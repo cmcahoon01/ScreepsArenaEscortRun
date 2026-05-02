@@ -88,7 +88,7 @@ export function calculateTeamStrength(creeps) {
         return 0;
     }
 
-    return creeps.reduce((total, creep) => {
+    return CombatConfig.DAMAGE.ATTACK_POWER + creeps.reduce((total, creep) => {
         return total + calculateCreepStrength(creep);
     }, 0);
 }
