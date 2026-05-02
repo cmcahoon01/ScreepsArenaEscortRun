@@ -123,7 +123,7 @@ export class KitingBehavior {
         // If only one position, return it
         if (bestPositions.length === 1) {
             return bestPositions[0];
-    
+        }
 
         // If there are ties, avoid stepping on swamp tiles or slowdown area effects
         const nonSwampPositions = bestPositions.filter(pos => {
