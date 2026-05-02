@@ -88,15 +88,12 @@ export const BuildConfig = {
     
     /**
      * Initial build order that always executes first.
-     * Provides basic offense (cleric) foundation.
-     * 
-     * Rationale:
-     * - Cleric: Provides early combat presence with healing and ranged attack
+     * Builds a cleric then a miner; both are replaced if they die.
      */
-    INITIAL_BUILD: ['cleric'],
+    INITIAL_BUILD: ['cleric', 'miner'],
 
     /**
-     * Economy-focused build order
+     * Economy-focused build order (not currently used; retained for future use).
      * Each entry can be either a string (job name, defaults to tier 1) 
      * or an object with {job, tier} to specify a tiered creep.
      * 
