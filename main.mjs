@@ -1,10 +1,8 @@
 import { EscortCreep } from 'arena/season_3/escort_run/basic';
-import { Flag, getObjectsByPrototype } from 'game';
+import { Flag, getObjectsByPrototype, RESOURCE_ENERGY } from 'game';
 
-import { getObjectsByPrototype } from 'game/utils';
 import { ConstructionSite, Creep, Source, StructureSpawn } from 'game/prototypes';
 import { CARRY, MOVE, WORK, ERR_NOT_IN_RANGE } from 'game/constants';
-import { RESOURCE_ENERGY } from 'game';
 import { ScreepController } from './src/controllers/ScreepController.mjs';
 import { BuildOrder } from './src/controllers/BuildOrder.mjs';
 import { GameState } from './src/services/GameState.mjs';
