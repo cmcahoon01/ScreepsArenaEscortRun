@@ -1,5 +1,5 @@
 import { getRange, findInRange, getObjectsByPrototype } from 'game/utils';
-import { EFFECT_SLOWDOWN } from "arena/season_1/construct_and_control/basic/constants";
+import { EFFECT_SLOWDOWN } from "arena/season_3/escort_run/basic/constants";
 import { AreaEffect } from 'game/prototypes';
 import { TerrainAnalyzer } from './TerrainAnalyzer.mjs';
 
