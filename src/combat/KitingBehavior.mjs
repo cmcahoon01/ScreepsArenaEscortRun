@@ -1,5 +1,4 @@
 import { getRange, findInRange, getObjectsByPrototype } from 'game/utils';
-import { AreaEffect } from 'game/prototypes';
 import { TerrainAnalyzer } from './TerrainAnalyzer.mjs';
 
 /**
@@ -124,18 +123,12 @@ export class KitingBehavior {
         // If only one position, return it
         if (bestPositions.length === 1) {
             return bestPositions[0];
-        }
-
-        const areaEffects = getObjectsByPrototype(AreaEffect);
+    
 
         // If there are ties, avoid stepping on swamp tiles or slowdown area effects
         const nonSwampPositions = bestPositions.filter(pos => {
             if (TerrainAnalyzer.isSwamp(pos)) return false;
-
-            // findInRange with range 0 finds effects exactly on that tile
-            const effectsHere = findInRange(pos, areaEffects, 0);
-            // Exclude if any slowdown effect is present
-            return !effectsHere;
+            return true;
         });
         
         // Use non-swamp positions if available, otherwise use all best positions
