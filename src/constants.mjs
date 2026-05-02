@@ -90,7 +90,7 @@ export const BuildConfig = {
      * Initial build order that always executes first.
      * Builds a cleric then a miner; both are replaced if they die.
      */
-    INITIAL_BUILD: ['cleric', 'miner'],
+    INITIAL_BUILD: ['cleric', {job: 'miner', tier: 2}],
 
     /**
      * Economy-focused build order (not currently used; retained for future use).
