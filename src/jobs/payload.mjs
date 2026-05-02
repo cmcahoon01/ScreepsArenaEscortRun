@@ -65,6 +65,7 @@ export class PayloadJob extends ActiveCreep {
         super(id, jobName, tier, controller, winObjective, gameState);
         this.flag = flag;
         this.memory.state = PAYLOAD_STATE_WAITING;
+        this.gameState.setPayloadId(this.id);
     }
 
     /**
@@ -121,6 +122,9 @@ export class PayloadJob extends ActiveCreep {
         if (!creep) {
             return;
         }
+
+        // Sync the payload's moving state into GameState so combat jobs can read it.
+        this.gameState.setPayloadMoving(this.memory.state === PAYLOAD_STATE_MOVING);
 
         // ── State 1: waiting on a rampart near spawn ──────────────────────────
         if (this.memory.state === PAYLOAD_STATE_WAITING) {
