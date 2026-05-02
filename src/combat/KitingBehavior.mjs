@@ -1,5 +1,4 @@
 import { getRange, findInRange, getObjectsByPrototype } from 'game/utils';
-import { EFFECT_SLOWDOWN } from "arena/season_3/escort_run/basic/constants";
 import { AreaEffect } from 'game/prototypes';
 import { TerrainAnalyzer } from './TerrainAnalyzer.mjs';
 
@@ -136,7 +135,7 @@ export class KitingBehavior {
             // findInRange with range 0 finds effects exactly on that tile
             const effectsHere = findInRange(pos, areaEffects, 0);
             // Exclude if any slowdown effect is present
-            return !effectsHere.some(e => e.effect === EFFECT_SLOWDOWN);
+            return !effectsHere;
         });
         
         // Use non-swamp positions if available, otherwise use all best positions
