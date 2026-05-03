@@ -5,7 +5,7 @@ import { BuildConfig, DEFAULT_TIER } from '../constants.mjs';
  * Determines what to build based on game state.
  *
  * Build order:
- *   Phase 1 (initial): miner → blocker → mule → cleric → tug → miner → mule → miner → mule.
+ *   Phase 1 (initial): miner → blocker → mule → cleric → miner → tug → mule → miner → mule.
  *     All initial-build creeps are replaced immediately if they die.
  *   Phase 2 (continuous): fighters and clerics at a BuildConfig.FIGHTER_TO_CLERIC_RATIO ratio.
  *
