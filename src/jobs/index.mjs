@@ -5,6 +5,7 @@ export { FighterJob } from './fighter.mjs';
 export { ArcherJob } from './archer.mjs';
 export { HaulerJob } from './hauler.mjs';
 export { MinerJob } from './miner.mjs';
+export { MuleJob } from './mule.mjs';
 export { ClericJob } from './cleric.mjs';
 export { PayloadJob } from './payload.mjs';
 export { BlockerJob } from './blocker.mjs';

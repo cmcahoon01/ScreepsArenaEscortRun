@@ -30,6 +30,7 @@ export class BuildStrategy {
         // Count creeps by job type
         const creepCounts = {
             miner: 0,
+            mule: 0,
             cleric: 0,
             tug: 0,
         };

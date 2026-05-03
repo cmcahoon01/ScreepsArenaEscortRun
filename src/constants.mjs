@@ -88,9 +88,9 @@ export const BuildConfig = {
     
     /**
      * Initial build order that always executes first.
-     * Builds a cleric then a miner; both are replaced if they die.
+     * Builds a cleric, then a miner, then a mule; all are replaced if they die.
      */
-    INITIAL_BUILD: ['cleric', {job: 'miner', tier: 2}],
+    INITIAL_BUILD: ['cleric', {job: 'miner', tier: 2}, 'mule'],
 
     /**
      * Aggressive initial build order used when the enemy escort creep is not on a rampart.
