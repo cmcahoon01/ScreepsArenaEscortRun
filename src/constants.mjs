@@ -239,7 +239,13 @@ export const CombatConfig = {
      * on the flag, all attackers not currently in combat will prioritize killing
      * that enemy.
      */
-    FLAG_BLOCKER_RANGE: 7
+    FLAG_BLOCKER_RANGE: 7,
+
+    /**
+     * Euclidean radius around the enemy spawn that combat units must never enter.
+     * If all enemies are within this zone, combat units idle near the map center.
+     */
+    ENEMY_SPAWN_EXCLUSION_RADIUS: 20
 };
 
 // ============================================================================

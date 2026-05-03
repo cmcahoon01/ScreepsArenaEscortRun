@@ -48,9 +48,15 @@ export class FighterJob extends ActiveCreep {
         
         // Filter out enemies that are standing on ramparts
         const hostileCreeps = CombatUtils.filterMeleeTargetableEnemies(allHostileCreeps, ramparts);
+
+        // Filter out enemies within the spawn exclusion zone - don't pursue them in
+        const enemySpawn = this.gameState.getEnemySpawn();
+        const movementTargets = enemySpawn
+            ? hostileCreeps.filter(e => !CombatUtils.isWithinEnemySpawnRadius(e, enemySpawn))
+            : hostileCreeps;
         
         // Check if there are any enemies within range 5 - fight back against nearby threats
-        const enemiesInRange5 = hostileCreeps.filter(enemy => getRange(creep, enemy) <= 5);
+        const enemiesInRange5 = movementTargets.filter(enemy => getRange(creep, enemy) <= 5);
         
         if (enemiesInRange5.length > 0) {
             // Enemies are nearby - fight back
@@ -73,9 +79,9 @@ export class FighterJob extends ActiveCreep {
         if (enemyEscortCreepId) {
             const enemyPayload = getObjectById(enemyEscortCreepId);
             if (enemyPayload) {
-                // Only pursue if the enemy payload is not on an enemy rampart (i.e., targetable)
+                // Only pursue if the enemy payload is not on an enemy rampart and not in the spawn zone
                 const isOnRampart = CombatUtils.isOnEnemyRampart(enemyPayload, ramparts);
-                if (!isOnRampart) {
+                if (!isOnRampart && !CombatUtils.isWithinEnemySpawnRadius(enemyPayload, enemySpawn)) {
                     this.attackOrMoveTo(creep, enemyPayload);
                     return;
                 }
@@ -89,15 +95,12 @@ export class FighterJob extends ActiveCreep {
             return;
         }
 
-        // If payload is moving, engage the closest enemy to the payload (not on a rampart)
+        // If payload is moving, engage the closest enemy to the payload (not on a rampart, not in spawn zone)
         if (this.gameState.isPayloadMoving()) {
             const payloadId = this.gameState.getPayloadId();
             const payload = payloadId ? getObjectById(payloadId) : null;
-            if (payload && allHostileCreeps.length > 0) {
-                const targetableEnemies = CombatUtils.filterMeleeTargetableEnemies(allHostileCreeps, ramparts);
-                const enemyClosestToPayload = targetableEnemies.length > 0
-                    ? payload.findClosestByRange(targetableEnemies)
-                    : null;
+            if (payload && movementTargets.length > 0) {
+                const enemyClosestToPayload = payload.findClosestByRange(movementTargets);
                 if (enemyClosestToPayload) {
                     this.attackOrMoveTo(creep, enemyClosestToPayload);
                     return;
@@ -148,31 +151,22 @@ export class FighterJob extends ActiveCreep {
 
     idle(creep) {
         const enemySpawn = this.gameState.getEnemySpawn();
-        if (!enemySpawn) {
+        const mapSize = MapTopology.ARENA_SIZE;
+        const centerPos = {
+            x: mapSize / 2,
+            y: mapSize / 2
+        };
+
+        // Never move within the spawn exclusion zone - retreat toward center if inside it
+        if (enemySpawn && CombatUtils.isWithinEnemySpawnRadius(creep, enemySpawn)) {
+            creep.moveTo(centerPos);
             return;
         }
-        
-        // Check if we're in enemy's third of the map - if so, move out
-        if (CombatUtils.isInEnemyThird(creep, enemySpawn)) {
-            // Move towards our spawn (away from enemy third)
-            const mySpawn = this.gameState.getMySpawn();
-            if (mySpawn) {
-                creep.moveTo(mySpawn);
-            }
-        } else {
-            // Idle in the center 2/3rds of the map
-            // Stay roughly where we are or move towards center line
-            const mapSize = MapTopology.ARENA_SIZE;
-            const centerPos = {
-                x: mapSize / 2,
-                y: mapSize / 2
-            };
-            
-            // Only move if we're far from center (to avoid constant movement)
-            const distToCenter = Math.abs(creep.x - centerPos.x) + Math.abs(creep.y - centerPos.y);
-            if (distToCenter > mapSize / 4) {
-                creep.moveTo(centerPos);
-            }
+
+        // Idle near center of the map (Manhattan distance is sufficient for this coarse check)
+        const distToCenter = Math.abs(creep.x - centerPos.x) + Math.abs(creep.y - centerPos.y);
+        if (distToCenter > mapSize / 4) {
+            creep.moveTo(centerPos);
         }
     }
 }
