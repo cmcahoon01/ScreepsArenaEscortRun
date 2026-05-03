@@ -64,9 +64,11 @@ export class FighterJob extends ActiveCreep {
             if (enemyPayload) {
                 const isOnRampart = CombatUtils.isOnEnemyRampart(enemyPayload, ramparts);
                 if (!isOnRampart && !CombatUtils.isWithinEnemySpawnRadius(enemyPayload, enemySpawn)) {
-                    // Only fight back if a non-payload enemy is within actual melee attack range (1)
+                    // Only fight back if a non-payload enemy with attack body parts is within actual melee attack range (1)
                     const combatEnemiesInRange = movementTargets.filter(
-                        e => e.id !== enemyEscortCreepId && getRange(creep, e) <= 1
+                        e => e.id !== enemyEscortCreepId &&
+                        getRange(creep, e) <= 1 &&
+                        CombatUtils.hasAttackCapability(e)
                     );
                     if (combatEnemiesInRange.length > 0) {
                         const target = creep.findClosestByRange(combatEnemiesInRange);

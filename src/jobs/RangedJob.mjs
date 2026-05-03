@@ -140,8 +140,10 @@ export class RangedJob extends ActiveCreep {
                 if (enemyPayload) {
                     const isOnRampart = CombatUtils.isOnEnemyRampart(enemyPayload, ramparts);
                     if (!isOnRampart && !CombatUtils.isWithinEnemySpawnRadius(enemyPayload, enemySpawn)) {
-                        // Only fight back if non-payload enemies are within ranged attack range (3)
-                        const combatEnemiesInRange = enemiesInRange.filter(e => e.id !== enemyEscortCreepId);
+                        // Only fight back if non-payload enemies with attack body parts are within ranged attack range (3)
+                        const combatEnemiesInRange = enemiesInRange.filter(
+                            e => e.id !== enemyEscortCreepId && CombatUtils.hasAttackCapability(e)
+                        );
 
                         if (combatEnemiesInRange.length > 0) {
                             // Fight back against nearest combat unit in attack range
