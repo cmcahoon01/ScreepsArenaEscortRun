@@ -1,4 +1,5 @@
 import { getRange, getObjectById } from 'game/utils';
+import { ATTACK, RANGED_ATTACK } from 'game/constants';
 import { compareTeamStrengths } from '../combat/strengthEstimator.mjs';
 import { CombatConfig, MapTopology } from '../constants.mjs';
 
@@ -217,6 +218,20 @@ export class CombatUtils {
      */
     static isOnEnemyRampart(target, ramparts) {
         return ramparts.some(r => !r.my && r.x === target.x && r.y === target.y);
+    }
+
+    /**
+     * Check if a creep has any offensive attack body parts (attack or ranged_attack).
+     * Used to distinguish true combat units from non-combat creeps (e.g., miners, tugs).
+     *
+     * @param {Creep} creep - The creep to inspect
+     * @returns {boolean} True if the creep has at least one attack or ranged_attack body part
+     */
+    static hasAttackCapability(creep) {
+        if (!creep || !creep.body) {
+            return false;
+        }
+        return creep.body.some(part => part.type === ATTACK || part.type === RANGED_ATTACK);
     }
 
     /**
