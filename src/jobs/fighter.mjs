@@ -54,7 +54,33 @@ export class FighterJob extends ActiveCreep {
         const movementTargets = enemySpawn
             ? hostileCreeps.filter(e => !CombatUtils.isWithinEnemySpawnRadius(e, enemySpawn))
             : hostileCreeps;
-        
+
+        // === ENEMY PAYLOAD PRIORITY ===
+        // If the enemy payload is outside the spawn exclusion zone, prioritize killing it.
+        // Exception: fight back against enemy combat units currently within melee attack range (1).
+        const enemyEscortCreepId = this.gameState.getEnemyEscortCreepId();
+        if (enemyEscortCreepId) {
+            const enemyPayload = getObjectById(enemyEscortCreepId);
+            if (enemyPayload) {
+                const isOnRampart = CombatUtils.isOnEnemyRampart(enemyPayload, ramparts);
+                if (!isOnRampart && !CombatUtils.isWithinEnemySpawnRadius(enemyPayload, enemySpawn)) {
+                    // Only fight back if a non-payload enemy is within actual melee attack range (1)
+                    const combatEnemiesInRange = movementTargets.filter(
+                        e => e.id !== enemyEscortCreepId && getRange(creep, e) <= 1
+                    );
+                    if (combatEnemiesInRange.length > 0) {
+                        const target = creep.findClosestByRange(combatEnemiesInRange);
+                        if (target) {
+                            this.attackOrMoveTo(creep, target);
+                            return;
+                        }
+                    }
+                    this.attackOrMoveTo(creep, enemyPayload);
+                    return;
+                }
+            }
+        }
+
         // Check if there are any enemies within range 5 - fight back against nearby threats
         const enemiesInRange5 = movementTargets.filter(enemy => getRange(creep, enemy) <= 5);
         
@@ -73,20 +99,6 @@ export class FighterJob extends ActiveCreep {
         if (flagBlocker && this.id === this.gameState.getFlagKillerId()) {
             this.attackOrMoveTo(creep, flagBlocker);
             return;
-        }
-
-        // No immediate threats - prioritize hunting the enemy escort creep (payload)
-        const enemyEscortCreepId = this.gameState.getEnemyEscortCreepId();
-        if (enemyEscortCreepId) {
-            const enemyPayload = getObjectById(enemyEscortCreepId);
-            if (enemyPayload) {
-                // Only pursue if the enemy payload is not on an enemy rampart and not in the spawn zone
-                const isOnRampart = CombatUtils.isOnEnemyRampart(enemyPayload, ramparts);
-                if (!isOnRampart && !CombatUtils.isWithinEnemySpawnRadius(enemyPayload, enemySpawn)) {
-                    this.attackOrMoveTo(creep, enemyPayload);
-                    return;
-                }
-            }
         }
 
         // No enemy payload to hunt - check for fortified miner
