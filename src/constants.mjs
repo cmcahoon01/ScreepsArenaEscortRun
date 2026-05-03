@@ -96,11 +96,9 @@ export const BuildConfig = {
         {job: 'miner', tier: 1},
         'blocker',
         'mule',
-        'fighter',
+        'mule',
         {job: 'miner', tier: 2},
-        'tug',
-        'mule',
-        'mule',
+        'cleric'
     ],
 
     /**
