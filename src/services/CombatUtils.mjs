@@ -12,6 +12,11 @@ export class CombatUtils {
      * @returns {boolean} True if we should retreat to defensive positions
      */
     static shouldAdoptDefensivePosture(gameState) {
+        // If payload is moving, never adopt defensive posture
+        if (gameState.isPayloadMoving()) {
+            return false;
+        }
+
         const comparison = compareTeamStrengths(gameState);
         
         // Adopt defensive posture if our strength ratio is below threshold
@@ -79,6 +84,22 @@ export class CombatUtils {
         return false;
     }
     
+    /**
+     * Check if a position is within the enemy spawn exclusion radius.
+     * Combat units should never move within this Euclidean distance of the enemy spawn.
+     * @param {Object} pos - Position with x and y coordinates
+     * @param {StructureSpawn} enemySpawn - Enemy spawn structure
+     * @returns {boolean} True if position is within the exclusion radius
+     */
+    static isWithinEnemySpawnRadius(pos, enemySpawn) {
+        if (!enemySpawn) {
+            return false;
+        }
+        const dx = pos.x - enemySpawn.x;
+        const dy = pos.y - enemySpawn.y;
+        return Math.sqrt(dx * dx + dy * dy) <= CombatConfig.ENEMY_SPAWN_EXCLUSION_RADIUS;
+    }
+
     /**
      * Find a safe rampart position to retreat to.
      * Returns the closest friendly rampart to the creep.

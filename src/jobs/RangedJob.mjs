@@ -33,7 +33,7 @@ export class RangedJob extends ActiveCreep {
         return KitingBehavior.findBestRetreatPosition(creep, enemies, allCreeps, allStructures);
     }
 
-    // Idle behavior - move towards center or stay defensive
+    // Idle behavior - move towards center or stay away from enemy spawn
     idle(creep, damagedCreeps) {
         // Subclasses can optionally check for injured allies first
         if (this.shouldHealDuringIdle() && damagedCreeps) {
@@ -48,18 +48,22 @@ export class RangedJob extends ActiveCreep {
         }
         
         const enemySpawn = this.gameState.getEnemySpawn();
-        if (enemySpawn) {
-            // Check if we're in enemy's third of the map - if so, move out
-            if (CombatUtils.isInEnemyThird(creep, enemySpawn)) {
-                // Move towards our spawn (away from enemy third)
-                const mySpawn = this.gameState.getMySpawn();
-                if (mySpawn) {
-                    creep.moveTo(mySpawn);
-                }
-            } else {
-                // Move towards enemy spawn to stay active
-                creep.moveTo(enemySpawn);
-            }
+        const mapSize = MapTopology.ARENA_SIZE;
+        const centerPos = {
+            x: mapSize / 2,
+            y: mapSize / 2
+        };
+
+        // Never move within the spawn exclusion zone - retreat toward center if inside it
+        if (enemySpawn && CombatUtils.isWithinEnemySpawnRadius(creep, enemySpawn)) {
+            creep.moveTo(centerPos);
+            return;
+        }
+
+        // Idle near center of the map (Manhattan distance is sufficient for this coarse check)
+        const distToCenter = Math.abs(creep.x - centerPos.x) + Math.abs(creep.y - centerPos.y);
+        if (distToCenter > mapSize / 4) {
+            creep.moveTo(centerPos);
         }
     }
 
@@ -120,10 +124,16 @@ export class RangedJob extends ActiveCreep {
                 allHostileCreeps, 
                 ramparts
             );
+
+            // Further filter: don't pursue enemies within the spawn exclusion zone
+            const enemySpawn = this.gameState.getEnemySpawn();
+            const validTargets = enemySpawn
+                ? enemiesNotOnRamparts.filter(e => !CombatUtils.isWithinEnemySpawnRadius(e, enemySpawn))
+                : enemiesNotOnRamparts;
             
-            // Only target enemies if there are valid targets (not all on ramparts)
-            if (enemiesNotOnRamparts.length > 0) {
-                const closestEnemy = creep.findClosestByRange(enemiesNotOnRamparts);
+            // Only target enemies if there are valid targets (not all on ramparts or in spawn zone)
+            if (validTargets.length > 0) {
+                const closestEnemy = creep.findClosestByRange(validTargets);
                 
                 if (closestEnemy) {
                     const range = getRange(creep, closestEnemy);
@@ -157,8 +167,8 @@ export class RangedJob extends ActiveCreep {
                             } else if (this.gameState.isPayloadMoving()) {
                                 const payloadId = this.gameState.getPayloadId();
                                 const payload = payloadId ? getObjectById(payloadId) : null;
-                                if (payload && allHostileCreeps.length > 0) {
-                                    const enemyClosestToPayload = payload.findClosestByRange(allHostileCreeps);
+                                if (payload && validTargets.length > 0) {
+                                    const enemyClosestToPayload = payload.findClosestByRange(validTargets);
                                     if (enemyClosestToPayload) {
                                         movementTarget = enemyClosestToPayload;
                                     }
@@ -191,7 +201,7 @@ export class RangedJob extends ActiveCreep {
                     creep.rangedAttack(attackTarget);
                 }
             } else {
-                // All enemies are on ramparts or no valid targets - idle
+                // All enemies are on ramparts, in spawn zone, or no valid targets - idle
                 this.idle(creep, damagedCreeps);
             }
         } else {
