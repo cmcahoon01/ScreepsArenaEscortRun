@@ -1,5 +1,5 @@
 import { getObjectById } from 'game/utils';
-import { WORK, CARRY, MOVE, ERR_NOT_IN_RANGE, RESOURCE_ENERGY } from 'game/constants';
+import { WORK, CARRY, MOVE, ERR_NOT_IN_RANGE, OK, RESOURCE_ENERGY } from 'game/constants';
 import { ActiveCreep } from './ActiveCreep.mjs';
 import { SourceAssignmentStrategy } from './SourceAssignmentStrategy.mjs';
 import { ExtensionBuilder } from './ExtensionBuilder.mjs';
@@ -48,6 +48,28 @@ export class MinerJob extends ActiveCreep {
         this.workParts = body.filter(part => part === WORK).length;
         this.miningProduction = 2 * this.workParts;
         this.buildingProduction = 5 * this.workParts;
+    }
+
+    /**
+     * Find a friendly mule creep adjacent (Chebyshev distance <= 1) to this creep.
+     * @param {Creep} creep - The miner creep object
+     * @returns {Creep|null} The adjacent mule creep, or null if none found
+     */
+    findAdjacentMule(creep) {
+        const muleActiveCreeps = this.controller.creeps.filter(c => c.jobName === 'mule');
+        for (const muleActiveCreep of muleActiveCreeps) {
+            const mule = getObjectById(muleActiveCreep.id);
+            if (mule) {
+                const range = Math.max(
+                    Math.abs(creep.x - mule.x),
+                    Math.abs(creep.y - mule.y)
+                );
+                if (range <= 1) {
+                    return mule;
+                }
+            }
+        }
+        return null;
     }
 
     act() {
@@ -177,8 +199,18 @@ export class MinerJob extends ActiveCreep {
                         console.log(`Miner ${this.id} not in range of source`);
                     }
                 } else {
-                    // Stage 2: Deposit to least full extension
-                    ExtensionBuilder.fillExtensions(creep, RESOURCE_ENERGY, this.gameState);
+                    // Transfer to an adjacent mule if one is present, otherwise fill extensions
+                    const adjacentMule = this.findAdjacentMule(creep);
+                    if (adjacentMule) {
+                        const transferResult = creep.transfer(adjacentMule, RESOURCE_ENERGY);
+                        if (transferResult !== OK) {
+                            // Transfer failed (e.g. mule is full); fall back to filling extensions
+                            ExtensionBuilder.fillExtensions(creep, RESOURCE_ENERGY, this.gameState);
+                        }
+                    } else {
+                        // Stage 2: Deposit to least full extension
+                        ExtensionBuilder.fillExtensions(creep, RESOURCE_ENERGY, this.gameState);
+                    }
                 }
             }
         }
