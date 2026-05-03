@@ -127,6 +127,7 @@ export class PayloadJob extends ActiveCreep {
                 // prepend itself: tugChain becomes [tugId, payloadId], so the
                 // payload moves to index 1 and is pulled by the tug at index 0.
                 this.gameState.setTugChain([this.id]);
+                console.log("Payload beginning pilgrimage");
             } else {
                 const targetRampart = this.findWaitingRampart(creep);
                 if (targetRampart) {
