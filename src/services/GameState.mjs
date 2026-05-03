@@ -35,6 +35,9 @@ export class GameState {
         this.flag = null; // Our flag (the win-objective position)
         this.enemyFlag = null; // The enemy's flag (the enemy win-objective position)
         this.flagKillerId = null; // ID of the single combat unit assigned to kill the flag blocker
+        this.blockerEverBuilt = false; // True once we have ever spawned a blocker
+        this.blockerEverDied = false;  // True once a blocker was built and subsequently died
+        this.enemyHasCombatUnit = false; // True if any enemy has attack or ranged_attack body parts
     }
     
     /**
@@ -45,6 +48,7 @@ export class GameState {
         this.allCreeps = getObjectsByPrototype(Creep);
         this.myCreeps = this.allCreeps.filter(c => c.my);
         this.enemyCreeps = this.allCreeps.filter(c => !c.my);
+        this.enemyHasCombatUnit = this.enemyCreeps.some(e => CombatUtils.hasAttackCapability(e));
         
         // Cache spawns
         const spawns = getObjectsByPrototype(StructureSpawn);
@@ -70,7 +74,15 @@ export class GameState {
 
         // Check if we have built a miner
         this.hasBuiltMiner = this.screepController.hasCreepOfRole('miner');
-        
+
+        // Track blocker lifecycle: once a blocker has been built and later dies, never rebuild
+        const hasBlockerNow = this.screepController.hasCreepOfRole('blocker');
+        if (hasBlockerNow) {
+            this.blockerEverBuilt = true;
+        } else if (this.blockerEverBuilt) {
+            this.blockerEverDied = true;
+        }
+
         // Maintain the flag killer assignment
         // Select one combat unit to hunt down the flag blocker; clear when no blocker is present.
         const flagBlocker = CombatUtils.findFlagBlockingEnemy(this, this.enemyCreeps);
@@ -188,6 +200,24 @@ export class GameState {
      */
     getHasBuiltMiner() {
         return this.hasBuiltMiner;
+    }
+
+    /**
+     * Get whether a blocker was ever built and has since died.
+     * When true, no further blockers should be spawned.
+     * @returns {boolean} True if a blocker was built and is no longer alive
+     */
+    getBlockerEverDied() {
+        return this.blockerEverDied;
+    }
+
+    /**
+     * Get whether any enemy creep has an attack or ranged_attack body part.
+     * Cached once per tick in refresh().
+     * @returns {boolean} True if the enemy has at least one combat-capable unit
+     */
+    getEnemyHasCombatUnit() {
+        return this.enemyHasCombatUnit;
     }
 
     /**

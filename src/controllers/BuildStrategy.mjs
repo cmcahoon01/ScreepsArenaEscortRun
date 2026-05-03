@@ -13,6 +13,10 @@ import { BuildConfig, DEFAULT_TIER } from '../constants.mjs';
  * miner and blocker have been built. Once the enemy escort leaves its rampart at that point,
  * the strategy switches to aggressive and stays there (fighters keep being built).
  * Lost miner and blocker creeps are replaced immediately in both modes.
+ *
+ * Blocker exceptions:
+ *   - A blocker is never built if any enemy unit has an attack or ranged_attack body part.
+ *   - Once the first blocker dies, no further blockers are ever built.
  */
 export class BuildStrategy {
     /**
@@ -51,6 +55,10 @@ export class BuildStrategy {
             ? BuildConfig.INITIAL_BUILD
             : BuildConfig.AGGRESSIVE_INITIAL_BUILD;
 
+        // Pre-compute blocker eligibility once, before iterating the build order.
+        // A blocker is skipped if any enemy has combat body parts, or if one has already died.
+        const blockerForbidden = this.gameState.getEnemyHasCombatUnit() || this.gameState.getBlockerEverDied();
+
         // Phase 1: Initial build order. Replace any lost creeps immediately.
         for (let i = 0; i < initialBuild.length; i++) {
             const buildItem = initialBuild[i];
@@ -60,6 +68,12 @@ export class BuildStrategy {
             
             if (!jobClass) {
                 console.log(`Warning: Unknown job type '${jobName}' in build order`);
+                continue;
+            }
+
+            // Never build a blocker if the enemy has any unit with combat body parts,
+            // and never rebuild one once the first blocker has died.
+            if (jobName === 'blocker' && blockerForbidden) {
                 continue;
             }
             
