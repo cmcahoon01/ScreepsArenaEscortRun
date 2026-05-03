@@ -31,9 +31,10 @@ export class SourceAssignmentStrategy {
     }
 
     /**
-     * Assign a source to a miner based on proximity to our spawn.
-     * Miner 0 gets the closest source to our spawn, miner 1 gets the second closest, etc.
-     * @param {number} minerIndex - Index of the miner (0-based)
+     * Assign the closest source (nearest to our spawn) to all miners.
+     * All miners go to the same source; each will claim a different adjacent cell
+     * via the excludePositions mechanism in findMiningPosition.
+     * @param {number} minerIndex - Index of the miner (0-based, unused for source selection)
      * @param {GameState} gameState - The game state service for cached game objects
      * @returns {Object|null} Assigned source or null if not available
      */
@@ -46,23 +47,18 @@ export class SourceAssignmentStrategy {
         }
 
         if (!mySpawn) {
-            // Fallback: assign by index without distance sorting
-            return minerIndex < sources.length ? sources[minerIndex] : null;
+            // Fallback: all miners share the first source
+            return sources[0];
         }
 
-        // Sort sources by Manhattan distance from our spawn so each miner
-        // targets the source nearest to their own spawn first.
+        // All miners target the single source closest to our spawn.
         const sourcesByDistance = sources.slice().sort((a, b) => {
             const distA = Math.abs(a.x - mySpawn.x) + Math.abs(a.y - mySpawn.y);
             const distB = Math.abs(b.x - mySpawn.x) + Math.abs(b.y - mySpawn.y);
             return distA - distB;
         });
 
-        if (minerIndex < sourcesByDistance.length) {
-            return sourcesByDistance[minerIndex];
-        }
-
-        return null;
+        return sourcesByDistance[0];
     }
 
     /**
