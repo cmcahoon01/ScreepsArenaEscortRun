@@ -17,6 +17,30 @@ export class TugJob extends ActiveCreep {
         return 'tug';
     }
 
+    /**
+     * Find a friendly rampart not adjacent to spawn (Chebyshev distance > 1) for
+     * idle tugs to shelter on, keeping the area around spawn clear for new spawns.
+     * @param {Creep} creep
+     * @returns {StructureRampart|null}
+     */
+    findIdleRampart(creep) {
+        const spawn = this.gameState.getMySpawn();
+        if (!spawn) {
+            return null;
+        }
+
+        const idleRamparts = this.gameState.getMyRamparts().filter(r => {
+            const chebyshevDist = Math.max(Math.abs(r.x - spawn.x), Math.abs(r.y - spawn.y));
+            return chebyshevDist > 1;
+        });
+
+        if (idleRamparts.length === 0) {
+            return null;
+        }
+
+        return creep.findClosestByRange(idleRamparts);
+    }
+
     act() {
         const creep = getObjectById(this.id);
         if (!creep) {
@@ -25,11 +49,17 @@ export class TugJob extends ActiveCreep {
 
         const tugChain = this.gameState.getTugChain();
         
-        // If tugChain is empty, move to our spawn
+        // If tugChain is empty, move to a rampart not adjacent to spawn so we
+        // don't block newly spawned tugs from clearing the spawn area.
         if (tugChain.length === 0) {
-            const mySpawn = this.gameState.getMySpawn();
-            if (mySpawn) {
-                creep.moveTo(mySpawn);
+            const idleRampart = this.findIdleRampart(creep);
+            if (idleRampart) {
+                creep.moveTo(idleRampart);
+            } else {
+                const mySpawn = this.gameState.getMySpawn();
+                if (mySpawn) {
+                    creep.moveTo(mySpawn);
+                }
             }
             return;
         }
