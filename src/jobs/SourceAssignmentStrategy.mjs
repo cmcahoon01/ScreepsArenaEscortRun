@@ -31,9 +31,10 @@ export class SourceAssignmentStrategy {
     }
 
     /**
-     * Assign a source to a miner based on proximity to our spawn.
-     * Miner 0 gets the closest source to our spawn, miner 1 gets the second closest, etc.
-     * @param {number} minerIndex - Index of the miner (0-based)
+     * Assign the closest source (nearest to our spawn) to all miners.
+     * All miners go to the same source; each will claim a different adjacent cell
+     * via the excludePositions mechanism in findMiningPosition.
+     * @param {number} minerIndex - Index of the miner (0-based, unused for source selection)
      * @param {GameState} gameState - The game state service for cached game objects
      * @returns {Object|null} Assigned source or null if not available
      */
@@ -46,33 +47,31 @@ export class SourceAssignmentStrategy {
         }
 
         if (!mySpawn) {
-            // Fallback: assign by index without distance sorting
-            return minerIndex < sources.length ? sources[minerIndex] : null;
+            // Fallback: all miners share the first source
+            return sources[0];
         }
 
-        // Sort sources by Manhattan distance from our spawn so each miner
-        // targets the source nearest to their own spawn first.
+        // All miners target the single source closest to our spawn.
         const sourcesByDistance = sources.slice().sort((a, b) => {
             const distA = Math.abs(a.x - mySpawn.x) + Math.abs(a.y - mySpawn.y);
             const distB = Math.abs(b.x - mySpawn.x) + Math.abs(b.y - mySpawn.y);
             return distA - distB;
         });
 
-        if (minerIndex < sourcesByDistance.length) {
-            return sourcesByDistance[minerIndex];
-        }
-
-        return null;
+        return sourcesByDistance[0];
     }
 
     /**
      * Find the mining position on the diagonal between the source and our spawn.
      * Standing on the diagonal gives the miner more room compared to a cardinal position.
+     * Positions listed in excludePositions are skipped so multiple miners targeting the
+     * same source claim different adjacent cells.
      * @param {Object} source - The source to find mining position for
      * @param {GameState} gameState - The game state service for cached game objects
+     * @param {Array<{x: number, y: number}>} [excludePositions=[]] - Positions already claimed by other miners
      * @returns {Object|null} Mining position or null if not found
      */
-    static findMiningPosition(source, gameState) {
+    static findMiningPosition(source, gameState, excludePositions = []) {
         const mySpawn = gameState.getMySpawn();
 
         const allDirections = [
@@ -85,6 +84,9 @@ export class SourceAssignmentStrategy {
             { dx: -1, dy: 1 }, // BOTTOM_LEFT
             { dx: -1, dy: -1 } // TOP_LEFT
         ];
+
+        // Helper: returns true when pos is already claimed by another miner
+        const isExcluded = (pos) => excludePositions.some(ep => ep.x === pos.x && ep.y === pos.y);
 
         // Preferred directions: diagonal from source toward spawn so the miner
         // stands between the source and the spawn with extra room on either side.
@@ -112,18 +114,18 @@ export class SourceAssignmentStrategy {
             }
         }
 
-        // Try preferred directions first
+        // Try preferred directions first, skipping excluded positions
         for (const dir of preferredDirections) {
             const pos = { x: source.x + dir.dx, y: source.y + dir.dy };
-            if (TerrainAnalyzer.isValidPosition(pos)) {
+            if (TerrainAnalyzer.isValidPosition(pos) && !isExcluded(pos)) {
                 return pos;
             }
         }
 
-        // Fallback to any valid adjacent position
+        // Fallback to any valid, non-excluded adjacent position
         for (const dir of allDirections) {
             const pos = { x: source.x + dir.dx, y: source.y + dir.dy };
-            if (TerrainAnalyzer.isValidPosition(pos)) {
+            if (TerrainAnalyzer.isValidPosition(pos) && !isExcluded(pos)) {
                 return pos;
             }
         }

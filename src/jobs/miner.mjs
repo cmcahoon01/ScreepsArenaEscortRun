@@ -115,7 +115,15 @@ export class MinerJob extends ActiveCreep {
             // Calculate target position if not already set
             let targetPos = MinerStateMachine.getTargetPosition(this.memory);
             if (!targetPos) {
-                const miningPos = SourceAssignmentStrategy.findMiningPosition(source, this.gameState);
+                // Collect positions already claimed by other miners so this miner
+                // picks a different adjacent cell when sharing a source.
+                const occupiedPositions = this.controller.creeps
+                    .filter(c => c.jobName === 'miner' && c.id !== this.id &&
+                                 c.memory.targetX !== null && c.memory.targetX !== undefined &&
+                                 c.memory.targetY !== null && c.memory.targetY !== undefined)
+                    .map(c => ({ x: c.memory.targetX, y: c.memory.targetY }));
+
+                const miningPos = SourceAssignmentStrategy.findMiningPosition(source, this.gameState, occupiedPositions);
                 if (miningPos) {
                     MinerStateMachine.setTargetPosition(this.memory, miningPos);
                     targetPos = miningPos;

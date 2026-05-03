@@ -4,17 +4,10 @@ import { BuildConfig, DEFAULT_TIER } from '../constants.mjs';
 /**
  * Determines what to build based on game state.
  *
- * Default build order (enemy escort has not yet advanced toward our flag — it's far away,
- * so use economy):
- *   miner → blocker → mule → cleric → tugs forever.
- * Aggressive build order (enemy escort has moved within BuildConfig.AGGRESSIVE_TRIGGER_DISTANCE
- * Chebyshev of our flag — it's advancing toward the goal, so hunt it):
- *   miner → blocker → mule → fighters forever (no cleric or tugs).
- *
- * The build order is re-evaluated every tick. The aggressive mode only activates after both the
- * miner and blocker have been built. Once the enemy escort comes within the trigger distance at
- * that point, the strategy switches to aggressive and stays there (fighters keep being built).
- * Lost miner and blocker creeps are replaced immediately in both modes.
+ * Build order:
+ *   Phase 1 (initial): miner → blocker → mule → cleric → miner → tug → mule → miner → mule.
+ *     All initial-build creeps are replaced immediately if they die.
+ *   Phase 2 (continuous): fighters and clerics at a BuildConfig.FIGHTER_TO_CLERIC_RATIO ratio.
  *
  * Blocker exceptions:
  *   - A blocker is never built if any enemy unit has an attack or ranged_attack body part.
@@ -41,6 +34,7 @@ export class BuildStrategy {
             mule: 0,
             cleric: 0,
             tug: 0,
+            fighter: 0,
         };
 
         for (const activeCreep of creeps) {
@@ -49,21 +43,12 @@ export class BuildStrategy {
             }
         }
 
-        // Check the enemy escort creep's current distance to our flag each tick.
-        // While it's far away (Chebyshev distance >= AGGRESSIVE_TRIGGER_DISTANCE),
-        // use the economy build. Once it comes within that distance — meaning the
-        // enemy is advancing toward the goal — switch to aggressive (fighters).
-        // The aggressive switch only activates after miner and blocker are already built.
-        const enemyApproaching = this.gameState.isEnemyEscortCreepApproachingGoal();
-        const initialBuild = enemyApproaching
-            ? BuildConfig.AGGRESSIVE_INITIAL_BUILD
-            : BuildConfig.INITIAL_BUILD;
-
         // Pre-compute blocker eligibility once, before iterating the build order.
         // A blocker is skipped if any enemy has combat body parts, or if one has already died.
         const blockerForbidden = this.gameState.getEnemyHasCombatUnit() || this.gameState.getBlockerEverDied();
 
         // Phase 1: Initial build order. Replace any lost creeps immediately.
+        const initialBuild = BuildConfig.INITIAL_BUILD;
         for (let i = 0; i < initialBuild.length; i++) {
             const buildItem = initialBuild[i];
             const jobName = buildItem.job || buildItem; // Support both string and {job, tier} format
@@ -102,9 +87,11 @@ export class BuildStrategy {
             }
         }
 
-        if (enemyApproaching) {
-            // Phase 2 (aggressive): Build fighters forever
-            const fighterClass = Jobs['fighter'];
+        // Phase 2: Build fighters and clerics at FIGHTER_TO_CLERIC_RATIO ratio.
+        const ratio = BuildConfig.FIGHTER_TO_CLERIC_RATIO;
+        const fighterClass = Jobs['fighter'];
+        const clericClass = Jobs['cleric'];
+        if (creepCounts.fighter < creepCounts.cleric * ratio) {
             return {
                 job: 'fighter',
                 tier: DEFAULT_TIER,
@@ -112,14 +99,11 @@ export class BuildStrategy {
                 cost: fighterClass.getTierCost(DEFAULT_TIER)
             };
         }
-
-        // Phase 2 (default): Build tugs forever
-        const tugClass = Jobs['tug'];
         return {
-            job: 'tug',
+            job: 'cleric',
             tier: DEFAULT_TIER,
-            body: tugClass.getTierBody(DEFAULT_TIER),
-            cost: tugClass.getTierCost(DEFAULT_TIER)
+            body: clericClass.getTierBody(DEFAULT_TIER),
+            cost: clericClass.getTierCost(DEFAULT_TIER)
         };
     }
 }
