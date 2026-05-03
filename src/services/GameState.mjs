@@ -32,6 +32,7 @@ export class GameState {
         this.payloadMoving = false; // Whether the payload is in the moving-to-flag state
         this.payloadId = null; // ID of the payload (EscortCreep)
         this.enemyEscortCreepId = null; // ID of the enemy escort creep, saved at game start
+        this.flag = null; // Our flag (the win-objective position)
     }
     
     /**
@@ -287,5 +288,21 @@ export class GameState {
             return false;
         }
         return CombatUtils.isOnEnemyRampart(enemyEscortCreep, this.ramparts);
+    }
+
+    /**
+     * Store a reference to our flag (the win-objective destination).
+     * @param {Flag|null} flag
+     */
+    setFlag(flag) {
+        this.flag = flag;
+    }
+
+    /**
+     * Get our flag (the win-objective destination).
+     * @returns {Flag|null}
+     */
+    getFlag() {
+        return this.flag;
     }
 }

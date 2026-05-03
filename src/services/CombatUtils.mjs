@@ -1,3 +1,4 @@
+import { getRange, getObjectById } from 'game/utils';
 import { compareTeamStrengths } from '../combat/strengthEstimator.mjs';
 import { CombatConfig, MapTopology } from '../constants.mjs';
 
@@ -192,5 +193,42 @@ export class CombatUtils {
      */
     static isOnEnemyRampart(target, ramparts) {
         return ramparts.some(r => !r.my && r.x === target.x && r.y === target.y);
+    }
+
+    /**
+     * Find an enemy standing on our flag when the payload is close enough to
+     * make it a priority target.
+     *
+     * Returns the enemy creep occupying the flag's tile, or null if:
+     *  - There is no flag stored in gameState, or
+     *  - The payload is not within FLAG_BLOCKER_RANGE of the flag, or
+     *  - No enemy is standing on the flag tile.
+     *
+     * @param {GameState} gameState - The game state service
+     * @param {Creep[]} enemies - Array of candidate enemy creeps to check
+     * @returns {Creep|null} The flag-blocking enemy creep, or null
+     */
+    static findFlagBlockingEnemy(gameState, enemies) {
+        const flag = gameState.getFlag();
+        if (!flag) {
+            return null;
+        }
+
+        const payloadId = gameState.getPayloadId();
+        if (!payloadId) {
+            return null;
+        }
+
+        const payload = getObjectById(payloadId);
+        if (!payload) {
+            return null;
+        }
+
+        if (getRange(payload, flag) > CombatConfig.FLAG_BLOCKER_RANGE) {
+            return null;
+        }
+
+        // Find an enemy standing on the flag tile
+        return enemies.find(e => e.x === flag.x && e.y === flag.y) || null;
     }
 }

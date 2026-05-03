@@ -128,6 +128,9 @@ export class RangedJob extends ActiveCreep {
                 if (closestEnemy) {
                     const range = getRange(creep, closestEnemy);
                     
+                    // Default attack target is the closest enemy; may be overridden below.
+                    let attackTarget = closestEnemy;
+
                     // === MOVEMENT LOGIC WHEN ENEMIES EXIST ===
                     // If there are enemies in range, movement should be dedicated to kiting
                     if (enemiesInRange.length > 0 && range < DESIRED_RANGE) {
@@ -145,13 +148,20 @@ export class RangedJob extends ActiveCreep {
                         // enemies ARE in range but range >= DESIRED_RANGE, so the explicit
                         // check is necessary.
                         let movementTarget = closestEnemy;
-                        if (enemiesInRange.length === 0 && this.gameState.isPayloadMoving()) {
-                            const payloadId = this.gameState.getPayloadId();
-                            const payload = payloadId ? getObjectById(payloadId) : null;
-                            if (payload && allHostileCreeps.length > 0) {
-                                const enemyClosestToPayload = payload.findClosestByRange(allHostileCreeps);
-                                if (enemyClosestToPayload) {
-                                    movementTarget = enemyClosestToPayload;
+                        if (enemiesInRange.length === 0) {
+                            // Not in combat - check for an enemy blocking the flag
+                            const flagBlocker = CombatUtils.findFlagBlockingEnemy(this.gameState, allHostileCreeps);
+                            if (flagBlocker) {
+                                movementTarget = flagBlocker;
+                                attackTarget = flagBlocker;
+                            } else if (this.gameState.isPayloadMoving()) {
+                                const payloadId = this.gameState.getPayloadId();
+                                const payload = payloadId ? getObjectById(payloadId) : null;
+                                if (payload && allHostileCreeps.length > 0) {
+                                    const enemyClosestToPayload = payload.findClosestByRange(allHostileCreeps);
+                                    if (enemyClosestToPayload) {
+                                        movementTarget = enemyClosestToPayload;
+                                    }
                                 }
                             }
                         }
@@ -178,7 +188,7 @@ export class RangedJob extends ActiveCreep {
                             }
                         }
                     }
-                    creep.rangedAttack(closestEnemy);
+                    creep.rangedAttack(attackTarget);
                 }
             } else {
                 // All enemies are on ramparts or no valid targets - idle
