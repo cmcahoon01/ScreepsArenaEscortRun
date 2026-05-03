@@ -37,6 +37,8 @@ export class CombatUtils {
     /**
      * Check if a position is in the enemy's third of the map.
      * Enemy's third is closest to their spawn.
+     * Handles both X-axis separated maps (old layout) and Y-axis separated maps
+     * (new layout where both teams spawn on the same side, e.g., both on the left).
      * @param {Object} pos - Position with x and y coordinates
      * @param {StructureSpawn} enemySpawn - Enemy spawn structure
      * @returns {boolean} True if position is in enemy's third
@@ -49,16 +51,28 @@ export class CombatUtils {
         const mapSize = MapTopology.ARENA_SIZE;
         const thirdSize = mapSize / 3;
         
-        // Determine which axis the spawns are separated on
-        // If enemy spawn is in left third (x < 33.33), enemy third is x < 33.33
-        // If enemy spawn is in right third (x > 66.67), enemy third is x > 66.67
-        
         if (enemySpawn.x < thirdSize) {
-            // Enemy is in left third
+            // Enemy on the left side. Check if also in a top/bottom corner (new map layout
+            // where both teams spawn on the left with different y positions).
+            if (enemySpawn.y < thirdSize) {
+                // Enemy top-left corner: avoid the top Y-third
+                return pos.y < thirdSize;
+            } else if (enemySpawn.y > mapSize - thirdSize) {
+                // Enemy bottom-left corner: avoid the bottom Y-third
+                return pos.y > mapSize - thirdSize;
+            }
+            // Enemy on left but not in a y-extreme (old map): avoid left X-third
             return pos.x < thirdSize;
         } else if (enemySpawn.x > mapSize - thirdSize) {
-            // Enemy is in right third
+            // Enemy on right: avoid right X-third
             return pos.x > mapSize - thirdSize;
+        }
+        
+        // Spawn is in the middle X zone – fall back to Y-axis check
+        if (enemySpawn.y < thirdSize) {
+            return pos.y < thirdSize;
+        } else if (enemySpawn.y > mapSize - thirdSize) {
+            return pos.y > mapSize - thirdSize;
         }
         
         return false;
