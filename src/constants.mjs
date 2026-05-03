@@ -96,7 +96,7 @@ export const BuildConfig = {
         {job: 'miner', tier: 2},
         'blocker',
         'mule',
-        'cleric',
+        'fighter',
         {job: 'miner', tier: 2},
         'tug',
         'mule',
@@ -108,7 +108,7 @@ export const BuildConfig = {
      * Ratio of fighters to clerics built after the initial build order completes.
      * For every 1 cleric, this many fighters are built.
      */
-    FIGHTER_TO_CLERIC_RATIO: 3,
+    FIGHTER_TO_CLERIC_RATIO: 5,
 };
 
 // ============================================================================
