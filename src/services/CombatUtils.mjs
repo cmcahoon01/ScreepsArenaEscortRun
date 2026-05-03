@@ -2,6 +2,9 @@ import { getRange, getObjectById } from 'game/utils';
 import { compareTeamStrengths } from '../combat/strengthEstimator.mjs';
 import { CombatConfig, MapTopology } from '../constants.mjs';
 
+// Job names that count as combat units eligible to be assigned as the flag killer
+const COMBAT_JOBS = new Set(['fighter', 'archer', 'cleric']);
+
 /**
  * Utility functions for combat logic shared across multiple combat jobs.
  */
@@ -214,6 +217,34 @@ export class CombatUtils {
      */
     static isOnEnemyRampart(target, ramparts) {
         return ramparts.some(r => !r.my && r.x === target.x && r.y === target.y);
+    }
+
+    /**
+     * Select the best combat unit to be the designated flag killer.
+     * Priority: fighters first, then the closest combat unit (archer/cleric) to the blocker.
+     *
+     * @param {GameState} gameState - The game state service
+     * @param {Creep} flagBlocker - The enemy standing on the flag
+     * @returns {string|null} ID of the selected flag killer creep, or null if none available
+     */
+    static selectFlagKiller(gameState, flagBlocker) {
+        const myCreeps = gameState.getMyCreeps();
+        const controllerCreeps = gameState.screepController.creeps;
+
+        const jobNameById = new Map(controllerCreeps.map(c => [c.id, c.jobName]));
+
+        const fighters = myCreeps.filter(c => jobNameById.get(c.id) === 'fighter');
+        const combatCreeps = myCreeps.filter(c => COMBAT_JOBS.has(jobNameById.get(c.id)));
+
+        // Prefer fighters; fall back to all combat units
+        const candidates = fighters.length > 0 ? fighters : combatCreeps;
+
+        if (candidates.length === 0) {
+            return null;
+        }
+
+        const closest = flagBlocker.findClosestByRange(candidates);
+        return closest ? closest.id : null;
     }
 
     /**

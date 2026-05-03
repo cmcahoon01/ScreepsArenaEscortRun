@@ -33,6 +33,7 @@ export class GameState {
         this.payloadId = null; // ID of the payload (EscortCreep)
         this.enemyEscortCreepId = null; // ID of the enemy escort creep, saved at game start
         this.flag = null; // Our flag (the win-objective position)
+        this.flagKillerId = null; // ID of the single combat unit assigned to kill the flag blocker
     }
     
     /**
@@ -68,6 +69,19 @@ export class GameState {
 
         // Check if we have built a miner
         this.hasBuiltMiner = this.screepController.hasCreepOfRole('miner');
+        
+        // Maintain the flag killer assignment
+        // Select one combat unit to hunt down the flag blocker; clear when no blocker is present.
+        const flagBlocker = CombatUtils.findFlagBlockingEnemy(this, this.enemyCreeps);
+        if (!flagBlocker) {
+            this.flagKillerId = null;
+        } else {
+            const currentKillerAlive = this.flagKillerId &&
+                this.myCreeps.some(c => c.id === this.flagKillerId);
+            if (!currentKillerAlive) {
+                this.flagKillerId = CombatUtils.selectFlagKiller(this, flagBlocker);
+            }
+        }
         
         // Validate and clean up tug chain - remove any dead creeps
         if (this.tugChain.length > 0) {
@@ -304,5 +318,21 @@ export class GameState {
      */
     getFlag() {
         return this.flag;
+    }
+
+    /**
+     * Get the ID of the single combat unit assigned to kill the flag blocker.
+     * @returns {string|null}
+     */
+    getFlagKillerId() {
+        return this.flagKillerId;
+    }
+
+    /**
+     * Set the ID of the single combat unit assigned to kill the flag blocker.
+     * @param {string|null} id
+     */
+    setFlagKillerId(id) {
+        this.flagKillerId = id;
     }
 }

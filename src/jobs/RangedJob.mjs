@@ -159,9 +159,10 @@ export class RangedJob extends ActiveCreep {
                         // check is necessary.
                         let movementTarget = closestEnemy;
                         if (enemiesInRange.length === 0) {
-                            // Not in combat - check for an enemy blocking the flag
+                            // Not in combat - check for an enemy blocking the flag.
+                            // Only the single designated flag killer pursues it; other units behave normally.
                             const flagBlocker = CombatUtils.findFlagBlockingEnemy(this.gameState, allHostileCreeps);
-                            if (flagBlocker) {
+                            if (flagBlocker && this.id === this.gameState.getFlagKillerId()) {
                                 movementTarget = flagBlocker;
                                 attackTarget = flagBlocker;
                             } else if (this.gameState.isPayloadMoving()) {
