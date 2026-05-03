@@ -31,85 +31,87 @@ export class SourceAssignmentStrategy {
     }
 
     /**
-     * Assign a source to a miner based on miner count.
-     * First miner gets top corner source, second gets bottom corner source.
+     * Assign a source to a miner based on proximity to our spawn.
+     * Miner 0 gets the closest source to our spawn, miner 1 gets the second closest, etc.
      * @param {number} minerIndex - Index of the miner (0-based)
      * @param {GameState} gameState - The game state service for cached game objects
      * @returns {Object|null} Assigned source or null if not available
      */
     static assignSourceToMiner(minerIndex, gameState) {
         const sources = this.findSortedSources(gameState);
-        const teamSide = this.getTeamSide(gameState);
-        
-        if (sources.length < 2) {
-            return null; // Not enough sources
+        const mySpawn = gameState.getMySpawn();
+
+        if (sources.length === 0) {
+            return null;
         }
-        
-        // First miner gets top source (corner source based on team side)
-        if (minerIndex === 0) {
-            // Filter to corner sources (top)
-            const topSources = sources.filter(s => s.y < MapTopology.CORNER_TOP_THRESHOLD);
-            if (teamSide === 'left') {
-                // Get the leftmost top source
-                return topSources.sort((a, b) => a.x - b.x)[0];
-            } else {
-                // Get the rightmost top source
-                return topSources.sort((a, b) => b.x - a.x)[0];
-            }
+
+        if (!mySpawn) {
+            // Fallback: assign by index without distance sorting
+            return minerIndex < sources.length ? sources[minerIndex] : null;
         }
-        
-        // Second miner gets bottom source
-        if (minerIndex === 1) {
-            const bottomSources = sources.filter(s => s.y > MapTopology.CORNER_BOTTOM_THRESHOLD);
-            if (teamSide === 'left') {
-                // Get the leftmost bottom source
-                return bottomSources.sort((a, b) => a.x - b.x)[0];
-            } else {
-                // Get the rightmost bottom source
-                return bottomSources.sort((a, b) => b.x - a.x)[0];
-            }
+
+        // Sort sources by Manhattan distance from our spawn so each miner
+        // targets the source nearest to their own spawn first.
+        const sourcesByDistance = sources.slice().sort((a, b) => {
+            const distA = Math.abs(a.x - mySpawn.x) + Math.abs(a.y - mySpawn.y);
+            const distB = Math.abs(b.x - mySpawn.x) + Math.abs(b.y - mySpawn.y);
+            return distA - distB;
+        });
+
+        if (minerIndex < sourcesByDistance.length) {
+            return sourcesByDistance[minerIndex];
         }
-        
+
         return null;
     }
 
     /**
-     * Find the mining position directly adjacent to the source.
-     * The source is in a wall, so we look for the one non-wall position directly adjacent.
+     * Find the mining position on the diagonal between the source and our spawn.
+     * Standing on the diagonal gives the miner more room compared to a cardinal position.
      * @param {Object} source - The source to find mining position for
      * @param {GameState} gameState - The game state service for cached game objects
      * @returns {Object|null} Mining position or null if not found
      */
     static findMiningPosition(source, gameState) {
-        const teamSide = this.getTeamSide(gameState);
-        
-        // The mining position should be the one facing towards the center/spawn
-        // For corner sources, this is typically towards the center of the map
-        const directions = [
+        const mySpawn = gameState.getMySpawn();
+
+        const allDirections = [
             { dx: 0, dy: -1 }, // TOP
             { dx: 1, dy: 0 },  // RIGHT
             { dx: 0, dy: 1 },  // BOTTOM
-            { dx: -1, dy: 0 }  // LEFT
+            { dx: -1, dy: 0 }, // LEFT
+            { dx: 1, dy: 1 },  // BOTTOM_RIGHT
+            { dx: 1, dy: -1 }, // TOP_RIGHT
+            { dx: -1, dy: 1 }, // BOTTOM_LEFT
+            { dx: -1, dy: -1 } // TOP_LEFT
         ];
-        
-        // Determine the best direction based on source position
+
+        // Preferred directions: diagonal from source toward spawn so the miner
+        // stands between the source and the spawn with extra room on either side.
         let preferredDirections = [];
-        if (source.y < 50) {
-            // Top half
-            if (teamSide === 'left') {
-                preferredDirections = [{ dx: 1, dy: 0 }, { dx: 0, dy: 1 }]; // RIGHT, BOTTOM
-            } else {
-                preferredDirections = [{ dx: -1, dy: 0 }, { dx: 0, dy: 1 }]; // LEFT, BOTTOM
+        if (mySpawn) {
+            const dx = Math.sign(mySpawn.x - source.x);
+            const dy = Math.sign(mySpawn.y - source.y);
+
+            if (dx !== 0 && dy !== 0) {
+                // True diagonal – use it first, then fall back to the two cardinal components
+                preferredDirections.push({ dx, dy });
+                preferredDirections.push({ dx, dy: 0 });
+                preferredDirections.push({ dx: 0, dy });
+            } else if (dx !== 0) {
+                preferredDirections.push({ dx, dy: 0 });
+            } else if (dy !== 0) {
+                preferredDirections.push({ dx: 0, dy });
             }
         } else {
-            // Bottom half
-            if (teamSide === 'left') {
-                preferredDirections = [{ dx: 1, dy: 0 }, { dx: 0, dy: -1 }]; // RIGHT, TOP
+            // No spawn available – fall back to position based on source y
+            if (source.y < MapTopology.ARENA_CENTER) {
+                preferredDirections = [{ dx: 1, dy: 1 }, { dx: 1, dy: 0 }, { dx: 0, dy: 1 }];
             } else {
-                preferredDirections = [{ dx: -1, dy: 0 }, { dx: 0, dy: -1 }]; // LEFT, TOP
+                preferredDirections = [{ dx: 1, dy: -1 }, { dx: 1, dy: 0 }, { dx: 0, dy: -1 }];
             }
         }
-        
+
         // Try preferred directions first
         for (const dir of preferredDirections) {
             const pos = { x: source.x + dir.dx, y: source.y + dir.dy };
@@ -117,15 +119,15 @@ export class SourceAssignmentStrategy {
                 return pos;
             }
         }
-        
-        // Fallback to any cardinal direction
-        for (const dir of directions) {
+
+        // Fallback to any valid adjacent position
+        for (const dir of allDirections) {
             const pos = { x: source.x + dir.dx, y: source.y + dir.dy };
             if (TerrainAnalyzer.isValidPosition(pos)) {
                 return pos;
             }
         }
-        
+
         return null;
     }
 }
