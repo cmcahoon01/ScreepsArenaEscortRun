@@ -28,6 +28,15 @@ export class MuleJob extends ActiveCreep {
             this.memory.state = 'collecting';
         }
 
+        // If the paired miner has died or left, clear the pair so we can re-pair.
+        // This ensures mules and miners can be built in any order and always form pairs.
+        if (this.memory.pairedMinerId) {
+            const pairedStillAlive = this.controller.creeps.some(c => c.id === this.memory.pairedMinerId);
+            if (!pairedStillAlive) {
+                this.memory.pairedMinerId = null;
+            }
+        }
+
         // Pair this mule with its corresponding miner by matching indices.
         // Find the first miner not already claimed by another mule, so pairing
         // remains correct even if a mule dies and is replaced.
@@ -39,6 +48,16 @@ export class MuleJob extends ActiveCreep {
             const unpairedMiner = miners.find(m => !claimedMinerIds.includes(m.id));
             if (unpairedMiner) {
                 this.memory.pairedMinerId = unpairedMiner.id;
+            }
+        }
+
+        // If the paired miner is still travelling to its mining position, act as a tug
+        // to pull it there before resuming normal collecting behaviour.
+        if (this.memory.pairedMinerId) {
+            const pairedActiveCreep = this.controller.creeps.find(c => c.id === this.memory.pairedMinerId);
+            if (pairedActiveCreep && pairedActiveCreep.memory.state === 'moving_to_position') {
+                this._actAsTug(creep);
+                return;
             }
         }
 
@@ -91,6 +110,49 @@ export class MuleJob extends ActiveCreep {
                 creep.moveTo(spawn);
                 creep.transfer(spawn, RESOURCE_ENERGY);
             }
+        }
+    }
+
+    /**
+     * Act as a tug for the paired miner while it travels to its mining position.
+     * Moves toward the miner and, once adjacent, joins the tug chain as the leader
+     * so the miner can be pulled to its source without needing a dedicated tug creep.
+     * @param {Creep} creep - The mule creep object
+     */
+    _actAsTug(creep) {
+        const tugChain = this.gameState.getTugChain();
+
+        // If this mule is already leading the chain, nothing more to do here;
+        // the miner's act() drives the chain movement each tick.
+        if (tugChain.length >= 1 && tugChain[0] === this.id) {
+            return;
+        }
+
+        // Resolve the paired miner game object.
+        const pairedActiveCreep = this.controller.creeps.find(c => c.id === this.memory.pairedMinerId);
+        const miner = pairedActiveCreep ? getObjectById(pairedActiveCreep.id) : null;
+        if (!miner) {
+            return;
+        }
+
+        // Only take over as chain leader when the chain has just the miner
+        // (length === 1) and no other tug has stepped in yet.  If a dedicated
+        // tug is already leading, stay close so we can take over if it dies.
+        if (tugChain.length === 1 && tugChain[0] === this.memory.pairedMinerId) {
+            const distance = Math.max(
+                Math.abs(creep.x - miner.x),
+                Math.abs(creep.y - miner.y)
+            );
+            if (distance <= 1) {
+                // Adjacent – become the leading tug: [mule, miner]
+                this.gameState.tugChain = [this.id, this.memory.pairedMinerId];
+            } else {
+                creep.moveTo(miner);
+            }
+        } else {
+            // Chain is empty or another creep is already the leader; move toward
+            // the miner to stay nearby and be ready to help if needed.
+            creep.moveTo(miner);
         }
     }
 }
