@@ -73,7 +73,7 @@ export class PayloadJob extends ActiveCreep {
      */
     hasMilitaryAdvantage() {
         const comparison = compareTeamStrengths(this.gameState);
-        return comparison.ratio >= MILITARY_ADVANTAGE_THRESHOLD;
+        return comparison.ratio >= MILITARY_ADVANTAGE_THRESHOLD && comparison.myTeam.strength > comparison.enemyTeam.strength + 50;
     }
 
     /**
