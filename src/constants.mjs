@@ -88,44 +88,27 @@ export const BuildConfig = {
     
     /**
      * Initial build order that always executes first.
-     * Builds a miner, then a blocker, then a mule, then a cleric; all are replaced if they die.
-     * After all four are present, tugs are built continuously.
+     * Builds in sequence: miner → blocker → mule → cleric → tug → miner → mule → miner → mule.
+     * All are replaced if they die. After all are present, fighters and clerics are built
+     * continuously at a FIGHTER_TO_CLERIC_RATIO ratio.
      */
-    INITIAL_BUILD: [{job: 'miner', tier: 2}, 'blocker', 'mule', 'cleric'],
-
-    /**
-     * Aggressive initial build order used when the enemy escort creep is approaching our flag.
-     * Builds a miner, blocker, and mule (replaced if they die), then fighters forever.
-     * No cleric or tugs are built in this mode.
-     * This mode only activates once both the miner and blocker have been spawned.
-     */
-    AGGRESSIVE_INITIAL_BUILD: [{job: 'miner', tier: 2}, 'blocker', 'mule'],
-
-    /**
-     * Chebyshev distance threshold from our flag at which the build strategy switches to aggressive.
-     * When the enemy escort creep's Chebyshev distance to our flag drops below this value,
-     * the enemy is considered to be advancing toward the goal and fighters are built instead of tugs.
-     *
-     * On a 100×100 map the maximum Chebyshev distance between opposite corners is ~90, so a
-     * threshold of 82 triggers once the enemy payload has made meaningful progress from its spawn.
-     */
-    AGGRESSIVE_TRIGGER_DISTANCE: 82,
-
-    /**
-     * Economy-focused build order (not currently used; retained for future use).
-     * Each entry can be either a string (job name, defaults to tier 1) 
-     * or an object with {job, tier} to specify a tiered creep.
-     * 
-     * Example: First miner is tier 1, second miner is tier 2 (more work parts)
-     */
-    ECONOMY_BUILD: [
-        {job: 'miner', tier: 1},
-        'tug',
+    INITIAL_BUILD: [
+        {job: 'miner', tier: 2},
+        'blocker',
+        'mule',
+        'cleric',
         'tug',
         {job: 'miner', tier: 2},
-        'tug',
-        'tug',
+        'mule',
+        {job: 'miner', tier: 2},
+        'mule',
     ],
+
+    /**
+     * Ratio of fighters to clerics built after the initial build order completes.
+     * For every 1 cleric, this many fighters are built.
+     */
+    FIGHTER_TO_CLERIC_RATIO: 3,
 };
 
 // ============================================================================

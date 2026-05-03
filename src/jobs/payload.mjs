@@ -1,4 +1,4 @@
-import { getObjectById } from 'game/utils';
+import { getObjectById, getTicks } from 'game/utils';
 import { ActiveCreep } from './ActiveCreep.mjs';
 import { TugChainService } from '../services/TugChainService.mjs';
 import { compareTeamStrengths } from '../combat/strengthEstimator.mjs';
@@ -7,16 +7,16 @@ const PAYLOAD_STATE_WAITING = 'waiting';
 const PAYLOAD_STATE_MOVING = 'moving';
 
 /**
- * Minimum number of tugs required to trigger the transition from waiting to moving.
- */
-const TUG_COUNT_THRESHOLD = 10;
-
-/**
  * Strength ratio threshold for "significant military advantage".
  * When myStrength / enemyStrength >= this value, we consider ourselves to have
  * sufficient advantage to advance the payload.
  */
 const MILITARY_ADVANTAGE_THRESHOLD = 1.5;
+
+/**
+ * Game tick threshold after which the payload advances regardless of military strength.
+ */
+const GAME_TIME_THRESHOLD = 1500;
 
 /**
  * Chebyshev distance from our spawn at which the payload waits on a rampart.
@@ -35,8 +35,8 @@ const WAITING_RAMPART_DISTANCE = 2;
  *   chain once it is non-empty.
  *
  * Transition from waiting → moving fires when EITHER:
- *   - We have more than TUG_COUNT_THRESHOLD tugs alive, OR
- *   - Our combat-strength ratio is >= MILITARY_ADVANTAGE_THRESHOLD
+ *   - Our combat-strength ratio is >= MILITARY_ADVANTAGE_THRESHOLD, OR
+ *   - The game tick count exceeds GAME_TIME_THRESHOLD (1500)
  */
 export class PayloadJob extends ActiveCreep {
     static get BODY() {
@@ -68,14 +68,6 @@ export class PayloadJob extends ActiveCreep {
     }
 
     /**
-     * Count the number of tug creeps currently alive in the controller.
-     * @returns {number}
-     */
-    getTugCount() {
-        return this.controller.creeps.filter(c => c.jobName === 'tug').length;
-    }
-
-    /**
      * Check whether we have a significant military advantage over the enemy.
      * @returns {boolean}
      */
@@ -86,10 +78,11 @@ export class PayloadJob extends ActiveCreep {
 
     /**
      * Return true when the waiting → moving transition should fire.
+     * Fires when we have a military advantage OR the game time exceeds the threshold.
      * @returns {boolean}
      */
     shouldTransitionToMoving() {
-        return this.getTugCount() > TUG_COUNT_THRESHOLD && this.hasMilitaryAdvantage();
+        return this.hasMilitaryAdvantage() || getTicks() >= GAME_TIME_THRESHOLD;
     }
 
     /**

@@ -68,11 +68,14 @@ export class SourceAssignmentStrategy {
     /**
      * Find the mining position on the diagonal between the source and our spawn.
      * Standing on the diagonal gives the miner more room compared to a cardinal position.
+     * Positions listed in excludePositions are skipped so multiple miners targeting the
+     * same source claim different adjacent cells.
      * @param {Object} source - The source to find mining position for
      * @param {GameState} gameState - The game state service for cached game objects
+     * @param {Array<{x: number, y: number}>} [excludePositions=[]] - Positions already claimed by other miners
      * @returns {Object|null} Mining position or null if not found
      */
-    static findMiningPosition(source, gameState) {
+    static findMiningPosition(source, gameState, excludePositions = []) {
         const mySpawn = gameState.getMySpawn();
 
         const allDirections = [
@@ -85,6 +88,9 @@ export class SourceAssignmentStrategy {
             { dx: -1, dy: 1 }, // BOTTOM_LEFT
             { dx: -1, dy: -1 } // TOP_LEFT
         ];
+
+        // Helper: returns true when pos is already claimed by another miner
+        const isExcluded = (pos) => excludePositions.some(ep => ep.x === pos.x && ep.y === pos.y);
 
         // Preferred directions: diagonal from source toward spawn so the miner
         // stands between the source and the spawn with extra room on either side.
@@ -112,18 +118,18 @@ export class SourceAssignmentStrategy {
             }
         }
 
-        // Try preferred directions first
+        // Try preferred directions first, skipping excluded positions
         for (const dir of preferredDirections) {
             const pos = { x: source.x + dir.dx, y: source.y + dir.dy };
-            if (TerrainAnalyzer.isValidPosition(pos)) {
+            if (TerrainAnalyzer.isValidPosition(pos) && !isExcluded(pos)) {
                 return pos;
             }
         }
 
-        // Fallback to any valid adjacent position
+        // Fallback to any valid, non-excluded adjacent position
         for (const dir of allDirections) {
             const pos = { x: source.x + dir.dx, y: source.y + dir.dy };
-            if (TerrainAnalyzer.isValidPosition(pos)) {
+            if (TerrainAnalyzer.isValidPosition(pos) && !isExcluded(pos)) {
                 return pos;
             }
         }
