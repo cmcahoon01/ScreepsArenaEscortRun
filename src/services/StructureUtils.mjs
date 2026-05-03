@@ -1,4 +1,4 @@
-import { WORK, ERR_NOT_IN_RANGE, RESOURCE_ENERGY, OK } from 'game/constants';
+import { WORK } from 'game/constants';
 import { MapTopology } from '../constants.mjs';
 
 /**
@@ -66,57 +66,4 @@ export function detectFortifiedMiner(gameState) {
     }
 
     return null;
-}
-
-/**
- * Perform the initial win objective transfer.
- * Withdraws energy from spawn and builds the win objective once at game start.
- * 
- * @param {Creep} creep - The creep performing the transfer
- * @param {GameState} gameState - The game state service
- * @param {ConstructionSite} winObjective - The win objective construction site
- * @returns {boolean} True if the creep should continue with this action, false if it should move to normal behavior
- */
-export function performInitialWinObjectiveTransfer(creep, gameState, winObjective) {
-    // If the win objective has already been initialized, skip this
-    if (gameState.getHasInitializedWinObjective()) {
-        return false;
-    }
-
-    const spawn = gameState.getMySpawn();
-    const usedCapacity = creep.store[RESOURCE_ENERGY] || 0;
-    
-    if (!spawn) {
-        // No spawn exists, can't withdraw. Skip this initialization.
-        gameState.setHasInitializedWinObjective();
-        return false;
-    }
-    
-    if (usedCapacity === 0) {
-        // Withdraw from spawn
-        const withdrawResult = creep.withdraw(spawn, RESOURCE_ENERGY);
-        if (withdrawResult === ERR_NOT_IN_RANGE) {
-            creep.moveTo(spawn);
-        } else if (withdrawResult !== OK) {
-            // Withdraw failed for some reason (e.g., spawn is empty, creep is full)
-            // Set flag to prevent getting stuck in this state
-            gameState.setHasInitializedWinObjective();
-            console.log(`Creep ${creep.id} failed to withdraw from spawn: ${withdrawResult}`);
-        }
-        return true;
-    } else {
-        // Build the win objective (creep has energy)
-        const buildResult = creep.build(winObjective);
-        if (buildResult === ERR_NOT_IN_RANGE) {
-            creep.moveTo(winObjective);
-        } else if (buildResult === OK) {
-            // Successfully built, set the flag
-            gameState.setHasInitializedWinObjective();
-        } else {
-            // Build failed for some other reason, set flag to prevent getting stuck
-            gameState.setHasInitializedWinObjective();
-            console.log(`Creep ${creep.id} failed to build win objective: ${buildResult}`);
-        }
-        return true;
-    }
 }

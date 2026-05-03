@@ -1,9 +1,8 @@
 import {getObjectById} from 'game/utils';
-import {WORK, CARRY, MOVE, ERR_NOT_IN_RANGE, RESOURCE_ENERGY, OK} from 'game/constants';
+import {WORK, CARRY, MOVE, ERR_NOT_IN_RANGE, RESOURCE_ENERGY} from 'game/constants';
 import {ActiveCreep} from './ActiveCreep.mjs';
 import {BodyPartCalculator, MapTopology} from '../constants.mjs';
 import {CombatUtils} from '../services/CombatUtils.mjs';
-import {performInitialWinObjectiveTransfer} from '../services/StructureUtils.mjs';
 
 // Hauler job - resource gathering and construction
 export class HaulerJob extends ActiveCreep {
@@ -41,13 +40,6 @@ export class HaulerJob extends ActiveCreep {
 
         if (inDefensiveMode) {
             // Haulers don't attack, just stay on ramparts
-            return;
-        }
-
-        // === INITIAL WIN OBJECTIVE TRANSFER ===
-        // If the win objective hasn't been initialized yet,
-        // withdraw from spawn and build the win objective once
-        if (performInitialWinObjectiveTransfer(creep, this.gameState, this.winObjective)) {
             return;
         }
 
@@ -94,33 +86,7 @@ export class HaulerJob extends ActiveCreep {
                 this.memory.state = 'mining';
                 return;
             }
-            if (this.gameState.getHasBuiltMiner()) {
-                // Determine the target (either winObjective or spawn)
-                let target = this.winObjective;
-                if (!target) {
-                    target = this.gameState.getMySpawn();
-                }
-
-                if (target) {
-                    // Now move towards the target
-                    // If target is winObjective, also try to build it
-                    if (this.winObjective && target === this.winObjective) {
-                        const buildResult = creep.build(this.winObjective);
-                        if (buildResult === ERR_NOT_IN_RANGE) {
-                            creep.moveTo(this.winObjective);
-                        }
-                    } else {
-                        // Moving to spawn
-                        const transferResult = creep.transfer(target, RESOURCE_ENERGY);
-                        if (transferResult === ERR_NOT_IN_RANGE) {
-                            creep.moveTo(target);
-                        }
-                    }
-                }
-            } else {
-                // No miners, deliver to spawn
-                this.deliverToSpawn(creep);
-            }
+            this.deliverToSpawn(creep);
         }
     }
 }

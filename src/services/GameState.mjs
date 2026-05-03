@@ -27,7 +27,6 @@ export class GameState {
         this.myConstructionSites = [];
         this.fortifiedMiner = null; // Cached detection of enemy miner on rampart near corner
         this.hasBuiltMiner = false;
-        this.hasInitializedWinObjective = false; // Flag to track if initial win objective transfer has been performed
         this.tugChain = []; // Array of creep IDs forming a tug chain to help move creeps without MOVE parts
         this.payloadMoving = false; // Whether the payload is in the moving-to-flag state
         this.payloadId = null; // ID of the payload (EscortCreep)
@@ -218,21 +217,6 @@ export class GameState {
      */
     getEnemyHasCombatUnit() {
         return this.enemyHasCombatUnit;
-    }
-
-    /**
-     * Get whether the win objective has been initialized with initial transfer.
-     * @return {boolean} True if initial win objective transfer has been performed, false otherwise
-     */
-    getHasInitializedWinObjective() {
-        return this.hasInitializedWinObjective;
-    }
-
-    /**
-     * Set the flag indicating that the initial win objective transfer has been performed.
-     */
-    setHasInitializedWinObjective() {
-        this.hasInitializedWinObjective = true;
     }
 
     /**
