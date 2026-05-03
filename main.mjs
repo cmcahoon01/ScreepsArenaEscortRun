@@ -20,11 +20,7 @@ const payloadJob = escortCreep
     ? new PayloadJob(escortCreep.id, 'payload', 1, screepController, winObjective, gameState, flag)
     : null;
 
-// Perform an initial game state refresh so cached values (including ramparts) are available
-// before initializing enemy escort creep tracking.
-gameState.refresh();
-
-// Save the enemy escort creep at game start and detect if it's on a rampart
+// Save the enemy escort creep ID at game start for per-tick live tracking
 gameState.initializeEnemyEscortCreep(enemyEscortCreep);
 
 export function loop() {

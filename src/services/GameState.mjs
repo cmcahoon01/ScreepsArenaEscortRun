@@ -32,7 +32,6 @@ export class GameState {
         this.payloadMoving = false; // Whether the payload is in the moving-to-flag state
         this.payloadId = null; // ID of the payload (EscortCreep)
         this.enemyEscortCreepId = null; // ID of the enemy escort creep, saved at game start
-        this.enemyPayloadStartedOnRampart = false; // Whether the enemy escort creep started on a rampart
     }
     
     /**
@@ -257,19 +256,12 @@ export class GameState {
 
     /**
      * Initialize the enemy escort creep tracking at game start.
-     * Saves the enemy escort creep's ID and detects whether it starts on a rampart.
+     * Saves the enemy escort creep's ID for use in per-tick live checks.
      * Should be called once before the main game loop begins.
      * @param {Object|null} enemyEscortCreep - The enemy escort creep object
      */
     initializeEnemyEscortCreep(enemyEscortCreep) {
-        if (!enemyEscortCreep) {
-            this.enemyEscortCreepId = null;
-            this.enemyPayloadStartedOnRampart = false;
-            return;
-        }
-        this.enemyEscortCreepId = enemyEscortCreep.id;
-        // Check if the enemy escort creep starts on an enemy rampart using cached ramparts
-        this.enemyPayloadStartedOnRampart = CombatUtils.isOnEnemyRampart(enemyEscortCreep, this.ramparts);
+        this.enemyEscortCreepId = enemyEscortCreep ? enemyEscortCreep.id : null;
     }
 
     /**
@@ -281,11 +273,19 @@ export class GameState {
     }
 
     /**
-     * Get whether the enemy escort creep was on a rampart at game start.
-     * This is a historical flag set at initialization, not a real-time check.
-     * @returns {boolean}
+     * Check if the enemy escort creep is currently on an enemy rampart.
+     * This is a live check performed each tick using cached game state.
+     * Returns false if the enemy escort creep cannot be found (dead or missing).
+     * @returns {boolean} True if the enemy escort creep is currently on an enemy rampart
      */
-    didEnemyPayloadStartOnRampart() {
-        return this.enemyPayloadStartedOnRampart;
+    isEnemyEscortCreepOnRampart() {
+        if (!this.enemyEscortCreepId) {
+            return false;
+        }
+        const enemyEscortCreep = getObjectById(this.enemyEscortCreepId);
+        if (!enemyEscortCreep) {
+            return false;
+        }
+        return CombatUtils.isOnEnemyRampart(enemyEscortCreep, this.ramparts);
     }
 }

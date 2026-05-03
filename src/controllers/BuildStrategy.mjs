@@ -4,11 +4,13 @@ import { BuildConfig, DEFAULT_TIER } from '../constants.mjs';
 /**
  * Determines what to build based on game state.
  *
- * Default build order (enemy escort starts on a rampart — it's protected, so use economy):
+ * Default build order (enemy escort is currently on a rampart — it's protected, so use economy):
  *   cleric → miner → tugs forever.
- * Aggressive build order (enemy escort does not start on a rampart — it's exposed, so hunt it):
+ * Aggressive build order (enemy escort has moved off its rampart — it's exposed, so hunt it):
  *   cleric → fighters forever (no miner or tugs).
  *
+ * The build order is re-evaluated every tick. Once the enemy escort leaves its rampart,
+ * the strategy switches to aggressive and stays there (fighters keep being built).
  * The cleric is replaced immediately if it dies in both modes.
  */
 export class BuildStrategy {
@@ -38,10 +40,11 @@ export class BuildStrategy {
             }
         }
 
-        // If the enemy escort was not on a rampart at game start, it's exposed and can be hunted
-        // directly by fighters. If it was on a rampart, use the economy build instead.
-        const enemyPayloadStartedOnRampart = this.gameState.didEnemyPayloadStartOnRampart();
-        const initialBuild = enemyPayloadStartedOnRampart
+        // Check the enemy escort creep's current position each tick.
+        // While it's on a rampart it's protected, so use the economy build.
+        // Once it moves off the rampart it's exposed, so switch to aggressive (fighters).
+        const enemyEscortOnRampart = this.gameState.isEnemyEscortCreepOnRampart();
+        const initialBuild = enemyEscortOnRampart
             ? BuildConfig.INITIAL_BUILD
             : BuildConfig.AGGRESSIVE_INITIAL_BUILD;
 
@@ -78,7 +81,7 @@ export class BuildStrategy {
             }
         }
 
-        if (!enemyPayloadStartedOnRampart) {
+        if (!enemyEscortOnRampart) {
             // Phase 2 (aggressive): Build fighters forever
             const fighterClass = Jobs['fighter'];
             return {
