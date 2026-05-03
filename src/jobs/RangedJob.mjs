@@ -110,40 +110,6 @@ export class RangedJob extends ActiveCreep {
             return;
         }
 
-        // === PAYLOAD ESCORT MODE ===
-        // When the payload is moving toward the flag, follow it and protect it
-        // by attacking any enemies that come within 9 spaces of the payload.
-        if (this.gameState.isPayloadMoving()) {
-            const payloadId = this.gameState.getPayloadId();
-            const payload = payloadId ? getObjectById(payloadId) : null;
-            if (payload) {
-                const enemiesNearPayload = allHostileCreeps.filter(e => getRange(payload, e) <= 9);
-                if (enemiesNearPayload.length > 0) {
-                    const closestEnemy = creep.findClosestByRange(enemiesNearPayload);
-                    if (closestEnemy) {
-                        if (isInRangedAttackRange(creep, closestEnemy)) {
-                            creep.rangedAttack(closestEnemy);
-                        }
-                        const range = getRange(creep, closestEnemy);
-                        if (range < DESIRED_RANGE) {
-                            // Enemy too close - kite away
-                            const retreatPos = this.findBestRetreatPosition(creep, allHostileCreeps, allCreeps, allStructures);
-                            if (retreatPos) {
-                                creep.moveTo(retreatPos);
-                            }
-                        } else {
-                            // Follow the payload
-                            creep.moveTo(payload);
-                        }
-                    }
-                } else {
-                    // No threats near payload - follow it
-                    creep.moveTo(payload);
-                }
-            }
-            return;
-        }
-        
         // === ATTACK LOGIC (when not in defensive mode) ===
         if (allHostileCreeps.length > 0) {
             // Get all ramparts for targeting logic
@@ -173,6 +139,25 @@ export class RangedJob extends ActiveCreep {
                     }
                     // No enemies in range - move towards target based on priority
                     else {
+                        // When no enemies are currently in attack range (not just out of kiting
+                        // distance) and the payload is moving, prioritize the enemy closest to
+                        // the payload as the movement target.  The else block also fires when
+                        // enemies ARE in range but range >= DESIRED_RANGE, so the explicit
+                        // check is necessary.
+                        let movementTarget = closestEnemy;
+                        if (enemiesInRange.length === 0 && this.gameState.isPayloadMoving()) {
+                            const payloadId = this.gameState.getPayloadId();
+                            const payload = payloadId ? getObjectById(payloadId) : null;
+                            if (payload && allHostileCreeps.length > 0) {
+                                const enemyClosestToPayload = payload.findClosestByRange(allHostileCreeps);
+                                if (enemyClosestToPayload) {
+                                    movementTarget = enemyClosestToPayload;
+                                }
+                            }
+                        }
+
+                        const rangeToTarget = getRange(creep, movementTarget);
+
                         // If there are injured allies (excluding self, not in range), move to them first
                         if (this.shouldHealDuringIdle()) {
                             const damagedAllies = damagedCreeps.filter(c => c.id !== creep.id);
@@ -182,14 +167,14 @@ export class RangedJob extends ActiveCreep {
                                     creep.moveTo(closestDamagedAlly);
                                 }
                             }
-                            // Otherwise move towards enemies to attack
-                            else if (range > DESIRED_RANGE) {
-                                creep.moveTo(closestEnemy);
+                            // Otherwise move towards movement target
+                            else if (rangeToTarget > DESIRED_RANGE) {
+                                creep.moveTo(movementTarget);
                             }
                         } else {
-                            // Non-healing units just move towards enemies
-                            if (range > DESIRED_RANGE) {
-                                creep.moveTo(closestEnemy);
+                            // Non-healing units just move towards movement target
+                            if (rangeToTarget > DESIRED_RANGE) {
+                                creep.moveTo(movementTarget);
                             }
                         }
                     }

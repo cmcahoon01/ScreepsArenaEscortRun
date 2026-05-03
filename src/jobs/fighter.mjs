@@ -40,32 +40,6 @@ export class FighterJob extends ActiveCreep {
             return;
         }
 
-        // === PAYLOAD ESCORT MODE ===
-        // When the payload is moving toward the flag, follow it and protect it
-        // by attacking any enemies that come within 9 spaces of the payload.
-        if (this.gameState.isPayloadMoving()) {
-            const payloadId = this.gameState.getPayloadId();
-            const payload = payloadId ? getObjectById(payloadId) : null;
-            if (payload) {
-                const allHostileCreeps = this.gameState.getEnemyCreeps();
-                const enemiesNearPayload = allHostileCreeps.filter(e => getRange(payload, e) <= 9);
-                if (enemiesNearPayload.length > 0) {
-                    const closestEnemy = creep.findClosestByRange(enemiesNearPayload);
-                    if (closestEnemy) {
-                        const attackResult = creep.attack(closestEnemy);
-                        if (attackResult === ERR_NOT_IN_RANGE) {
-                            // Can't reach the enemy yet - keep following the payload
-                            creep.moveTo(payload);
-                        }
-                    }
-                } else {
-                    // No threats near payload - follow it
-                    creep.moveTo(payload);
-                }
-            }
-            return;
-        }
-
         // Find all enemy creeps
         const allHostileCreeps = this.gameState.getEnemyCreeps();
         
@@ -87,8 +61,21 @@ export class FighterJob extends ActiveCreep {
                 this.attackFortifiedMiner(creep, fortifiedMiner);
                 return;
             }
-            
-            // No fortified miner either, idle
+
+            // If payload is moving, prioritize enemies closest to the payload
+            if (this.gameState.isPayloadMoving()) {
+                const payloadId = this.gameState.getPayloadId();
+                const payload = payloadId ? getObjectById(payloadId) : null;
+                if (payload && allHostileCreeps.length > 0) {
+                    const enemyClosestToPayload = payload.findClosestByRange(allHostileCreeps);
+                    if (enemyClosestToPayload) {
+                        creep.moveTo(enemyClosestToPayload);
+                        return;
+                    }
+                }
+            }
+
+            // No fortified miner, no payload priority - idle
             this.idle(creep);
             return;
         }
