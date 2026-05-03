@@ -1,4 +1,5 @@
 import { getObjectById } from 'game/utils';
+import { TerrainAnalyzer } from '../combat/TerrainAnalyzer.mjs';
 
 /**
  * TugChainService - Utility for coordinating movement of tug chains.
@@ -34,11 +35,39 @@ export class TugChainService {
         for (let idx = 0; idx < creeps.length; idx++) {
             if (idx === 0) {
                 if (creeps[idx].x === target.x && creeps[idx].y === target.y) {
-                    // Already at target, move up one to get the miner into position
+                    // Tug is on the dragged unit's target tile — step aside to make room.
+                    // Prefer a tile adjacent to the dragged unit that is not the target.
                     reachedTarget = true;
-                    const upOnePos = { x: target.x, y: target.y - 1 };
-                    creeps[idx].moveTo(upOnePos);
-                }else {
+                    let evadePos;
+                    if (creeps.length > 1) {
+                        const dragged = creeps[1];
+                        const tug = creeps[idx];
+                        const candidates = [];
+                        for (let dx = -1; dx <= 1; dx++) {
+                            for (let dy = -1; dy <= 1; dy++) {
+                                if (dx === 0 && dy === 0) continue;
+                                const pos = { x: dragged.x + dx, y: dragged.y + dy };
+                                if (pos.x === target.x && pos.y === target.y) continue;
+                                if (!TerrainAnalyzer.isValidPosition(pos)) continue;
+                                if (TerrainAnalyzer.isWall(pos)) continue;
+                                candidates.push(pos);
+                            }
+                        }
+                        // Prefer the candidate closest to the tug's current position
+                        const tugX = tug.x;
+                        const tugY = tug.y;
+                        evadePos = candidates.length > 0
+                            ? candidates.reduce((best, pos) =>
+                                Math.max(Math.abs(pos.x - tugX), Math.abs(pos.y - tugY)) <
+                                Math.max(Math.abs(best.x - tugX), Math.abs(best.y - tugY))
+                                    ? pos : best
+                            )
+                            : { x: target.x, y: target.y - 1 };
+                    } else {
+                        evadePos = { x: target.x, y: target.y - 1 };
+                    }
+                    creeps[idx].moveTo(evadePos);
+                } else {
                     creeps[idx].moveTo(target);
                 }
             } else {
