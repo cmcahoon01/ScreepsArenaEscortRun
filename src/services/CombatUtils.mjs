@@ -183,4 +183,14 @@ export class CombatUtils {
             return !onRampart;
         });
     }
+
+    /**
+     * Check if a game object or position is on an enemy-owned rampart.
+     * @param {Object} target - Game object or position with x and y coordinates
+     * @param {StructureRampart[]} ramparts - Array of all rampart structures
+     * @returns {boolean} True if the target is on an enemy-owned rampart
+     */
+    static isOnEnemyRampart(target, ramparts) {
+        return ramparts.some(r => !r.my && r.x === target.x && r.y === target.y);
+    }
 }

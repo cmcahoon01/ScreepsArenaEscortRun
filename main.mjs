@@ -14,10 +14,14 @@ const screepController = new ScreepController();
 const gameState = new GameState(screepController);
 const buildOrder = new BuildOrder(screepController, winObjective, gameState);
 const escortCreep = getObjectsByPrototype(EscortCreep).find(i => i.my);
+const enemyEscortCreep = getObjectsByPrototype(EscortCreep).find(i => !i.my);
 const flag = getObjectsByPrototype(Flag).find(i => i.my);
 const payloadJob = escortCreep
     ? new PayloadJob(escortCreep.id, 'payload', 1, screepController, winObjective, gameState, flag)
     : null;
+
+// Save the enemy escort creep ID at game start for per-tick live tracking
+gameState.initializeEnemyEscortCreep(enemyEscortCreep);
 
 export function loop() {
     // Refresh game state cache once per tick

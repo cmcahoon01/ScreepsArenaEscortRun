@@ -3,8 +3,15 @@ import { BuildConfig, DEFAULT_TIER } from '../constants.mjs';
 
 /**
  * Determines what to build based on game state.
- * Build order: cleric → miner → tugs forever.
- * Cleric and miner are replaced immediately if they die.
+ *
+ * Default build order (enemy escort is currently on a rampart — it's protected, so use economy):
+ *   cleric → miner → tugs forever.
+ * Aggressive build order (enemy escort has moved off its rampart — it's exposed, so hunt it):
+ *   cleric → fighters forever (no miner or tugs).
+ *
+ * The build order is re-evaluated every tick. Once the enemy escort leaves its rampart,
+ * the strategy switches to aggressive and stays there (fighters keep being built).
+ * The cleric is replaced immediately if it dies in both modes.
  */
 export class BuildStrategy {
     /**
@@ -33,9 +40,17 @@ export class BuildStrategy {
             }
         }
 
-        // Phase 1: Initial build order (cleric, then miner). Replace either if they die.
-        for (let i = 0; i < BuildConfig.INITIAL_BUILD.length; i++) {
-            const buildItem = BuildConfig.INITIAL_BUILD[i];
+        // Check the enemy escort creep's current position each tick.
+        // While it's on a rampart it's protected, so use the economy build.
+        // Once it moves off the rampart it's exposed, so switch to aggressive (fighters).
+        const enemyEscortOnRampart = this.gameState.isEnemyEscortCreepOnRampart();
+        const initialBuild = enemyEscortOnRampart
+            ? BuildConfig.INITIAL_BUILD
+            : BuildConfig.AGGRESSIVE_INITIAL_BUILD;
+
+        // Phase 1: Initial build order. Replace any lost creeps immediately.
+        for (let i = 0; i < initialBuild.length; i++) {
+            const buildItem = initialBuild[i];
             const jobName = buildItem.job || buildItem; // Support both string and {job, tier} format
             const tier = buildItem.tier || DEFAULT_TIER;
             const jobClass = Jobs[jobName];
@@ -48,7 +63,7 @@ export class BuildStrategy {
             // Count how many of this job should exist up to and including this position
             let expectedCount = 0;
             for (let j = 0; j <= i; j++) {
-                const checkItem = BuildConfig.INITIAL_BUILD[j];
+                const checkItem = initialBuild[j];
                 const checkJobName = checkItem.job || checkItem;
                 if (checkJobName === jobName) {
                     expectedCount++;
@@ -66,7 +81,18 @@ export class BuildStrategy {
             }
         }
 
-        // Phase 2: Build tugs forever
+        if (!enemyEscortOnRampart) {
+            // Phase 2 (aggressive): Build fighters forever
+            const fighterClass = Jobs['fighter'];
+            return {
+                job: 'fighter',
+                tier: DEFAULT_TIER,
+                body: fighterClass.getTierBody(DEFAULT_TIER),
+                cost: fighterClass.getTierCost(DEFAULT_TIER)
+            };
+        }
+
+        // Phase 2 (default): Build tugs forever
         const tugClass = Jobs['tug'];
         return {
             job: 'tug',
