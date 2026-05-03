@@ -67,9 +67,10 @@ export class FighterJob extends ActiveCreep {
             return;
         }
 
-        // Not in combat - check if an enemy is blocking the flag while the payload is close
+        // Not in combat - check if an enemy is blocking the flag while the payload is close.
+        // Only the single designated flag killer pursues it; other units behave normally.
         const flagBlocker = CombatUtils.findFlagBlockingEnemy(this.gameState, allHostileCreeps);
-        if (flagBlocker) {
+        if (flagBlocker && this.id === this.gameState.getFlagKillerId()) {
             this.attackOrMoveTo(creep, flagBlocker);
             return;
         }
