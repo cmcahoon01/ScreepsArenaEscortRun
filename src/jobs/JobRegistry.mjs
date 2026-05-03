@@ -4,6 +4,7 @@ import { HaulerJob } from './hauler.mjs';
 import { MinerJob } from './miner.mjs';
 import { ClericJob } from './cleric.mjs';
 import { TugJob } from './tug.mjs';
+import { BlockerJob } from './blocker.mjs';
 
 // Frozen registry mapping job names to their classes
 export const Jobs = Object.freeze({
@@ -12,5 +13,6 @@ export const Jobs = Object.freeze({
     hauler: HaulerJob,
     miner: MinerJob,
     cleric: ClericJob,
-    tug: TugJob
+    tug: TugJob,
+    blocker: BlockerJob
 });
