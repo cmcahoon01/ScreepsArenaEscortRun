@@ -14,10 +14,18 @@ const screepController = new ScreepController();
 const gameState = new GameState(screepController);
 const buildOrder = new BuildOrder(screepController, winObjective, gameState);
 const escortCreep = getObjectsByPrototype(EscortCreep).find(i => i.my);
+const enemyEscortCreep = getObjectsByPrototype(EscortCreep).find(i => !i.my);
 const flag = getObjectsByPrototype(Flag).find(i => i.my);
 const payloadJob = escortCreep
     ? new PayloadJob(escortCreep.id, 'payload', 1, screepController, winObjective, gameState, flag)
     : null;
+
+// Perform an initial game state refresh so cached values (including ramparts) are available
+// before initializing enemy escort creep tracking.
+gameState.refresh();
+
+// Save the enemy escort creep at game start and detect if it's on a rampart
+gameState.initializeEnemyEscortCreep(enemyEscortCreep);
 
 export function loop() {
     // Refresh game state cache once per tick

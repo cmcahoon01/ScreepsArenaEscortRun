@@ -93,6 +93,13 @@ export const BuildConfig = {
     INITIAL_BUILD: ['cleric', {job: 'miner', tier: 2}],
 
     /**
+     * Aggressive initial build order used when the enemy escort creep is not on a rampart.
+     * Builds only a cleric (replaced if it dies), then fighters forever.
+     * No miner or tugs are built in this mode.
+     */
+    AGGRESSIVE_INITIAL_BUILD: ['cleric'],
+
+    /**
      * Economy-focused build order (not currently used; retained for future use).
      * Each entry can be either a string (job name, defaults to tier 1) 
      * or an object with {job, tier} to specify a tiered creep.

@@ -1,6 +1,7 @@
 import { getObjectsByPrototype, getObjectById } from 'game/utils';
 import { Creep, StructureSpawn, StructureRampart, StructureExtension, Source, ConstructionSite } from 'game/prototypes';
 import { detectFortifiedMiner } from "./StructureUtils.mjs";
+import { CombatUtils } from "./CombatUtils.mjs";
 
 /**
  * GameState service that caches expensive game object queries per tick.
@@ -30,6 +31,8 @@ export class GameState {
         this.tugChain = []; // Array of creep IDs forming a tug chain to help move creeps without MOVE parts
         this.payloadMoving = false; // Whether the payload is in the moving-to-flag state
         this.payloadId = null; // ID of the payload (EscortCreep)
+        this.enemyEscortCreepId = null; // ID of the enemy escort creep, saved at game start
+        this.enemyPayloadStartedOnRampart = false; // Whether the enemy escort creep started on a rampart
     }
     
     /**
@@ -250,5 +253,39 @@ export class GameState {
      */
     setPayloadId(id) {
         this.payloadId = id;
+    }
+
+    /**
+     * Initialize the enemy escort creep tracking at game start.
+     * Saves the enemy escort creep's ID and detects whether it starts on a rampart.
+     * Should be called once before the main game loop begins.
+     * @param {Object|null} enemyEscortCreep - The enemy escort creep object
+     */
+    initializeEnemyEscortCreep(enemyEscortCreep) {
+        if (!enemyEscortCreep) {
+            this.enemyEscortCreepId = null;
+            this.enemyPayloadStartedOnRampart = false;
+            return;
+        }
+        this.enemyEscortCreepId = enemyEscortCreep.id;
+        // Check if the enemy escort creep starts on an enemy rampart using cached ramparts
+        this.enemyPayloadStartedOnRampart = CombatUtils.isOnEnemyRampart(enemyEscortCreep, this.ramparts);
+    }
+
+    /**
+     * Get the ID of the enemy escort creep (saved at game start).
+     * @returns {string|null}
+     */
+    getEnemyEscortCreepId() {
+        return this.enemyEscortCreepId;
+    }
+
+    /**
+     * Get whether the enemy escort creep was on a rampart at game start.
+     * This is a historical flag set at initialization, not a real-time check.
+     * @returns {boolean}
+     */
+    didEnemyPayloadStartOnRampart() {
+        return this.enemyPayloadStartedOnRampart;
     }
 }

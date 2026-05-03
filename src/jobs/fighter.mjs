@@ -49,50 +49,68 @@ export class FighterJob extends ActiveCreep {
         // Filter out enemies that are standing on ramparts
         const hostileCreeps = CombatUtils.filterMeleeTargetableEnemies(allHostileCreeps, ramparts);
         
-        // Check if there are any enemies within range 5
-        // Range 5 is chosen as the engagement threshold - close enough to respond to threats
-        // but allows checking for fortified miners if no immediate danger exists
+        // Check if there are any enemies within range 5 - fight back against nearby threats
         const enemiesInRange5 = hostileCreeps.filter(enemy => getRange(creep, enemy) <= 5);
         
-        // If there are no targetable enemies within range 5, check for fortified miner
-        if (enemiesInRange5.length === 0) {
-            const fortifiedMiner = this.gameState.getFortifiedMiner();
-            if (fortifiedMiner) {
-                this.attackFortifiedMiner(creep, fortifiedMiner);
-                return;
+        if (enemiesInRange5.length > 0) {
+            // Enemies are nearby - fight back
+            const target = creep.findClosestByRange(enemiesInRange5);
+            if (target) {
+                this.attackOrMoveTo(creep, target);
             }
-
-            // If payload is moving, prioritize enemies closest to the payload
-            if (this.gameState.isPayloadMoving()) {
-                const payloadId = this.gameState.getPayloadId();
-                const payload = payloadId ? getObjectById(payloadId) : null;
-                if (payload && allHostileCreeps.length > 0) {
-                    const enemyClosestToPayload = payload.findClosestByRange(allHostileCreeps);
-                    if (enemyClosestToPayload) {
-                        creep.moveTo(enemyClosestToPayload);
-                        return;
-                    }
-                }
-            }
-
-            // No fortified miner, no payload priority - idle
-            this.idle(creep);
             return;
         }
 
-        // Find the closest enemy creep that is not on a rampart and is within range 5
-        const target = creep.findClosestByRange(enemiesInRange5);
-        
-        if (target) {
-            // Try to attack the target
-            const attackResult = creep.attack(target);
-            
-            // If the target is not in range, move towards it
-            if (attackResult === ERR_NOT_IN_RANGE) {
-                creep.moveTo(target);
+        // No immediate threats - prioritize hunting the enemy escort creep (payload)
+        const enemyEscortCreepId = this.gameState.getEnemyEscortCreepId();
+        if (enemyEscortCreepId) {
+            const enemyPayload = getObjectById(enemyEscortCreepId);
+            if (enemyPayload) {
+                // Only pursue if the enemy payload is not on an enemy rampart (i.e., targetable)
+                const isOnRampart = CombatUtils.isOnEnemyRampart(enemyPayload, ramparts);
+                if (!isOnRampart) {
+                    this.attackOrMoveTo(creep, enemyPayload);
+                    return;
+                }
             }
-        } else {
-            this.idle(creep);
+        }
+
+        // No enemy payload to hunt - check for fortified miner
+        const fortifiedMiner = this.gameState.getFortifiedMiner();
+        if (fortifiedMiner) {
+            this.attackFortifiedMiner(creep, fortifiedMiner);
+            return;
+        }
+
+        // If payload is moving, engage the closest enemy to the payload (not on a rampart)
+        if (this.gameState.isPayloadMoving()) {
+            const payloadId = this.gameState.getPayloadId();
+            const payload = payloadId ? getObjectById(payloadId) : null;
+            if (payload && allHostileCreeps.length > 0) {
+                const targetableEnemies = CombatUtils.filterMeleeTargetableEnemies(allHostileCreeps, ramparts);
+                const enemyClosestToPayload = targetableEnemies.length > 0
+                    ? payload.findClosestByRange(targetableEnemies)
+                    : null;
+                if (enemyClosestToPayload) {
+                    this.attackOrMoveTo(creep, enemyClosestToPayload);
+                    return;
+                }
+            }
+        }
+
+        // No fortified miner, no payload priority - idle
+        this.idle(creep);
+    }
+
+    /**
+     * Attempt to attack a target; if out of range, move toward it.
+     * @param {Creep} creep - The attacking creep
+     * @param {Object} target - The target game object
+     */
+    attackOrMoveTo(creep, target) {
+        const attackResult = creep.attack(target);
+        if (attackResult === ERR_NOT_IN_RANGE) {
+            creep.moveTo(target);
         }
     }
     
