@@ -88,18 +88,18 @@ export const BuildConfig = {
     
     /**
      * Initial build order that always executes first.
-     * Builds a miner, then a blocker, then a cleric; all are replaced if they die.
-     * After all three are present, tugs are built continuously.
+     * Builds a miner, then a blocker, then a mule, then a cleric; all are replaced if they die.
+     * After all four are present, tugs are built continuously.
      */
-    INITIAL_BUILD: [{job: 'miner', tier: 2}, 'blocker', 'cleric'],
+    INITIAL_BUILD: [{job: 'miner', tier: 2}, 'blocker', 'mule', 'cleric'],
 
     /**
      * Aggressive initial build order used when the enemy escort creep is not on a rampart.
-     * Builds a miner and blocker (replaced if they die), then fighters forever.
+     * Builds a miner, blocker, and mule (replaced if they die), then fighters forever.
      * No cleric or tugs are built in this mode.
      * This mode only activates once both the miner and blocker have been spawned.
      */
-    AGGRESSIVE_INITIAL_BUILD: [{job: 'miner', tier: 2}, 'blocker'],
+    AGGRESSIVE_INITIAL_BUILD: [{job: 'miner', tier: 2}, 'blocker', 'mule'],
 
     /**
      * Economy-focused build order (not currently used; retained for future use).
