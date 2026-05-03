@@ -51,7 +51,7 @@ export class MuleJob extends ActiveCreep {
                         return;
                     }
                 } else {
-                    const minerEnergy = miner.store ? (miner.store[RESOURCE_ENERGY] || 0) : 0;
+                    const minerEnergy = miner.store[RESOURCE_ENERGY] || 0;
 
                     if (minerEnergy === 0 && usedCapacity > 0) {
                         // Miner is empty but we still have energy - go deposit
