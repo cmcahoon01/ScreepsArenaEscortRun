@@ -94,12 +94,22 @@ export const BuildConfig = {
     INITIAL_BUILD: [{job: 'miner', tier: 2}, 'blocker', 'mule', 'cleric'],
 
     /**
-     * Aggressive initial build order used when the enemy escort creep is not on a rampart.
+     * Aggressive initial build order used when the enemy escort creep is approaching our flag.
      * Builds a miner, blocker, and mule (replaced if they die), then fighters forever.
      * No cleric or tugs are built in this mode.
      * This mode only activates once both the miner and blocker have been spawned.
      */
     AGGRESSIVE_INITIAL_BUILD: [{job: 'miner', tier: 2}, 'blocker', 'mule'],
+
+    /**
+     * Chebyshev distance threshold from our flag at which the build strategy switches to aggressive.
+     * When the enemy escort creep's Chebyshev distance to our flag drops below this value,
+     * the enemy is considered to be advancing toward the goal and fighters are built instead of tugs.
+     *
+     * On a 100×100 map the maximum Chebyshev distance between opposite corners is ~90, so a
+     * threshold of 82 triggers once the enemy payload has made meaningful progress from its spawn.
+     */
+    AGGRESSIVE_TRIGGER_DISTANCE: 82,
 
     /**
      * Economy-focused build order (not currently used; retained for future use).

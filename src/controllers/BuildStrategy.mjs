@@ -4,14 +4,16 @@ import { BuildConfig, DEFAULT_TIER } from '../constants.mjs';
 /**
  * Determines what to build based on game state.
  *
- * Default build order (enemy escort is currently on a rampart — it's protected, so use economy):
+ * Default build order (enemy escort has not yet advanced toward our flag — it's far away,
+ * so use economy):
  *   miner → blocker → mule → cleric → tugs forever.
- * Aggressive build order (enemy escort has moved off its rampart — it's exposed, so hunt it):
+ * Aggressive build order (enemy escort has moved within BuildConfig.AGGRESSIVE_TRIGGER_DISTANCE
+ * Chebyshev of our flag — it's advancing toward the goal, so hunt it):
  *   miner → blocker → mule → fighters forever (no cleric or tugs).
  *
  * The build order is re-evaluated every tick. The aggressive mode only activates after both the
- * miner and blocker have been built. Once the enemy escort leaves its rampart at that point,
- * the strategy switches to aggressive and stays there (fighters keep being built).
+ * miner and blocker have been built. Once the enemy escort comes within the trigger distance at
+ * that point, the strategy switches to aggressive and stays there (fighters keep being built).
  * Lost miner and blocker creeps are replaced immediately in both modes.
  *
  * Blocker exceptions:
@@ -47,14 +49,15 @@ export class BuildStrategy {
             }
         }
 
-        // Check the enemy escort creep's current position each tick.
-        // While it's on a rampart it's protected, so use the economy build.
-        // Once it moves off the rampart it's exposed, so switch to aggressive (fighters).
+        // Check the enemy escort creep's current distance to our flag each tick.
+        // While it's far away (Chebyshev distance >= AGGRESSIVE_TRIGGER_DISTANCE),
+        // use the economy build. Once it comes within that distance — meaning the
+        // enemy is advancing toward the goal — switch to aggressive (fighters).
         // The aggressive switch only activates after miner and blocker are already built.
-        const enemyEscortOnRampart = this.gameState.isEnemyEscortCreepOnRampart();
-        const initialBuild = enemyEscortOnRampart
-            ? BuildConfig.INITIAL_BUILD
-            : BuildConfig.AGGRESSIVE_INITIAL_BUILD;
+        const enemyApproaching = this.gameState.isEnemyEscortCreepApproachingGoal();
+        const initialBuild = enemyApproaching
+            ? BuildConfig.AGGRESSIVE_INITIAL_BUILD
+            : BuildConfig.INITIAL_BUILD;
 
         // Pre-compute blocker eligibility once, before iterating the build order.
         // A blocker is skipped if any enemy has combat body parts, or if one has already died.
@@ -99,7 +102,7 @@ export class BuildStrategy {
             }
         }
 
-        if (!enemyEscortOnRampart) {
+        if (enemyApproaching) {
             // Phase 2 (aggressive): Build fighters forever
             const fighterClass = Jobs['fighter'];
             return {

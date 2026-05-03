@@ -2,6 +2,7 @@ import { getObjectsByPrototype, getObjectById } from 'game/utils';
 import { Creep, StructureSpawn, StructureRampart, StructureExtension, Source, ConstructionSite } from 'game/prototypes';
 import { detectFortifiedMiner } from "./StructureUtils.mjs";
 import { CombatUtils } from "./CombatUtils.mjs";
+import { BuildConfig } from "../constants.mjs";
 
 /**
  * GameState service that caches expensive game object queries per tick.
@@ -317,6 +318,36 @@ export class GameState {
             return false;
         }
         return CombatUtils.isOnEnemyRampart(enemyEscortCreep, this.ramparts);
+    }
+
+    /**
+     * Check if the enemy escort creep is approaching our flag (their win objective).
+     * Returns true when the Chebyshev distance from the enemy escort creep to our flag
+     * is less than BuildConfig.AGGRESSIVE_TRIGGER_DISTANCE (default 82).
+     *
+     * A distance under this threshold means the enemy has moved meaningfully off their
+     * starting position in the direction of our flag, warranting an aggressive build response.
+     *
+     * Returns false if the enemy escort creep or our flag cannot be found.
+     * @returns {boolean} True if the enemy escort creep is within the aggressive-trigger distance of our flag
+     */
+    isEnemyEscortCreepApproachingGoal() {
+        if (!this.enemyEscortCreepId) {
+            return false;
+        }
+        const enemyEscortCreep = getObjectById(this.enemyEscortCreepId);
+        if (!enemyEscortCreep) {
+            return false;
+        }
+        const ourFlag = this.flag;
+        if (!ourFlag) {
+            return false;
+        }
+        const chebyshevDist = Math.max(
+            Math.abs(enemyEscortCreep.x - ourFlag.x),
+            Math.abs(enemyEscortCreep.y - ourFlag.y)
+        );
+        return chebyshevDist < BuildConfig.AGGRESSIVE_TRIGGER_DISTANCE;
     }
 
     /**
