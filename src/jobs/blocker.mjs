@@ -87,7 +87,7 @@ export class BlockerJob extends ActiveCreep {
                 // Adjacent — join the tug chain. When the chain holds only the miner,
                 // insert this blocker at the front (index 0) as the lead puller,
                 // matching the pattern used by TugJob.
-                if (this.gameState.tugChain.length === 1) {
+                if (tugChain.length === 1) {
                     this.gameState.setTugChain([this.id, tugChain[0]]);
                 } else {
                     this.gameState.addToTugChain(this.id);
