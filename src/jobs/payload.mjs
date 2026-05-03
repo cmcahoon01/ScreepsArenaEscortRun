@@ -89,7 +89,7 @@ export class PayloadJob extends ActiveCreep {
      * @returns {boolean}
      */
     shouldTransitionToMoving() {
-        return this.getTugCount() > TUG_COUNT_THRESHOLD || this.hasMilitaryAdvantage();
+        return this.getTugCount() > TUG_COUNT_THRESHOLD && this.hasMilitaryAdvantage();
     }
 
     /**
