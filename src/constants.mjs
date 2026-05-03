@@ -231,7 +231,15 @@ export const CombatConfig = {
      * disadvantage and should adopt defensive posture to protect units and
      * leverage rampart defenses.
      */
-    DEFENSIVE_THRESHOLD: 0.7
+    DEFENSIVE_THRESHOLD: 0.7,
+
+    /**
+     * Distance threshold for flag-blocker priority.
+     * When the payload is within this range of the flag and an enemy is standing
+     * on the flag, all attackers not currently in combat will prioritize killing
+     * that enemy.
+     */
+    FLAG_BLOCKER_RANGE: 7
 };
 
 // ============================================================================

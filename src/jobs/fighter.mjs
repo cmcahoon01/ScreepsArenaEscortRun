@@ -61,6 +61,13 @@ export class FighterJob extends ActiveCreep {
             return;
         }
 
+        // Not in combat - check if an enemy is blocking the flag while the payload is close
+        const flagBlocker = CombatUtils.findFlagBlockingEnemy(this.gameState, allHostileCreeps);
+        if (flagBlocker) {
+            this.attackOrMoveTo(creep, flagBlocker);
+            return;
+        }
+
         // No immediate threats - prioritize hunting the enemy escort creep (payload)
         const enemyEscortCreepId = this.gameState.getEnemyEscortCreepId();
         if (enemyEscortCreepId) {

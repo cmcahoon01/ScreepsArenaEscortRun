@@ -22,6 +22,8 @@ const payloadJob = escortCreep
 
 // Save the enemy escort creep ID at game start for per-tick live tracking
 gameState.initializeEnemyEscortCreep(enemyEscortCreep);
+// Store our flag so combat jobs can reference it
+gameState.setFlag(flag);
 
 export function loop() {
     // Refresh game state cache once per tick
