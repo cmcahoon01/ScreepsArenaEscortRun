@@ -130,7 +130,47 @@ export class RangedJob extends ActiveCreep {
             const validTargets = enemySpawn
                 ? enemiesNotOnRamparts.filter(e => !CombatUtils.isWithinEnemySpawnRadius(e, enemySpawn))
                 : enemiesNotOnRamparts;
-            
+
+            // === ENEMY PAYLOAD PRIORITY ===
+            // If the enemy payload is outside the spawn exclusion zone, prioritize killing it.
+            // Exception: fight back against enemy combat units currently within ranged attack range (3).
+            const enemyEscortCreepId = this.gameState.getEnemyEscortCreepId();
+            if (enemyEscortCreepId) {
+                const enemyPayload = getObjectById(enemyEscortCreepId);
+                if (enemyPayload) {
+                    const isOnRampart = CombatUtils.isOnEnemyRampart(enemyPayload, ramparts);
+                    if (!isOnRampart && !CombatUtils.isWithinEnemySpawnRadius(enemyPayload, enemySpawn)) {
+                        // Only fight back if non-payload enemies are within ranged attack range (3)
+                        const combatEnemiesInRange = enemiesInRange.filter(e => e.id !== enemyEscortCreepId);
+
+                        if (combatEnemiesInRange.length > 0) {
+                            // Fight back against nearest combat unit in attack range
+                            const target = creep.findClosestByRange(combatEnemiesInRange);
+                            if (target) {
+                                const rangeToTarget = getRange(creep, target);
+                                if (rangeToTarget < DESIRED_RANGE) {
+                                    const retreatPos = this.findBestRetreatPosition(creep, allHostileCreeps, allCreeps, allStructures);
+                                    if (retreatPos) {
+                                        creep.moveTo(retreatPos);
+                                    }
+                                } else if (rangeToTarget > DESIRED_RANGE) {
+                                    creep.moveTo(target);
+                                }
+                                creep.rangedAttack(target);
+                            }
+                        } else {
+                            // No combat enemies in attack range - pursue and attack the enemy payload
+                            const rangeToPayload = getRange(creep, enemyPayload);
+                            if (rangeToPayload > DESIRED_RANGE) {
+                                creep.moveTo(enemyPayload);
+                            }
+                            creep.rangedAttack(enemyPayload);
+                        }
+                        return;
+                    }
+                }
+            }
+
             // Only target enemies if there are valid targets (not all on ramparts or in spawn zone)
             if (validTargets.length > 0) {
                 const closestEnemy = creep.findClosestByRange(validTargets);
