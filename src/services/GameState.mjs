@@ -33,6 +33,7 @@ export class GameState {
         this.payloadId = null; // ID of the payload (EscortCreep)
         this.enemyEscortCreepId = null; // ID of the enemy escort creep, saved at game start
         this.flag = null; // Our flag (the win-objective position)
+        this.enemyFlag = null; // The enemy's flag (the enemy win-objective position)
         this.flagKillerId = null; // ID of the single combat unit assigned to kill the flag blocker
     }
     
@@ -318,6 +319,22 @@ export class GameState {
      */
     getFlag() {
         return this.flag;
+    }
+
+    /**
+     * Store a reference to the enemy's flag (the enemy win-objective destination).
+     * @param {Flag|null} flag
+     */
+    setEnemyFlag(flag) {
+        this.enemyFlag = flag;
+    }
+
+    /**
+     * Get the enemy's flag (the enemy win-objective destination).
+     * @returns {Flag|null}
+     */
+    getEnemyFlag() {
+        return this.enemyFlag;
     }
 
     /**

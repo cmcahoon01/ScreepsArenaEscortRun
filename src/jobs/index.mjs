@@ -7,4 +7,5 @@ export { HaulerJob } from './hauler.mjs';
 export { MinerJob } from './miner.mjs';
 export { ClericJob } from './cleric.mjs';
 export { PayloadJob } from './payload.mjs';
+export { BlockerJob } from './blocker.mjs';
 export { Jobs } from './JobRegistry.mjs';

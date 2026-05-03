@@ -16,6 +16,7 @@ const buildOrder = new BuildOrder(screepController, winObjective, gameState);
 const escortCreep = getObjectsByPrototype(EscortCreep).find(i => i.my);
 const enemyEscortCreep = getObjectsByPrototype(EscortCreep).find(i => !i.my);
 const flag = getObjectsByPrototype(Flag).find(i => i.my);
+const enemyFlag = getObjectsByPrototype(Flag).find(i => !i.my);
 const payloadJob = escortCreep
     ? new PayloadJob(escortCreep.id, 'payload', 1, screepController, winObjective, gameState, flag)
     : null;
@@ -24,6 +25,8 @@ const payloadJob = escortCreep
 gameState.initializeEnemyEscortCreep(enemyEscortCreep);
 // Store our flag so combat jobs can reference it
 gameState.setFlag(flag);
+// Store the enemy flag so the blocker job can rush to it
+gameState.setEnemyFlag(enemyFlag);
 
 export function loop() {
     // Refresh game state cache once per tick
