@@ -28,6 +28,8 @@ export class GameState {
         this.hasBuiltMiner = false;
         this.hasInitializedWinObjective = false; // Flag to track if initial win objective transfer has been performed
         this.tugChain = []; // Array of creep IDs forming a tug chain to help move creeps without MOVE parts
+        this.payloadMoving = false; // Whether the payload is in the moving-to-flag state
+        this.payloadId = null; // ID of the payload (EscortCreep)
     }
     
     /**
@@ -216,5 +218,37 @@ export class GameState {
      */
     clearTugChain() {
         this.tugChain = [];
+    }
+
+    /**
+     * Get whether the payload is currently in the moving-to-flag state.
+     * @returns {boolean}
+     */
+    isPayloadMoving() {
+        return this.payloadMoving;
+    }
+
+    /**
+     * Set whether the payload is currently in the moving-to-flag state.
+     * @param {boolean} moving
+     */
+    setPayloadMoving(moving) {
+        this.payloadMoving = moving;
+    }
+
+    /**
+     * Get the ID of the payload (EscortCreep).
+     * @returns {string|null}
+     */
+    getPayloadId() {
+        return this.payloadId;
+    }
+
+    /**
+     * Set the ID of the payload (EscortCreep).
+     * @param {string|null} id
+     */
+    setPayloadId(id) {
+        this.payloadId = id;
     }
 }

@@ -109,6 +109,40 @@ export class RangedJob extends ActiveCreep {
             }
             return;
         }
+
+        // === PAYLOAD ESCORT MODE ===
+        // When the payload is moving toward the flag, follow it and protect it
+        // by attacking any enemies that come within 9 spaces of the payload.
+        if (this.gameState.isPayloadMoving()) {
+            const payloadId = this.gameState.getPayloadId();
+            const payload = payloadId ? getObjectById(payloadId) : null;
+            if (payload) {
+                const enemiesNearPayload = allHostileCreeps.filter(e => getRange(payload, e) <= 9);
+                if (enemiesNearPayload.length > 0) {
+                    const closestEnemy = creep.findClosestByRange(enemiesNearPayload);
+                    if (closestEnemy) {
+                        if (isInRangedAttackRange(creep, closestEnemy)) {
+                            creep.rangedAttack(closestEnemy);
+                        }
+                        const range = getRange(creep, closestEnemy);
+                        if (range < DESIRED_RANGE) {
+                            // Enemy too close - kite away
+                            const retreatPos = this.findBestRetreatPosition(creep, allHostileCreeps, allCreeps, allStructures);
+                            if (retreatPos) {
+                                creep.moveTo(retreatPos);
+                            }
+                        } else {
+                            // Follow the payload
+                            creep.moveTo(payload);
+                        }
+                    }
+                } else {
+                    // No threats near payload - follow it
+                    creep.moveTo(payload);
+                }
+            }
+            return;
+        }
         
         // === ATTACK LOGIC (when not in defensive mode) ===
         if (allHostileCreeps.length > 0) {
