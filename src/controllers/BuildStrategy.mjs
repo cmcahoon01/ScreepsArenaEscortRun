@@ -5,9 +5,9 @@ import { BuildConfig, DEFAULT_TIER } from '../constants.mjs';
  * Determines what to build based on game state.
  *
  * Default build order (enemy escort is currently on a rampart — it's protected, so use economy):
- *   miner → blocker → cleric → tugs forever.
+ *   miner → blocker → mule → cleric → tugs forever.
  * Aggressive build order (enemy escort has moved off its rampart — it's exposed, so hunt it):
- *   miner → blocker → fighters forever (no cleric or tugs).
+ *   miner → blocker → mule → fighters forever (no cleric or tugs).
  *
  * The build order is re-evaluated every tick. The aggressive mode only activates after both the
  * miner and blocker have been built. Once the enemy escort leaves its rampart at that point,
@@ -36,6 +36,7 @@ export class BuildStrategy {
         const creepCounts = {
             miner: 0,
             blocker: 0,
+            mule: 0,
             cleric: 0,
             tug: 0,
         };
