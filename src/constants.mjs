@@ -145,7 +145,7 @@ export const MapTopology = {
      * Rationale: 5 extensions per miner provides good energy storage capacity
      * without overcrowding the source area (which has limited space).
      */
-    EXTENSIONS_PER_MINER: 1,
+    EXTENSIONS_PER_MINER: 0,
     
     /**
      * Arena map size (width and height).
