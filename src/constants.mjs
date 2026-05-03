@@ -93,14 +93,13 @@ export const BuildConfig = {
      * continuously at a FIGHTER_TO_CLERIC_RATIO ratio.
      */
     INITIAL_BUILD: [
-        {job: 'miner', tier: 2},
+        {job: 'miner', tier: 1},
         'blocker',
         'mule',
         'fighter',
         {job: 'miner', tier: 2},
         'tug',
         'mule',
-        {job: 'miner', tier: 2},
         'mule',
     ],
 
