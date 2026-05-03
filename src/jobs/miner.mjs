@@ -7,7 +7,6 @@ import { MinerStateMachine } from './MinerStateMachine.mjs';
 import { BodyPartCalculator } from '../constants.mjs';
 import { CombatUtils } from '../services/CombatUtils.mjs';
 import { TugChainService } from '../services/TugChainService.mjs';
-import { performInitialWinObjectiveTransfer } from '../services/StructureUtils.mjs';
 
 // Miner job - dedicated resource extraction and extension building
 export class MinerJob extends ActiveCreep {
@@ -39,8 +38,8 @@ export class MinerJob extends ActiveCreep {
         }
     }
 
-    constructor(id, jobName, tier, controller, winObjective, gameState) {
-        super(id, jobName, tier, controller, winObjective, gameState);
+    constructor(id, jobName, tier, controller, gameState) {
+        super(id, jobName, tier, controller, gameState);
         
         // Calculate properties based on this creep's tier
         const body = this.getBody();
@@ -75,14 +74,6 @@ export class MinerJob extends ActiveCreep {
     act() {
         const creep = getObjectById(this.id);
         if (!creep) {
-            return;
-        }
-        
-        // === INITIAL WIN OBJECTIVE TRANSFER ===
-        // Miners spawn before haulers and need to perform the initial transfer
-        // Since miners can't move on their own, they must be spawned adjacent to both
-        // spawn and win objective. The spawn direction logic handles this positioning.
-        if (performInitialWinObjectiveTransfer(creep, this.gameState, this.winObjective)) {
             return;
         }
         

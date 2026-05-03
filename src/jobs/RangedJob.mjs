@@ -11,8 +11,8 @@ const DESIRED_RANGE = 3;
 
 // Base class for ranged combat units (archer and cleric)
 export class RangedJob extends ActiveCreep {
-    constructor(id, jobName, tier, controller, winObjective, gameState) {
-        super(id, jobName, tier, controller, winObjective, gameState);
+    constructor(id, jobName, tier, controller, gameState) {
+        super(id, jobName, tier, controller, gameState);
         if (new.target === RangedJob) {
             throw new TypeError("Cannot construct RangedJob instances directly");
         }

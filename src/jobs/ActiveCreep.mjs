@@ -2,7 +2,7 @@
 import { BodyPartCalculator, DEFAULT_TIER } from '../constants.mjs';
 
 export class ActiveCreep {
-    constructor(id, jobName, tier, controller, winObjective, gameState) {
+    constructor(id, jobName, tier, controller, gameState) {
         if (new.target === ActiveCreep) {
             throw new TypeError("Cannot construct ActiveCreep instances directly");
         }
@@ -10,7 +10,6 @@ export class ActiveCreep {
         this.jobName = jobName;
         this.tier = tier || DEFAULT_TIER; // Default to tier 1 if not specified
         this.controller = controller;
-        this.winObjective = winObjective;
         this.gameState = gameState;
         this.memory = {}; // Dictionary to store creep-specific state/memory
     }

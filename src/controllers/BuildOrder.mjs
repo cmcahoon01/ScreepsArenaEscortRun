@@ -7,9 +7,8 @@ import { BuildStrategy } from './BuildStrategy.mjs';
  * build strategy decisions, and spawn queue management.
  */
 export class BuildOrder {
-    constructor(screepController, winObjective, gameState) {
+    constructor(screepController, gameState) {
         this.screepController = screepController;
-        this.winObjective = winObjective;
         this.gameState = gameState;
         
         // Initialize component managers
@@ -23,7 +22,7 @@ export class BuildOrder {
      * Delegates to BuildQueue.
      */
     checkAndAddSpawningCreep() {
-        this.buildQueue.checkAndAddSpawningCreep(this.winObjective);
+        this.buildQueue.checkAndAddSpawningCreep();
     }
 
     /**
@@ -43,6 +42,6 @@ export class BuildOrder {
         const totalEnergy = this.energyManager.getTotalEnergy();
 
         // Try to spawn using the build queue
-        return this.buildQueue.trySpawn(nextCreep, totalEnergy, this.winObjective);
+        return this.buildQueue.trySpawn(nextCreep, totalEnergy);
     }
 }

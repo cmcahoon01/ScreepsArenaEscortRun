@@ -57,12 +57,11 @@ export class PayloadJob extends ActiveCreep {
      * @param {string} jobName
      * @param {number} tier
      * @param {ScreepController} controller
-     * @param {ConstructionSite} winObjective
      * @param {GameState} gameState
      * @param {Flag} flag - Our flag (move target in state 2)
      */
-    constructor(id, jobName, tier, controller, winObjective, gameState, flag) {
-        super(id, jobName, tier, controller, winObjective, gameState);
+    constructor(id, jobName, tier, controller, gameState, flag) {
+        super(id, jobName, tier, controller, gameState);
         this.flag = flag;
         this.memory.state = PAYLOAD_STATE_WAITING;
         this.gameState.setPayloadId(this.id);
