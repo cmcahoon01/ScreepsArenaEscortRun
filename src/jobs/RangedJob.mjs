@@ -101,7 +101,8 @@ export class RangedJob extends ActiveCreep {
         this.performHealing(creep, damagedCreeps, allCreeps);
         
         // === DEFENSIVE POSTURING CHECK ===
-        const inDefensiveMode = CombatUtils.handleDefensiveRetreat(creep, this.gameState);
+        // const inDefensiveMode = CombatUtils.handleDefensiveRetreat(creep, this.gameState);
+        const inDefensiveMode = false;
         
         if (inDefensiveMode) {
             // Still attack enemies if they're in range (even while on ramparts)
