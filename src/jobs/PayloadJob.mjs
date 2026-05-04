@@ -1,5 +1,5 @@
 import { getObjectById, getTicks } from 'game/utils';
-import { ActiveCreep } from '../services/ActiveCreep.mjs';
+import { ActiveCreep } from '../services/jobs/ActiveCreep.mjs';
 import { TugChainService } from '../services/TugChainService.mjs';
 import { compareTeamStrengths } from '../services/combat/StrengthEstimatorService.mjs';
 import { PayloadConfig } from '../constants.mjs';

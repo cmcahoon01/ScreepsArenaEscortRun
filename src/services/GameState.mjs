@@ -1,7 +1,7 @@
 import { getObjectsByPrototype, getObjectById } from 'game/utils';
 import { Creep, StructureSpawn, StructureRampart, StructureExtension, Source, ConstructionSite, StructureContainer } from 'game/prototypes';
 import { detectFortifiedMiner } from "./StructureUtils.mjs";
-import { CombatUtils } from "./CombatUtils.mjs";
+import { CombatUtils } from "./combat/CombatUtils.mjs";
 import { BuildConfig } from "../constants.mjs";
 
 /**

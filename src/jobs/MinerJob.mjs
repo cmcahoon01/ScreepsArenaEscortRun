@@ -2,13 +2,13 @@ import { getObjectById } from 'game/utils';
 import { WORK, CARRY, MOVE, ERR_NOT_IN_RANGE, OK, RESOURCE_ENERGY } from 'game/constants';
 import { StructureContainer } from 'game/prototypes';
 import { createConstructionSite } from 'game/utils';
-import { ActiveCreep } from '../services/ActiveCreep.mjs';
+import { ActiveCreep } from '../services/jobs/ActiveCreep.mjs';
 import { SourceAssignmentStrategy } from '../services/mining/SourceAssignmentStrategy.mjs';
 import { ExtensionBuilder } from '../services/mining/ExtensionBuilder.mjs';
 import { MinerStateMachine } from '../services/mining/MinerStateMachine.mjs';
 import { ContainerPlacementStrategy } from '../services/mining/ContainerPlacementStrategy.mjs';
 import { BodyPartCalculator } from '../services/BodyPartService.mjs';
-import { CombatUtils } from '../services/CombatUtils.mjs';
+import { CombatUtils } from '../services/combat/CombatUtils.mjs';
 import { TugChainService } from '../services/TugChainService.mjs';
 
 // Miner job - dedicated resource extraction and extension building

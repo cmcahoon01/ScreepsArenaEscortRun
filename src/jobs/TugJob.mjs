@@ -1,6 +1,6 @@
 import { getObjectById } from 'game/utils';
 import { MOVE } from 'game/constants';
-import { ActiveCreep } from '../services/ActiveCreep.mjs';
+import { ActiveCreep } from '../services/jobs/ActiveCreep.mjs';
 import { BodyPartCalculator } from '../services/BodyPartService.mjs';
 
 // Tug job - helps move creeps that don't have MOVE body parts
