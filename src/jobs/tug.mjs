@@ -41,6 +41,48 @@ export class TugJob extends ActiveCreep {
         return creep.findClosestByRange(idleRamparts);
     }
 
+    /**
+     * Join or lead the tug chain.
+     * If not already in the chain, moves toward the last creep and joins when adjacent.
+     * Becomes the chain leader when the chain has a single member, otherwise appends.
+     * If already in the chain, waits — movement is driven by the subject via pull().
+     * @param {Creep} creep - This creep's game object
+     */
+    _joinOrLeadChain(creep) {
+        const tugChain = this.gameState.getTugChain();
+
+        // Already in the chain — wait; the chain subject drives movement via pull()
+        if (tugChain.includes(this.id)) {
+            return;
+        }
+
+        // Move towards the last creep in the chain and join when adjacent
+        const lastCreepId = tugChain[tugChain.length - 1];
+        const lastCreep = getObjectById(lastCreepId);
+
+        if (!lastCreep) {
+            // Last creep in chain is dead; tugChain will be cleaned up in next refresh
+            return;
+        }
+
+        const distance = Math.max(
+            Math.abs(creep.x - lastCreep.x),
+            Math.abs(creep.y - lastCreep.y)
+        );
+
+        if (distance <= 1) {
+            // Adjacent — join the chain
+            if (tugChain.length === 1) {
+                // Become the chain leader: [this, subject]
+                this.gameState.tugChain = [this.id, tugChain[0]];
+            } else {
+                this.gameState.addToTugChain(this.id);
+            }
+        } else {
+            creep.moveTo(lastCreep);
+        }
+    }
+
     act() {
         const creep = getObjectById(this.id);
         if (!creep) {
@@ -48,7 +90,7 @@ export class TugJob extends ActiveCreep {
         }
 
         const tugChain = this.gameState.getTugChain();
-        
+
         // If tugChain is empty, move to a rampart not adjacent to spawn so we
         // don't block newly spawned tugs from clearing the spawn area.
         if (tugChain.length === 0) {
@@ -64,41 +106,6 @@ export class TugJob extends ActiveCreep {
             return;
         }
 
-        // Check if this tug is already in the chain
-        const isInChain = tugChain.includes(this.id);
-        
-        if (!isInChain) {
-            // This tug needs to join the chain
-            // Move towards the last creep in the chain
-            const lastCreepId = tugChain[tugChain.length - 1];
-            const lastCreep = getObjectById(lastCreepId);
-            
-            if (!lastCreep) {
-                // Last creep in chain is dead, tugChain will be cleaned up in next refresh
-                return;
-            }
-            
-            // Check if we're adjacent to the last creep
-            const distance = Math.max(
-                Math.abs(creep.x - lastCreep.x),
-                Math.abs(creep.y - lastCreep.y)
-            );
-            
-            if (distance <= 1) {
-                // We're adjacent, add ourselves to the chain
-                if (this.gameState.tugChain.length === 1) {
-                    this.gameState.tugChain = [this.id, tugChain[0]];
-                }else {
-                    this.gameState.addToTugChain(this.id)
-                }
-            } else {
-                // Move towards the last creep in the chain
-                creep.moveTo(lastCreep);
-            }
-        } else {
-            // We're already in the chain, just wait
-            // The creep being helped will coordinate the movement using pull() commands
-            // We don't need to do anything here
-        }
+        this._joinOrLeadChain(creep);
     }
 }
