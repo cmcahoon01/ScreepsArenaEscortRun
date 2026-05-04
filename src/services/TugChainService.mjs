@@ -42,6 +42,13 @@ export class TugChainService {
                     if (creeps.length > 1) {
                         const dragged = creeps[1];
                         const tug = creeps[idx];
+                        // Build a set of occupied positions, excluding the tug itself
+                        // (it is vacating its current tile, so it shouldn't block candidates)
+                        const occupied = new Set(
+                            gameState.getAllCreeps()
+                                .filter(c => c !== tug)
+                                .map(c => `${c.x},${c.y}`)
+                        );
                         const candidates = [];
                         for (let dx = -1; dx <= 1; dx++) {
                             for (let dy = -1; dy <= 1; dy++) {
@@ -50,6 +57,8 @@ export class TugChainService {
                                 if (pos.x === target.x && pos.y === target.y) continue;
                                 if (!TerrainAnalyzer.isValidPosition(pos)) continue;
                                 if (TerrainAnalyzer.isWall(pos)) continue;
+                                // Skip positions already occupied by another creep
+                                if (occupied.has(`${pos.x},${pos.y}`)) continue;
                                 candidates.push(pos);
                             }
                         }
