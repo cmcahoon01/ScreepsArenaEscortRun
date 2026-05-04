@@ -166,8 +166,7 @@ export class MinerJob extends ActiveCreep {
                         c.jobName === 'miner' && c.tier === 1 && c.id !== this.id
                     );
                     const tier1Pos = (tier1ActiveCreep &&
-                                      tier1ActiveCreep.memory.targetX !== null &&
-                                      tier1ActiveCreep.memory.targetX !== undefined)
+                                      tier1ActiveCreep.memory.targetX != null)
                         ? { x: tier1ActiveCreep.memory.targetX, y: tier1ActiveCreep.memory.targetY }
                         : null;
 
