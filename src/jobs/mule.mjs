@@ -1,5 +1,5 @@
 import { getObjectById } from 'game/utils';
-import { MOVE, CARRY, RESOURCE_ENERGY } from 'game/constants';
+import { MOVE, CARRY, RESOURCE_ENERGY, ERR_NOT_IN_RANGE } from 'game/constants';
 import { TugJob } from './tug.mjs';
 import { BodyPartCalculator } from '../constants.mjs';
 
@@ -64,51 +64,84 @@ export class MuleJob extends TugJob {
         const usedCapacity = creep.store[RESOURCE_ENERGY] || 0;
         const totalCapacity = creep.store.getCapacity(RESOURCE_ENERGY);
 
-        if (this.memory.state === 'collecting') {
+        if (usedCapacity >= totalCapacity) {
             // Switch to depositing when full
-            if (usedCapacity >= totalCapacity) {
-                this.memory.state = 'depositing';
-            } else {
-                // Find the paired miner creep
-                const pairedActiveCreep = this.memory.pairedMinerId
-                    ? this.controller.creeps.find(c => c.id === this.memory.pairedMinerId)
-                    : null;
-                const miner = pairedActiveCreep ? getObjectById(pairedActiveCreep.id) : null;
+            this.memory.state = 'depositing';
+        } else if (usedCapacity === 0) {
+            // Switch to collecting when empty
+            this.memory.state = 'collecting';
+        }
 
-                if (!miner) {
-                    // Paired miner is gone; deposit any energy we're carrying
-                    if (usedCapacity > 0) {
-                        this.memory.state = 'depositing';
-                    } else {
-                        return;
-                    }
-                } else {
-                    const minerEnergy = miner.store[RESOURCE_ENERGY] || 0;
+        if (this.memory.state === 'collecting') {
+            this.collect(creep);
+        }else if (this.memory.state === 'depositing') {
+            this.deposit(creep);
+        }
+    }
 
-                    if (minerEnergy === 0 && usedCapacity > 0) {
-                        // Miner is empty but we still have energy - go deposit
-                        this.memory.state = 'depositing';
-                    } else {
-                        // Move towards the paired miner; the miner will transfer when adjacent
-                        creep.moveTo(miner);
-                        return;
+    deposit(creep) {
+        const spawn = this.gameState.getMySpawn();
+        if (spawn) {
+            // Try to transfer first; move only if out of range
+            let transferResult = creep.transfer(spawn, RESOURCE_ENERGY);
+            if (transferResult === ERR_NOT_IN_RANGE) {
+                creep.moveTo(spawn);
+            } else if (transferResult === 0){
+                this.memory.state = 'collecting';
+                return this.collect(creep);
+            }
+        }
+    }
+
+    collect(creep) {
+        // If the mining container is built, withdraw from it instead of waiting on the miner
+        const containerId = this.gameState.getMiningContainerId();
+        if (containerId) {
+            const container = getObjectById(containerId);
+            if (container) {
+                const containerEnergy = container.store[RESOURCE_ENERGY] || 0;
+                if (containerEnergy > 0) {
+                    // Try to withdraw first; move only if out of range
+                    let withdrawResult = creep.withdraw(container, RESOURCE_ENERGY);
+                    if (withdrawResult === ERR_NOT_IN_RANGE) {
+                        creep.moveTo(container);
+                        withdrawResult = creep.withdraw(container, RESOURCE_ENERGY);
                     }
+                    if (withdrawResult === 0) {
+                        this.memory.state = 'depositing';
+                        return this.deposit(creep);
+                    }
+
                 }
+                // Container is empty this tick – nothing to do
+                return;
             }
         }
 
-        if (this.memory.state === 'depositing') {
-            // Switch back to collecting once empty
-            if (usedCapacity === 0) {
-                this.memory.state = 'collecting';
-                return;
-            }
+        // Find the paired miner creep
+        const pairedActiveCreep = this.memory.pairedMinerId
+            ? this.controller.creeps.find(c => c.id === this.memory.pairedMinerId)
+            : null;
+        const miner = pairedActiveCreep ? getObjectById(pairedActiveCreep.id) : null;
 
-            const spawn = this.gameState.getMySpawn();
-            if (spawn) {
-                // Move and transfer in the same turn
-                creep.moveTo(spawn);
-                creep.transfer(spawn, RESOURCE_ENERGY);
+        const usedCapacity = creep.store[RESOURCE_ENERGY] || 0;
+        if (!miner) {
+            // Paired miner is gone; deposit any energy we're carrying
+            if (usedCapacity > 0) {
+                this.memory.state = 'depositing';
+                console.log(`Mule ${creep.id} has no paired miner but is carrying energy; switching to depositing state`);
+                return this.deposit(creep);
+            }
+        } else {
+            const minerEnergy = miner.store[RESOURCE_ENERGY] || 0;
+
+            if (minerEnergy === 0 && usedCapacity > 0) {
+                // Miner is empty but we still have energy - go deposit
+                this.memory.state = 'depositing';
+                return this.deposit(creep);
+            } else {
+                // Move towards the paired miner; the miner will transfer when adjacent
+                creep.moveTo(miner);
             }
         }
     }
