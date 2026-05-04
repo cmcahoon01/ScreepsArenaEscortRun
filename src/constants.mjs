@@ -41,9 +41,9 @@ export const DEFAULT_TIER = 1;
 export const BuildConfig = {
     /**
      * Initial build order that always executes first.
-     * Builds in sequence: miner → blocker → mule → cleric → tug → miner → mule → miner → mule.
-     * All are replaced if they die. After all are present, fighters and clerics are built
-     * continuously at a FIGHTER_TO_CLERIC_RATIO ratio.
+     * Builds in sequence: miner1 → blocker → mule → miner2 → mule.
+     * All are replaced if they die. After all are present, creeps are built
+     * according to PHASE2_BUILD weights.
      */
     INITIAL_BUILD: [
         'miner1',

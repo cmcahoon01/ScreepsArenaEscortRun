@@ -1,8 +1,8 @@
 import { getObjectById, getTicks } from 'game/utils';
 import { ActiveCreep } from './base/ActiveCreep.mjs';
-import { moveChain } from '../services/TugChainService.mjs';
 import { compareTeamStrengths } from '../services/combat/StrengthEstimatorService.mjs';
 import { PayloadConfig } from '../constants.mjs';
+import { chebyshevDistance } from '../services/RangeUtils.mjs';
 
 export class PayloadJob extends ActiveCreep {
     static get BODY() {
@@ -38,10 +38,9 @@ export class PayloadJob extends ActiveCreep {
         const spawn = this.gameState.getMySpawn();
         if (!spawn) return null;
 
-        const nearRamparts = this.gameState.getMyRamparts().filter(r => {
-            const dist = Math.max(Math.abs(r.x - spawn.x), Math.abs(r.y - spawn.y));
-            return dist === PayloadConfig.WAITING_RAMPART_DISTANCE;
-        });
+        const nearRamparts = this.gameState.getMyRamparts().filter(r =>
+            chebyshevDistance(r, spawn) === PayloadConfig.WAITING_RAMPART_DISTANCE
+        );
 
         if (nearRamparts.length === 0) return null;
         return creep.findClosestByRange(nearRamparts);
@@ -72,8 +71,7 @@ export class PayloadJob extends ActiveCreep {
             }
 
             if (this.flag) {
-                const chain = this.gameState.getTugChain();
-                moveChain(chain.ids, this.flag, this.gameState);
+                this.gameState.getTugChain().tick(this.flag, this.gameState);
             }
         }
     }

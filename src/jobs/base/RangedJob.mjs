@@ -38,6 +38,26 @@ export class RangedJob extends ActiveCreep {
         // Default: no healing
     }
 
+    /**
+     * Idle behaviour: healing-capable ranged units move toward injured allies;
+     * non-healing units defer to the base ActiveCreep.idle() (move to MAP_CENTER).
+     * @param {Creep} creep
+     */
+    idle(creep) {
+        if (this.shouldHealDuringIdle()) {
+            const myCreeps = this.gameState.getMyCreeps();
+            const damagedAllies = myCreeps.filter(c => c.id !== creep.id && c.hits < c.hitsMax);
+            if (damagedAllies.length > 0) {
+                const closestDamagedAlly = creep.findClosestByRange(damagedAllies);
+                if (closestDamagedAlly) {
+                    creep.moveTo(closestDamagedAlly);
+                    return;
+                }
+            }
+        }
+        super.idle(creep);
+    }
+
     act() {
         const creep = getObjectById(this.id);
         if (!creep) return;

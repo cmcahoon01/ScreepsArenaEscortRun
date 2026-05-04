@@ -22,12 +22,32 @@ export class TugChain {
         return this._chain.includes(id);
     }
 
+    /** True if `id` is the chain leader (index 0). */
+    isLeader(id) {
+        return this._chain[0] === id;
+    }
+
+    /** True if the chain has exactly one member equal to `id`. */
+    hasSingleMember(id) {
+        return this._chain.length === 1 && this._chain[0] === id;
+    }
+
+    /** Returns 0-based position of `id` in the chain, or -1 if not present. */
+    getChainPosition(id) {
+        return this._chain.indexOf(id);
+    }
+
     get length() {
         return this._chain.length;
     }
 
     get ids() {
         return [...this._chain];
+    }
+
+    /** The last ID in the chain (the subject being towed), or undefined if empty. */
+    get last() {
+        return this._chain[this._chain.length - 1];
     }
 
     prune() {

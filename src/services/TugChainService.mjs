@@ -1,5 +1,6 @@
 import { getObjectById } from 'game/utils';
 import { isValidPosition, isWall } from './combat/TerrainAnalyzer.mjs';
+import { chebyshevDistance } from './RangeUtils.mjs';
 
 export function moveChain(tugChain, target, gameState) {
     if (!tugChain || tugChain.length === 0) return false;
@@ -69,17 +70,11 @@ export function joinTugChain(creepId, creep, gameState) {
 
     if (tugChain.includes(creepId)) return;
 
-    const lastCreepId = tugChain.ids[tugChain.length - 1];
-    const lastCreep = getObjectById(lastCreepId);
+    const lastCreep = getObjectById(tugChain.last);
 
     if (!lastCreep) return;
 
-    const distance = Math.max(
-        Math.abs(creep.x - lastCreep.x),
-        Math.abs(creep.y - lastCreep.y)
-    );
-
-    if (distance <= 1) {
+    if (chebyshevDistance(creep, lastCreep) <= 1) {
         if (tugChain.length === 1) {
             tugChain.setLeader(creepId);
         } else {

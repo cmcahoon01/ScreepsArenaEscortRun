@@ -4,6 +4,7 @@ import { detectFortifiedMiner } from "./StructureUtils.mjs";
 import { findFlagBlockingEnemy, selectFlagKiller, hasAttackCapability } from "./combat/CombatUtils.mjs";
 import { BuildConfig, MINER_JOB_NAMES } from "../constants.mjs";
 import { TugChain } from "./TugChain.mjs";
+import { chebyshevDistance } from "./RangeUtils.mjs";
 
 export class GameState {
     constructor() {
@@ -119,12 +120,13 @@ export class GameState {
 
     getTugChain() { return this._tugChain; }
 
-    setTugChain(arrayOrId) {
-        const ids = Array.isArray(arrayOrId) ? arrayOrId : [arrayOrId];
-        this._tugChain = new TugChain(ids[0]);
-        for (let i = 1; i < ids.length; i++) {
-            this._tugChain.extend(ids[i]);
+    setTugChain(ids) {
+        const arr = Array.isArray(ids) ? ids : [ids];
+        const chain = new TugChain(arr[0]);
+        for (let i = 1; i < arr.length; i++) {
+            chain.extend(arr[i]);
         }
+        this._tugChain = chain;
     }
 
     addToTugChain(creepId) {
@@ -159,11 +161,7 @@ export class GameState {
         if (!enemyEscortCreep) return false;
         const ourFlag = this.flag;
         if (!ourFlag) return false;
-        const chebyshevDist = Math.max(
-            Math.abs(enemyEscortCreep.x - ourFlag.x),
-            Math.abs(enemyEscortCreep.y - ourFlag.y)
-        );
-        return chebyshevDist < BuildConfig.AGGRESSIVE_TRIGGER_DISTANCE;
+        return chebyshevDistance(enemyEscortCreep, ourFlag) < BuildConfig.AGGRESSIVE_TRIGGER_DISTANCE;
     }
 
     setFlag(flag) { this.flag = flag; }

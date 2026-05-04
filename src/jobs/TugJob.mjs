@@ -3,6 +3,7 @@ import { MOVE } from 'game/constants';
 import { ActiveCreep } from './base/ActiveCreep.mjs';
 import { calculateCost } from '../services/BodyPartService.mjs';
 import { joinTugChain } from '../services/TugChainService.mjs';
+import { chebyshevDistance } from '../services/RangeUtils.mjs';
 
 export class TugJob extends ActiveCreep {
     static get BODY() {
@@ -21,10 +22,9 @@ export class TugJob extends ActiveCreep {
         const spawn = this.gameState.getMySpawn();
         if (!spawn) return null;
 
-        const idleRamparts = this.gameState.getMyRamparts().filter(r => {
-            const chebyshevDist = Math.max(Math.abs(r.x - spawn.x), Math.abs(r.y - spawn.y));
-            return chebyshevDist > 1;
-        });
+        const idleRamparts = this.gameState.getMyRamparts().filter(r =>
+            chebyshevDistance(r, spawn) > 1
+        );
 
         if (idleRamparts.length === 0) return null;
         return creep.findClosestByRange(idleRamparts);

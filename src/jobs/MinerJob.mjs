@@ -6,8 +6,8 @@ import { assignSourceToMiner, findMiningPosition } from '../services/mining/Sour
 import { MinerState, initialize, isAtTargetPosition, setTargetPosition, transitionToMining, isMovingToPosition, isMining, getTargetPosition } from '../services/mining/MinerStateMachine.mjs';
 import { findContainerPosition } from '../services/mining/ContainerPlacementStrategy.mjs';
 import { calculateCost } from '../services/BodyPartService.mjs';
-import { moveChain } from '../services/TugChainService.mjs';
 import { MINER_JOB_NAMES } from '../constants.mjs';
+import { chebyshevDistance } from '../services/RangeUtils.mjs';
 
 export class MinerJob extends ActiveCreep {
     static get BODY() {
@@ -43,8 +43,7 @@ export class MinerJob extends ActiveCreep {
             c => this.gameState.getCreepJobName(c.id) === 'mule'
         );
         for (const mule of muleCreeps) {
-            const range = Math.max(Math.abs(creep.x - mule.x), Math.abs(creep.y - mule.y));
-            if (range <= 1) return mule;
+            if (chebyshevDistance(creep, mule) <= 1) return mule;
         }
         return null;
     }
@@ -94,9 +93,10 @@ export class MinerJob extends ActiveCreep {
                 const tugChain = this.gameState.getTugChain();
                 if (tugChain.length === 0) {
                     tugChain.claim(this.id);
-                    moveChain(tugChain.ids, targetPos, this.gameState);
-                } else if (tugChain.ids[1] === this.id) {
-                    moveChain(tugChain.ids, targetPos, this.gameState);
+                    tugChain.tick(targetPos, this.gameState);
+                } else if (tugChain.getChainPosition(this.id) === 1) {
+                    // This miner is the subject (index 1) of the active chain
+                    tugChain.tick(targetPos, this.gameState);
                 }
                 // Else another miner is using the chain — wait this tick
                 return;

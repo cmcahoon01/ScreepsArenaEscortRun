@@ -128,7 +128,7 @@ export class MuleJob extends TugJob {
     _actAsTug(creep) {
         const tugChain = this.gameState.getTugChain();
 
-        if (tugChain.length >= 1 && tugChain.ids[0] === this.id) {
+        if (tugChain.isLeader(this.id)) {
             return;
         }
 
@@ -136,7 +136,7 @@ export class MuleJob extends TugJob {
         const miner = pairedActiveCreep ? getObjectById(pairedActiveCreep.id) : null;
         if (!miner) return;
 
-        if (tugChain.length === 1 && tugChain.ids[0] === this.memory.pairedMinerId) {
+        if (tugChain.hasSingleMember(this.memory.pairedMinerId)) {
             joinTugChain(this.id, creep, this.gameState);
         } else {
             creep.moveTo(miner);
