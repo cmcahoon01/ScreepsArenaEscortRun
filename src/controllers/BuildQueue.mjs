@@ -1,11 +1,5 @@
-import { MapTopology, DEFAULT_TIER } from '../constants.mjs';
+import { MapTopology, DEFAULT_TIER, BuildConfig } from '../constants.mjs';
 import { TOP, TOP_RIGHT, RIGHT, BOTTOM_RIGHT, BOTTOM, BOTTOM_LEFT, LEFT, TOP_LEFT } from 'game/constants';
-
-/**
- * Jobs that should spawn facing the closest resource source.
- * All other jobs will spawn in the opposite direction.
- */
-const SOURCE_FACING_JOBS = ['miner', 'mule', 'blocker'];
 
 /**
  * Manages spawn queue and tracks pending spawns.
@@ -84,7 +78,7 @@ export class BuildQueue {
 
         const primaryDir = this._getPrimaryDirection(spawn, closestSource);
 
-        if (SOURCE_FACING_JOBS.includes(jobName)) {
+        if (BuildConfig.SOURCE_FACING_JOBS.includes(jobName)) {
             // Spawn toward the closest source
             spawn.setDirections(this._getDirectionsFrom(primaryDir));
         } else {

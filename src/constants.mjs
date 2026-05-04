@@ -6,11 +6,11 @@
  * understand their impact on bot behavior.
  */
 
+import { LEFT, RIGHT, TOP, BOTTOM, BOTTOM_LEFT, BOTTOM_RIGHT, TOP_LEFT, TOP_RIGHT } from "game/constants";
+
 // ============================================================================
 // Body Part Costs
 // ============================================================================
-
-import {LEFT, RIGHT, TOP, BOTTOM, BOTTOM_LEFT, BOTTOM_RIGHT, TOP_LEFT, TOP_RIGHT} from "game/constants";
 
 /**
  * Cost of each body part type in energy.
@@ -25,30 +25,6 @@ export const BODY_PART_COSTS = {
     carry: 50,
     tough: 10,
 };
-
-/**
- * Utility class for calculating creep body costs.
- */
-export class BodyPartCalculator {
-    /**
-     * Calculate the total energy cost of a body parts array.
-     * @param {string[]} bodyParts - Array of body part constants (e.g., [MOVE, ATTACK])
-     * @returns {number} Total energy cost
-     */
-    static calculateCost(bodyParts) {
-        if (!bodyParts || bodyParts.length === 0) {
-            return 0;
-        }
-        return bodyParts.reduce((sum, part) => {
-            const cost = BODY_PART_COSTS[part];
-            if (cost === undefined) {
-                console.log(`Warning: Unknown body part type '${part}'`);
-                return sum;
-            }
-            return sum + cost;
-        }, 0);
-    }
-}
 
 // ============================================================================
 // Build Configuration
@@ -82,6 +58,12 @@ export const BuildConfig = {
      * For every 1 cleric, this many fighters are built.
      */
     FIGHTER_TO_CLERIC_RATIO: 5,
+
+    /**
+     * Jobs that should spawn facing the closest resource source.
+     * All other jobs spawn in the opposite direction (away from the source).
+     */
+    SOURCE_FACING_JOBS: ['miner', 'mule', 'blocker'],
 };
 
 // ============================================================================
@@ -124,6 +106,18 @@ export const MapTopology = {
      * Used to determine which side of the map a spawn is on.
      */
     ARENA_CENTER: 50,
+
+    /**
+     * All 8 spawn directions starting with RIGHT (clockwise).
+     * Used when spawning toward the right side of the map.
+     */
+    RIGHT_FIRST_SPAWNING: [RIGHT, BOTTOM_RIGHT, BOTTOM, BOTTOM_LEFT, LEFT, TOP_LEFT, TOP, TOP_RIGHT],
+
+    /**
+     * All 8 spawn directions starting with LEFT (clockwise).
+     * Used when spawning toward the left side of the map.
+     */
+    LEFT_FIRST_SPAWNING: [LEFT, BOTTOM_LEFT, BOTTOM, BOTTOM_RIGHT, RIGHT, TOP_RIGHT, TOP, TOP_LEFT],
 };
 
 // ============================================================================
@@ -214,5 +208,76 @@ export const CombatConfig = {
      * to create a neutral gap that prevents rapid engage/disengage toggling when
      * enemies hover near the territory boundary.
      */
-    COMBAT_ENGAGE_RADIUS: 45
+    COMBAT_ENGAGE_RADIUS: 45,
+
+    /**
+     * Job names that count as combat units eligible to be assigned as the flag killer
+     * or filtered as combat-capable creeps.
+     */
+    COMBAT_JOBS: ['fighter', 'paladin', 'archer', 'cleric'],
+};
+
+// ============================================================================
+// Range Configuration
+// ============================================================================
+
+/**
+ * Range constants for combat and healing interactions.
+ * These values are defined by the Screeps Arena API.
+ */
+export const RangeConfig = {
+    /**
+     * Maximum range for ranged attacks (ranged_attack body part).
+     */
+    RANGED_ATTACK_RANGE: 3,
+
+    /**
+     * Range for melee healing (heal body part, adjacent).
+     */
+    HEAL_RANGE: 1,
+
+    /**
+     * Maximum range for ranged healing (heal body part).
+     */
+    RANGED_HEAL_RANGE: 3,
+
+    /**
+     * Range for adjacent (melee) interactions.
+     */
+    ADJACENT_RANGE: 1,
+};
+
+// ============================================================================
+// Payload Configuration
+// ============================================================================
+
+/**
+ * Configuration for the payload (EscortCreep) state machine and movement.
+ */
+export const PayloadConfig = {
+    /**
+     * State string for the payload waiting on a rampart near spawn.
+     */
+    STATE_WAITING: 'waiting',
+
+    /**
+     * State string for the payload actively moving toward the flag.
+     */
+    STATE_MOVING: 'moving',
+
+    /**
+     * Strength ratio threshold for "significant military advantage".
+     * When myStrength / enemyStrength >= this value, the payload advances.
+     */
+    MILITARY_ADVANTAGE_THRESHOLD: 1.5,
+
+    /**
+     * Game tick threshold after which the payload advances regardless of military strength.
+     */
+    GAME_TIME_THRESHOLD: 1500,
+
+    /**
+     * Chebyshev distance from our spawn at which the payload waits on a rampart.
+     */
+    WAITING_RAMPART_DISTANCE: 2,
 };

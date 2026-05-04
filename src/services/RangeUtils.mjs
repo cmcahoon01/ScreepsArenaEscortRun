@@ -1,14 +1,15 @@
 import { getRange } from 'game/utils';
+import { RangeConfig } from '../constants.mjs';
 
 /**
- * Constants and utility functions for range checking in combat and healing.
+ * Utility functions for range checking in combat and healing.
  */
 
-// Range constants
-export const RANGED_ATTACK_RANGE = 3;
-export const HEAL_RANGE = 1;
-export const RANGED_HEAL_RANGE = 3;
-export const ADJACENT_RANGE = 1;
+// Re-export range constants for convenience
+export const RANGED_ATTACK_RANGE = RangeConfig.RANGED_ATTACK_RANGE;
+export const HEAL_RANGE = RangeConfig.HEAL_RANGE;
+export const RANGED_HEAL_RANGE = RangeConfig.RANGED_HEAL_RANGE;
+export const ADJACENT_RANGE = RangeConfig.ADJACENT_RANGE;
 
 /**
  * Check if target is within ranged attack range.

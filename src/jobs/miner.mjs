@@ -7,7 +7,7 @@ import { SourceAssignmentStrategy } from './SourceAssignmentStrategy.mjs';
 import { ExtensionBuilder } from './ExtensionBuilder.mjs';
 import { MinerStateMachine } from './MinerStateMachine.mjs';
 import { ContainerPlacementStrategy } from './ContainerPlacementStrategy.mjs';
-import { BodyPartCalculator } from '../constants.mjs';
+import { BodyPartCalculator } from '../services/BodyPartService.mjs';
 import { CombatUtils } from '../services/CombatUtils.mjs';
 import { TugChainService } from '../services/TugChainService.mjs';
 
