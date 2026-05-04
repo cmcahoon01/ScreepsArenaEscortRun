@@ -1,4 +1,5 @@
 import { CombatUtils } from '../services/CombatUtils.mjs';
+import { CombatConfig } from '../constants.mjs';
 
 /**
  * CombatCoordinator — group-level engage / disengage logic.
@@ -6,11 +7,15 @@ import { CombatUtils } from '../services/CombatUtils.mjs';
  * Ensures all combat units behave as a unit: they either all fight together
  * or all fall back to the map center together.
  *
- * Decision rule (evaluated once per tick):
- *   ENGAGE   — at least one enemy combat unit is outside the enemy spawn
- *              exclusion zone (i.e., they have moved into open territory).
- *   DISENGAGE — all enemy combat units have retreated inside the exclusion
- *              zone (or there are no combat-capable enemies at all).
+ * Hysteresis is used to prevent rapid toggling when enemies hover near the
+ * territory boundary.  Two separate Euclidean radii (measured from the enemy
+ * spawn) define a neutral gap:
+ *
+ *   ENGAGE   — triggered when any enemy combat unit crosses outside
+ *              CombatConfig.COMBAT_ENGAGE_RADIUS (the outer / larger radius).
+ *   NEUTRAL  — enemy is between the two radii; current state is held.
+ *   DISENGAGE — triggered when ALL enemy combat units retreat inside
+ *              CombatConfig.ENEMY_SPAWN_EXCLUSION_RADIUS (the inner radius).
  *
  * The result is stored in GameState and consulted by each combat job during
  * its act() call.  The enemy-escort / payload-priority path in each job is
@@ -18,6 +23,21 @@ import { CombatUtils } from '../services/CombatUtils.mjs';
  * advancing enemy payload.
  */
 export class CombatCoordinator {
+    /**
+     * Compute the Euclidean distance from a position to the enemy spawn.
+     * @param {Object} pos - Position with x and y coordinates
+     * @param {{x: number, y: number}|null} enemySpawn - Enemy spawn structure
+     * @returns {number} Euclidean distance, or Infinity if spawn is unknown
+     */
+    static distanceToEnemySpawn(pos, enemySpawn) {
+        if (!enemySpawn) {
+            return Infinity;
+        }
+        const dx = pos.x - enemySpawn.x;
+        const dy = pos.y - enemySpawn.y;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+
     /**
      * Update the combat engagement state for the current tick.
      * Must be called once per tick, after gameState.refresh().
@@ -42,11 +62,33 @@ export class CombatCoordinator {
             return;
         }
 
-        // Engage if any combat enemy has left the safety of their spawn exclusion zone
-        const anyEnemyOutside = enemyCombatUnits.some(
-            e => !CombatUtils.isWithinEnemySpawnRadius(e, enemySpawn)
-        );
+        const currentlyEngaged = gameState.isCombatEngaged();
 
-        gameState.setCombatEngaged(anyEnemyOutside);
+        if (currentlyEngaged) {
+            // === ALREADY ENGAGED ===
+            // Disengage only when ALL combat enemies have fully retreated inside the
+            // inner exclusion radius.  Enemies lingering in the neutral gap keep the
+            // engagement active, avoiding oscillation.
+            const anyEnemyOutsideInnerRadius = enemyCombatUnits.some(
+                e => CombatCoordinator.distanceToEnemySpawn(e, enemySpawn) >
+                    CombatConfig.ENEMY_SPAWN_EXCLUSION_RADIUS
+            );
+            if (!anyEnemyOutsideInnerRadius) {
+                gameState.setCombatEngaged(false);
+            }
+            // Otherwise stay engaged (neutral gap or still outside)
+        } else {
+            // === CURRENTLY DISENGAGED ===
+            // Engage only when at least one combat enemy has crossed the outer radius.
+            // Enemies still within the neutral gap do not trigger engagement.
+            const anyEnemyOutsideEngageRadius = enemyCombatUnits.some(
+                e => CombatCoordinator.distanceToEnemySpawn(e, enemySpawn) >
+                    CombatConfig.COMBAT_ENGAGE_RADIUS
+            );
+            if (anyEnemyOutsideEngageRadius) {
+                gameState.setCombatEngaged(true);
+            }
+            // Otherwise stay disengaged (neutral gap)
+        }
     }
 }
