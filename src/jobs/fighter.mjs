@@ -7,7 +7,7 @@ import { BodyPartCalculator, MapTopology } from '../constants.mjs';
 // Fighter job - melee combat
 export class FighterJob extends ActiveCreep {
     static get BODY() {
-        return [MOVE, ATTACK];
+        return [ATTACK, MOVE];
     }
 
     static get COST() {

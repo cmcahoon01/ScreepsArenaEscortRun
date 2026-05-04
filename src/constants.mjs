@@ -98,14 +98,13 @@ export const BuildConfig = {
         'mule',
         {job: 'miner', tier: 2},
         'mule',
-        'cleric'
     ],
 
     /**
      * Ratio of fighters to clerics built after the initial build order completes.
      * For every 1 cleric, this many fighters are built.
      */
-    FIGHTER_TO_CLERIC_RATIO: 2,
+    FIGHTER_TO_CLERIC_RATIO: 5,
 };
 
 // ============================================================================
@@ -237,7 +236,7 @@ export const CombatConfig = {
      * Euclidean radius around the enemy spawn that combat units must never enter.
      * If all enemies are within this zone, combat units idle near the map center.
      */
-    ENEMY_SPAWN_EXCLUSION_RADIUS: 25,
+    ENEMY_SPAWN_EXCLUSION_RADIUS: 30,
 
     /**
      * Euclidean radius around the enemy spawn that an enemy combat unit must cross
@@ -245,7 +244,7 @@ export const CombatConfig = {
      * to create a neutral gap that prevents rapid engage/disengage toggling when
      * enemies hover near the territory boundary.
      */
-    COMBAT_ENGAGE_RADIUS: 40
+    COMBAT_ENGAGE_RADIUS: 45
 };
 
 // ============================================================================
