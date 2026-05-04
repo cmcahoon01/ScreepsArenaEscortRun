@@ -1,10 +1,10 @@
 import { getObjectById } from 'game/utils';
 import { MOVE, CARRY, RESOURCE_ENERGY } from 'game/constants';
-import { ActiveCreep } from './ActiveCreep.mjs';
+import { TugJob } from './tug.mjs';
 import { BodyPartCalculator } from '../constants.mjs';
 
 // Mule job - transports resources from a paired miner to the spawn
-export class MuleJob extends ActiveCreep {
+export class MuleJob extends TugJob {
     static get BODY() {
         return [MOVE, CARRY];
     }
@@ -135,23 +135,12 @@ export class MuleJob extends ActiveCreep {
             return;
         }
 
-        // Only take over as chain leader when the chain has just the miner
-        // (length === 1) and no other tug has stepped in yet.  If a dedicated
-        // tug is already leading, stay close so we can take over if it dies.
+        // If the chain contains only the miner, use the shared joining logic to
+        // become the chain leader. Otherwise, stay close to the miner so we can
+        // take over if the dedicated tug dies.
         if (tugChain.length === 1 && tugChain[0] === this.memory.pairedMinerId) {
-            const distance = Math.max(
-                Math.abs(creep.x - miner.x),
-                Math.abs(creep.y - miner.y)
-            );
-            if (distance <= 1) {
-                // Adjacent – become the leading tug: [mule, miner]
-                this.gameState.tugChain = [this.id, this.memory.pairedMinerId];
-            } else {
-                creep.moveTo(miner);
-            }
+            this._joinOrLeadChain(creep);
         } else {
-            // Chain is empty or another creep is already the leader; move toward
-            // the miner to stay nearby and be ready to help if needed.
             creep.moveTo(miner);
         }
     }
