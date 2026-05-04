@@ -64,29 +64,6 @@ export const DEFAULT_TIER = 1;
  */
 export const BuildConfig = {
     /**
-     * Strength threshold ratio for strategy switching.
-     * When myStrength/enemyStrength >= 0.8, switch to logistics focus.
-     * 
-     * Rationale: At 80% or higher of enemy strength, we're competitive enough
-     * to invest in economy without being overwhelmed. Below 80% means we need
-     * more military units to survive.
-     */
-    STRENGTH_THRESHOLD: 0.8,
-    
-    /**
-     * Military unit composition ratio.
-     * For every 1 cleric (healer), build 3 archers (ranged attackers).
-     * 
-     * Rationale: Clerics provide healing support while archers deal damage.
-     * The 3:1 ratio balances offensive power with sustainability. Too many
-     * healers would reduce damage output, while too few would make the army
-     * fragile.
-     */
-    MILITARY_RATIO: {
-        ARCHERS_PER_CLERIC: 3
-    },
-    
-    /**
      * Initial build order that always executes first.
      * Builds in sequence: miner → blocker → mule → cleric → tug → miner → mule → miner → mule.
      * All are replaced if they die. After all are present, fighters and clerics are built
@@ -147,13 +124,6 @@ export const MapTopology = {
      * Used to determine which side of the map a spawn is on.
      */
     ARENA_CENTER: 50,
-
-    /**
-     * Preferred spawn directions when spawning creeps.
-     *
-     */
-    LEFT_FIRST_SPAWNING: [LEFT, TOP_LEFT, TOP, TOP_RIGHT, RIGHT, BOTTOM_RIGHT, BOTTOM, BOTTOM_LEFT],
-    RIGHT_FIRST_SPAWNING: [RIGHT, BOTTOM_RIGHT, BOTTOM, BOTTOM_LEFT, LEFT, TOP_LEFT, TOP, TOP_RIGHT],
 };
 
 // ============================================================================
@@ -245,26 +215,4 @@ export const CombatConfig = {
      * enemies hover near the territory boundary.
      */
     COMBAT_ENGAGE_RADIUS: 45
-};
-
-// ============================================================================
-// Construction Configuration
-// ============================================================================
-
-/**
- * Configuration for construction and infrastructure.
- */
-export const ConstructionConfig = {
-    /**
-     * Maximum number of road construction sites to create.
-     * 
-     * Rationale: Limiting to 6 prevents over-investment in roads.
-     * Roads cost energy to build and maintain. Too many roads would
-     * divert resources from more important structures (extensions, spawns).
-     * 6 roads is enough to improve key paths without excessive overhead.
-     * 
-     * Note: As of current implementation, road construction is commented out
-     * in HaulerJob.mjs, but this constant is preserved for future use.
-     */
-    MAX_ROAD_CONSTRUCTION: 6
 };
