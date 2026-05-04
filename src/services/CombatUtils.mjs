@@ -263,6 +263,92 @@ export class CombatUtils {
     }
 
     /**
+     * Select the primary combat target considering all game priorities.
+     *
+     * Returns one of:
+     *   - null: no enemies at all; caller should idle
+     *   - { mode: 'idle', validTargets }:
+     *       no targetable enemies (all on ramparts / in spawn zone); caller should idle
+     *   - { mode: 'payload_priority', enemyPayload, combatEnemiesInRange, validTargets }:
+     *       enemy escort is active: fight back against combatEnemiesInRange if any,
+     *       otherwise pursue enemyPayload
+     *   - { mode: 'standard', attackTarget, movementTarget, validTargets }:
+     *       normal combat: attack attackTarget; move towards movementTarget
+     *       (movementTarget may differ from attackTarget when flag-blocker or
+     *       payload-relative priority applies and no enemies are in attack range)
+     *
+     * @param {Creep} creep - The acting creep
+     * @param {GameState} gameState - The game state service
+     * @param {Creep[]} enemiesInAttackRange - Enemies within this creep's attack range
+     * @returns {Object|null}
+     */
+    static selectPrimaryTarget(creep, gameState, enemiesInAttackRange) {
+        const allHostileCreeps = gameState.getEnemyCreeps();
+        if (allHostileCreeps.length === 0) {
+            return null;
+        }
+
+        const ramparts = gameState.getRamparts();
+        const { enemiesNotOnRamparts } = CombatUtils.filterEnemiesByRampartStatus(allHostileCreeps, ramparts);
+
+        const enemySpawn = gameState.getEnemySpawn();
+        const validTargets = enemySpawn
+            ? enemiesNotOnRamparts.filter(e => !CombatUtils.isWithinEnemySpawnRadius(e, enemySpawn))
+            : enemiesNotOnRamparts;
+
+        // === ENEMY PAYLOAD PRIORITY ===
+        // If the enemy escort is outside its spawn zone and not sheltered on a rampart,
+        // prioritise killing it.  Exception: fight back when combat enemies are already
+        // within attack range.
+        const enemyEscortCreepId = gameState.getEnemyEscortCreepId();
+        if (enemyEscortCreepId) {
+            const enemyPayload = getObjectById(enemyEscortCreepId);
+            if (enemyPayload) {
+                const isOnRampart = CombatUtils.isOnEnemyRampart(enemyPayload, ramparts);
+                if (!isOnRampart && !CombatUtils.isWithinEnemySpawnRadius(enemyPayload, enemySpawn)) {
+                    const combatEnemiesInRange = enemiesInAttackRange.filter(
+                        e => e.id !== enemyEscortCreepId && CombatUtils.hasAttackCapability(e)
+                    );
+                    return {
+                        mode: 'payload_priority',
+                        enemyPayload,
+                        combatEnemiesInRange,
+                        validTargets,
+                    };
+                }
+            }
+        }
+
+        if (validTargets.length === 0) {
+            return { mode: 'idle', validTargets };
+        }
+
+        const closestEnemy = creep.findClosestByRange(validTargets);
+        let attackTarget = closestEnemy;
+        let movementTarget = closestEnemy;
+
+        // When no enemies are within attack range, consider higher-priority movement targets.
+        if (enemiesInAttackRange.length === 0) {
+            const flagBlocker = CombatUtils.findFlagBlockingEnemy(gameState, allHostileCreeps);
+            if (flagBlocker && creep.id === gameState.getFlagKillerId()) {
+                attackTarget = flagBlocker;
+                movementTarget = flagBlocker;
+            } else if (gameState.isPayloadMoving()) {
+                const payloadId = gameState.getPayloadId();
+                const payload = payloadId ? getObjectById(payloadId) : null;
+                if (payload && validTargets.length > 0) {
+                    const enemyClosestToPayload = payload.findClosestByRange(validTargets);
+                    if (enemyClosestToPayload) {
+                        movementTarget = enemyClosestToPayload;
+                    }
+                }
+            }
+        }
+
+        return { mode: 'standard', attackTarget, movementTarget, validTargets };
+    }
+
+    /**
      * Find an enemy standing on our flag when the payload is close enough to
      * make it a priority target.
      *

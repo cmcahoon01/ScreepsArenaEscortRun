@@ -5,6 +5,7 @@ import { ScreepController } from './src/controllers/ScreepController.mjs';
 import { BuildOrder } from './src/controllers/BuildOrder.mjs';
 import { GameState } from './src/services/GameState.mjs';
 import { PayloadJob } from './src/jobs/payload.mjs';
+import { CombatCoordinator } from './src/combat/CombatCoordinator.mjs';
 
 const screepController = new ScreepController();
 const gameState = new GameState(screepController);
@@ -27,6 +28,9 @@ gameState.setEnemyFlag(enemyFlag);
 export function loop() {
     // Refresh game state cache once per tick
     gameState.refresh();
+
+    // Determine group-level combat engagement (engage / disengage together)
+    CombatCoordinator.tick(gameState);
 
     // Check if there's a spawning creep that needs to be added to memory
     buildOrder.checkAndAddSpawningCreep();
