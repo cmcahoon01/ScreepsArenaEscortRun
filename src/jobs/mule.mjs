@@ -77,7 +77,7 @@ export class MuleJob extends TugJob {
                         const containerEnergy = container.store[RESOURCE_ENERGY] || 0;
                         if (containerEnergy > 0) {
                             // Try to withdraw first; move only if out of range
-                            const withdrawResult = creep.withdraw(container, RESOURCE_ENERGY);
+                            let withdrawResult = creep.withdraw(container, RESOURCE_ENERGY);
                             if (withdrawResult === ERR_NOT_IN_RANGE) {
                                 creep.moveTo(container);
                                 withdrawResult = creep.withdraw(container, RESOURCE_ENERGY);
@@ -130,7 +130,7 @@ export class MuleJob extends TugJob {
             const spawn = this.gameState.getMySpawn();
             if (spawn) {
                 // Try to transfer first; move only if out of range
-                const transferResult = creep.transfer(spawn, RESOURCE_ENERGY);
+                let transferResult = creep.transfer(spawn, RESOURCE_ENERGY);
                 if (transferResult === ERR_NOT_IN_RANGE) {
                     creep.moveTo(spawn);
                     transferResult = creep.transfer(spawn, RESOURCE_ENERGY);
