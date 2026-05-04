@@ -30,6 +30,15 @@ export class MinerJob extends ActiveCreep {
         }
     }
 
+    /**
+     * Whether this miner should place the mining container on arrival.
+     * Overridden to true by Miner2Job.
+     * @returns {boolean}
+     */
+    shouldPlaceContainer() {
+        return false;
+    }
+
     constructor(id, jobName, tier, controller, gameState) {
         super(id, jobName, tier, controller, gameState);
         const body = this.getBody();
@@ -105,12 +114,14 @@ export class MinerJob extends ActiveCreep {
             transitionToMining(this.memory);
             console.log(`Miner ${this.id} arrived at mining position`);
 
-            if (this.jobName === 'miner2' && !this.gameState.getMiningContainerPos()) {
-                const miner1ActiveCreep = this.controller.creeps.find(c =>
-                    c.jobName === 'miner1' && c.id !== this.id
+            if (this.shouldPlaceContainer() && !this.gameState.getMiningContainerPos()) {
+                // Find the companion miner (the one that does not place the container)
+                const companionMiner = this.controller.creeps.find(c =>
+                    MINER_JOB_NAMES.has(c.jobName) && c.id !== this.id &&
+                    typeof c.shouldPlaceContainer === 'function' && !c.shouldPlaceContainer()
                 );
-                const tier1Pos = (miner1ActiveCreep && miner1ActiveCreep.memory.targetX != null)
-                    ? { x: miner1ActiveCreep.memory.targetX, y: miner1ActiveCreep.memory.targetY }
+                const tier1Pos = (companionMiner && companionMiner.memory.targetX != null)
+                    ? { x: companionMiner.memory.targetX, y: companionMiner.memory.targetY }
                     : null;
                 const containerPos = findContainerPosition(creep, tier1Pos, source);
                 if (containerPos) {

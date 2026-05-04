@@ -45,9 +45,9 @@ export class TugChain {
         return [...this._chain];
     }
 
-    /** The last ID in the chain (the subject being towed), or undefined if empty. */
+    /** The last ID in the chain (the subject being towed), or null if empty. */
     get last() {
-        return this._chain[this._chain.length - 1];
+        return this._chain.length > 0 ? this._chain[this._chain.length - 1] : null;
     }
 
     prune() {
