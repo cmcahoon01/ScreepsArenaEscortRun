@@ -1,9 +1,12 @@
 import { getObjectById } from 'game/utils';
 import { WORK, CARRY, MOVE, ERR_NOT_IN_RANGE, OK, RESOURCE_ENERGY } from 'game/constants';
+import { StructureContainer } from 'game/prototypes';
+import { createConstructionSite } from 'game/utils';
 import { ActiveCreep } from './ActiveCreep.mjs';
 import { SourceAssignmentStrategy } from './SourceAssignmentStrategy.mjs';
 import { ExtensionBuilder } from './ExtensionBuilder.mjs';
 import { MinerStateMachine } from './MinerStateMachine.mjs';
+import { ContainerPlacementStrategy } from './ContainerPlacementStrategy.mjs';
 import { BodyPartCalculator } from '../constants.mjs';
 import { CombatUtils } from '../services/CombatUtils.mjs';
 import { TugChainService } from '../services/TugChainService.mjs';
@@ -156,6 +159,31 @@ export class MinerJob extends ActiveCreep {
                 // Arrived at target position
                 MinerStateMachine.transitionToMining(this.memory);
                 console.log(`Miner ${this.id} arrived at mining position`);
+
+                // Tier 2 miner places the container construction site on arrival
+                if (this.tier === 2 && !this.gameState.getMiningContainerPos()) {
+                    const tier1ActiveCreep = this.controller.creeps.find(c =>
+                        c.jobName === 'miner' && c.tier === 1 && c.id !== this.id
+                    );
+                    const tier1Pos = (tier1ActiveCreep &&
+                                      tier1ActiveCreep.memory.targetX !== null &&
+                                      tier1ActiveCreep.memory.targetX !== undefined)
+                        ? { x: tier1ActiveCreep.memory.targetX, y: tier1ActiveCreep.memory.targetY }
+                        : null;
+
+                    const containerPos = ContainerPlacementStrategy.findContainerPosition(creep, tier1Pos, source);
+                    if (containerPos) {
+                        const result = createConstructionSite(containerPos, StructureContainer);
+                        if (result.object) {
+                            this.gameState.setMiningContainerPos(containerPos.x, containerPos.y);
+                            console.log(`Miner ${this.id} placed container site at (${containerPos.x}, ${containerPos.y})`);
+                        } else {
+                            console.log(`Miner ${this.id} failed to place container site at (${containerPos.x}, ${containerPos.y}): error ${result.error}`);
+                        }
+                    } else {
+                        console.log(`Miner ${this.id} could not find a valid container position`);
+                    }
+                }
             }
         }
         
@@ -198,17 +226,43 @@ export class MinerJob extends ActiveCreep {
                         console.log(`Miner ${this.id} not in range of source`);
                     }
                 } else {
-                    // Transfer to an adjacent mule if one is present, otherwise fill extensions
-                    const adjacentMule = this.findAdjacentMule(creep);
-                    if (adjacentMule) {
-                        const transferResult = creep.transfer(adjacentMule, RESOURCE_ENERGY);
-                        if (transferResult !== OK) {
-                            // Transfer failed (e.g. mule is full); fall back to filling extensions
-                            ExtensionBuilder.fillExtensions(creep, RESOURCE_ENERGY, this.gameState);
+                    // Deposit energy: use container if available, otherwise mule/extensions
+                    const containerPos = this.gameState.getMiningContainerPos();
+                    const containerId = this.gameState.getMiningContainerId();
+
+                    if (containerId) {
+                        // Container is fully built – transfer energy into it
+                        const container = getObjectById(containerId);
+                        if (container) {
+                            const transferResult = creep.transfer(container, RESOURCE_ENERGY);
+                            if (transferResult === ERR_NOT_IN_RANGE) {
+                                console.log(`Miner ${this.id} not in range of container`);
+                            }
+                        }
+                    } else if (containerPos) {
+                        // Container site exists but is still under construction – build it
+                        const site = this.gameState.getMyConstructionSites().find(s =>
+                            s.x === containerPos.x && s.y === containerPos.y
+                        );
+                        if (site) {
+                            const buildResult = creep.build(site);
+                            if (buildResult === ERR_NOT_IN_RANGE) {
+                                console.log(`Miner ${this.id} not in range of container site`);
+                            }
                         }
                     } else {
-                        // Stage 2: Deposit to least full extension
-                        ExtensionBuilder.fillExtensions(creep, RESOURCE_ENERGY, this.gameState);
+                        // No container – transfer to an adjacent mule if one is present, otherwise fill extensions
+                        const adjacentMule = this.findAdjacentMule(creep);
+                        if (adjacentMule) {
+                            const transferResult = creep.transfer(adjacentMule, RESOURCE_ENERGY);
+                            if (transferResult !== OK) {
+                                // Transfer failed (e.g. mule is full); fall back to filling extensions
+                                ExtensionBuilder.fillExtensions(creep, RESOURCE_ENERGY, this.gameState);
+                            }
+                        } else {
+                            // Stage 2: Deposit to least full extension
+                            ExtensionBuilder.fillExtensions(creep, RESOURCE_ENERGY, this.gameState);
+                        }
                     }
                 }
             }

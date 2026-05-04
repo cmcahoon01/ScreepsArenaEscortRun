@@ -1,5 +1,5 @@
 import { getObjectById } from 'game/utils';
-import { MOVE, CARRY, RESOURCE_ENERGY } from 'game/constants';
+import { MOVE, CARRY, RESOURCE_ENERGY, ERR_NOT_IN_RANGE } from 'game/constants';
 import { TugJob } from './tug.mjs';
 import { BodyPartCalculator } from '../constants.mjs';
 
@@ -69,6 +69,24 @@ export class MuleJob extends TugJob {
             if (usedCapacity >= totalCapacity) {
                 this.memory.state = 'depositing';
             } else {
+                // If the mining container is built, withdraw from it instead of waiting on the miner
+                const containerId = this.gameState.getMiningContainerId();
+                if (containerId) {
+                    const container = getObjectById(containerId);
+                    if (container) {
+                        const containerEnergy = container.store[RESOURCE_ENERGY] || 0;
+                        if (containerEnergy > 0) {
+                            creep.moveTo(container);
+                            const withdrawResult = creep.withdraw(container, RESOURCE_ENERGY);
+                            if (withdrawResult === ERR_NOT_IN_RANGE) {
+                                // Still moving towards the container; no further action this tick
+                            }
+                        }
+                        // Container is empty this tick – nothing to do
+                        return;
+                    }
+                }
+
                 // Find the paired miner creep
                 const pairedActiveCreep = this.memory.pairedMinerId
                     ? this.controller.creeps.find(c => c.id === this.memory.pairedMinerId)

@@ -1,5 +1,5 @@
 import { getObjectsByPrototype, getObjectById } from 'game/utils';
-import { Creep, StructureSpawn, StructureRampart, StructureExtension, Source, ConstructionSite } from 'game/prototypes';
+import { Creep, StructureSpawn, StructureRampart, StructureExtension, Source, ConstructionSite, StructureContainer } from 'game/prototypes';
 import { detectFortifiedMiner } from "./StructureUtils.mjs";
 import { CombatUtils } from "./CombatUtils.mjs";
 import { BuildConfig } from "../constants.mjs";
@@ -38,6 +38,8 @@ export class GameState {
         this.blockerEverBuilt = false; // True once we have ever spawned a blocker
         this.blockerEverDied = false;  // True once a blocker was built and subsequently died
         this.enemyHasCombatUnit = false; // True if any enemy has attack or ranged_attack body parts
+        this.miningContainerPos = null; // Position {x, y} of the mining container/site
+        this.miningContainerId = null;  // ID of the completed mining container
     }
     
     /**
@@ -68,6 +70,18 @@ export class GameState {
         // Cache construction sites
         const allConstructionSites = getObjectsByPrototype(ConstructionSite);
         this.myConstructionSites = allConstructionSites.filter(c => c.my);
+
+        // Check if the mining container construction site has completed
+        if (this.miningContainerPos && !this.miningContainerId) {
+            const containers = getObjectsByPrototype(StructureContainer);
+            const container = containers.find(c =>
+                c.x === this.miningContainerPos.x && c.y === this.miningContainerPos.y
+            );
+            if (container) {
+                this.miningContainerId = container.id;
+                console.log(`Mining container built at (${this.miningContainerPos.x}, ${this.miningContainerPos.y})`);
+            }
+        }
         
         // Cache fortified miner detection
         this.fortifiedMiner = detectFortifiedMiner(this);
@@ -396,5 +410,31 @@ export class GameState {
      */
     setFlagKillerId(id) {
         this.flagKillerId = id;
+    }
+
+    /**
+     * Set the position of the mining container (or its construction site).
+     * @param {number} x
+     * @param {number} y
+     */
+    setMiningContainerPos(x, y) {
+        this.miningContainerPos = { x, y };
+    }
+
+    /**
+     * Get the position of the mining container/site.
+     * @returns {{x: number, y: number}|null}
+     */
+    getMiningContainerPos() {
+        return this.miningContainerPos;
+    }
+
+    /**
+     * Get the ID of the completed mining container.
+     * Returns null until the construction site has been fully built.
+     * @returns {string|null}
+     */
+    getMiningContainerId() {
+        return this.miningContainerId;
     }
 }
