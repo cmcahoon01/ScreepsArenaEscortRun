@@ -80,6 +80,7 @@ export class MuleJob extends TugJob {
                             const withdrawResult = creep.withdraw(container, RESOURCE_ENERGY);
                             if (withdrawResult === ERR_NOT_IN_RANGE) {
                                 creep.moveTo(container);
+                                creep.withdraw(container, RESOURCE_ENERGY);
                             }
                         }
                         // Container is empty this tick – nothing to do
@@ -128,6 +129,7 @@ export class MuleJob extends TugJob {
                 const transferResult = creep.transfer(spawn, RESOURCE_ENERGY);
                 if (transferResult === ERR_NOT_IN_RANGE) {
                     creep.moveTo(spawn);
+                    creep.transfer(spawn, RESOURCE_ENERGY);
                 }
             }
         }
