@@ -54,17 +54,7 @@ export class RangedJob extends ActiveCreep {
             y: mapSize / 2
         };
 
-        // Never move within the spawn exclusion zone - retreat toward center if inside it
-        if (enemySpawn && CombatUtils.isWithinEnemySpawnRadius(creep, enemySpawn)) {
-            creep.moveTo(centerPos);
-            return;
-        }
-
-        // Idle near center of the map (Manhattan distance is sufficient for this coarse check)
-        const distToCenter = Math.abs(creep.x - centerPos.x) + Math.abs(creep.y - centerPos.y);
-        if (distToCenter > mapSize / 4) {
-            creep.moveTo(centerPos);
-        }
+        creep.moveTo(centerPos);
     }
 
     // Hook method for subclasses to indicate if they should heal during idle

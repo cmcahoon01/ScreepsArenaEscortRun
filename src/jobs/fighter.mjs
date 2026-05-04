@@ -60,7 +60,6 @@ export class FighterJob extends ActiveCreep {
         // If the enemy payload is outside the spawn exclusion zone, prioritize killing it.
         // Exception: fight back against enemy combat units currently within melee attack range (1).
         const enemyEscortCreepId = this.gameState.getEnemyEscortCreepId();
-        console.log("a");
         if (enemyEscortCreepId) {
             const enemyPayload = getObjectById(enemyEscortCreepId);
             if (enemyPayload) {
@@ -84,7 +83,6 @@ export class FighterJob extends ActiveCreep {
                 }
             }
         }
-        console.log("b");
 
         // Check if there are any enemies within range 5 - fight back against nearby threats
         const enemiesInRange5 = movementTargets.filter(enemy => getRange(creep, enemy) <= 5);
@@ -97,7 +95,6 @@ export class FighterJob extends ActiveCreep {
             }
             return;
         }
-        console.log("c");
 
         // Not in combat - check if an enemy is blocking the flag while the payload is close.
         // Only the single designated flag killer pursues it; other units behave normally.
@@ -106,7 +103,6 @@ export class FighterJob extends ActiveCreep {
             this.attackOrMoveTo(creep, flagBlocker);
             return;
         }
-        console.log("d");
 
         // If payload is moving, engage the closest enemy to the payload (not on a rampart, not in spawn zone)
         if (this.gameState.isPayloadMoving()) {
@@ -120,7 +116,6 @@ export class FighterJob extends ActiveCreep {
                 }
             }
         }
-        console.log("e");
 
         // No fortified miner, no payload priority - idle
         this.idle(creep);
@@ -171,16 +166,6 @@ export class FighterJob extends ActiveCreep {
             y: mapSize / 2
         };
 
-        // Never move within the spawn exclusion zone - retreat toward center if inside it
-        if (enemySpawn && CombatUtils.isWithinEnemySpawnRadius(creep, enemySpawn)) {
-            creep.moveTo(centerPos);
-            return;
-        }
-
-        // Idle near center of the map (Manhattan distance is sufficient for this coarse check)
-        const distToCenter = Math.abs(creep.x - centerPos.x) + Math.abs(creep.y - centerPos.y);
-        if (distToCenter > mapSize / 4) {
-            creep.moveTo(centerPos);
-        }
+        creep.moveTo(centerPos);
     }
 }
