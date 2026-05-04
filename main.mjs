@@ -4,8 +4,8 @@ import { Flag, getObjectsByPrototype } from 'game';
 import { ScreepController } from './src/controllers/ScreepController.mjs';
 import { BuildOrder } from './src/controllers/BuildOrder.mjs';
 import { GameState } from './src/services/GameState.mjs';
-import { PayloadJob } from './src/jobs/payload.mjs';
-import { CombatCoordinator } from './src/combat/CombatCoordinator.mjs';
+import { PayloadJob } from './src/jobs/PayloadJob.mjs';
+import { CombatCoordinator } from './src/controllers/CombatCoordinator.mjs';
 
 const screepController = new ScreepController();
 const gameState = new GameState(screepController);

@@ -1,4 +1,4 @@
-import { Jobs } from '../jobs/JobRegistry.mjs';
+import { Jobs } from '../services/jobs/JobRegistry.mjs';
 import { BuildConfig, DEFAULT_TIER } from '../constants.mjs';
 
 /**

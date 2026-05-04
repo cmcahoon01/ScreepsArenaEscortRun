@@ -1,4 +1,4 @@
-import { CombatUtils } from '../services/CombatUtils.mjs';
+import { CombatUtils } from '../services/combat/CombatUtils.mjs';
 import { CombatConfig } from '../constants.mjs';
 
 /**

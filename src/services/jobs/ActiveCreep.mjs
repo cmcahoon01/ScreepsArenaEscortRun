@@ -1,6 +1,6 @@
 // Base class for active creeps that combines CreepInfo data with Job behavior
-import { DEFAULT_TIER } from '../constants.mjs';
-import { BodyPartCalculator } from '../services/BodyPartService.mjs';
+import { DEFAULT_TIER } from '../../constants.mjs';
+import { BodyPartCalculator } from '../BodyPartService.mjs';
 
 export class ActiveCreep {
     constructor(id, jobName, tier, controller, gameState) {

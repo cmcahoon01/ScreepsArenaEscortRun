@@ -1,8 +1,8 @@
 import { getObjectById } from 'game/utils';
 import { ATTACK, MOVE, ERR_NOT_IN_RANGE } from 'game/constants';
 import { ActiveCreep } from './ActiveCreep.mjs';
-import { CombatUtils } from '../services/CombatUtils.mjs';
-import { MapTopology } from '../constants.mjs';
+import { CombatUtils } from '../combat/CombatUtils.mjs';
+import { MapTopology } from '../../constants.mjs';
 
 // Base class for melee combat units (fighter and paladin)
 export class MeleeJob extends ActiveCreep {

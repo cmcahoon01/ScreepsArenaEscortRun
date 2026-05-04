@@ -1,6 +1,6 @@
 import { getTerrainAt } from 'game/utils';
 import { TERRAIN_WALL, TERRAIN_SWAMP } from 'game/constants';
-import { MapTopology } from '../constants.mjs';
+import { MapTopology } from '../../constants.mjs';
 
 /**
  * Handles terrain and position validation.

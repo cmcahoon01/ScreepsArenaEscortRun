@@ -1,5 +1,5 @@
 import { getObjectById } from 'game/utils';
-import { TerrainAnalyzer } from '../combat/TerrainAnalyzer.mjs';
+import { TerrainAnalyzer } from './combat/TerrainAnalyzerService.mjs';
 
 /**
  * TugChainService - Utility for coordinating movement of tug chains.

@@ -1,10 +1,10 @@
 import { getObjectById, getObjectsByPrototype, getRange } from 'game/utils';
 import { Structure } from 'game/prototypes';
 import { ActiveCreep } from './ActiveCreep.mjs';
-import { KitingBehavior } from '../combat/KitingBehavior.mjs';
-import { isInRangedAttackRange } from '../services/RangeUtils.mjs';
-import { CombatUtils } from '../services/CombatUtils.mjs';
-import { MapTopology, RangeConfig } from '../constants.mjs';
+import { KitingBehavior } from '../combat/KitingBehaviorService.mjs';
+import { isInRangedAttackRange } from '../RangeUtils.mjs';
+import { CombatUtils } from '../combat/CombatUtils.mjs';
+import { MapTopology, RangeConfig } from '../../constants.mjs';
 
 // Base class for ranged combat units (archer and cleric)
 export class RangedJob extends ActiveCreep {
