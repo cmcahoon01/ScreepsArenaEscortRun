@@ -67,7 +67,13 @@ export class FighterJob extends ActiveCreep {
             return;
         }
 
-        // Standard mode: attack the closest valid enemy; if out of melee range, move
+        // Standard mode: disengage if the coordinator says enemies have retreated
+        if (!this.gameState.isCombatEngaged()) {
+            this.idle(creep);
+            return;
+        }
+
+        // Attack the closest valid enemy; if out of melee range, move
         // towards the priority movement target (flag blocker / payload-relative / closest).
         const attackResult = creep.attack(result.attackTarget);
         if (attackResult === ERR_NOT_IN_RANGE) {

@@ -40,6 +40,7 @@ export class GameState {
         this.enemyHasCombatUnit = false; // True if any enemy has attack or ranged_attack body parts
         this.miningContainerPos = null; // Position {x, y} of the mining container/site
         this.miningContainerId = null;  // ID of the completed mining container
+        this.combatEngaged = false; // Whether combat units should actively engage enemies this tick
     }
     
     /**
@@ -436,5 +437,23 @@ export class GameState {
      */
     getMiningContainerId() {
         return this.miningContainerId;
+    }
+
+    /**
+     * Check whether the CombatCoordinator has determined that combat units
+     * should actively engage enemies this tick.
+     * @returns {boolean}
+     */
+    isCombatEngaged() {
+        return this.combatEngaged;
+    }
+
+    /**
+     * Set the combat engagement state for this tick.
+     * Called by CombatCoordinator.tick() each tick.
+     * @param {boolean} engaged
+     */
+    setCombatEngaged(engaged) {
+        this.combatEngaged = engaged;
     }
 }

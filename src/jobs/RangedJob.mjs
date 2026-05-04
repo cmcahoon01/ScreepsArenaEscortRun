@@ -140,7 +140,12 @@ export class RangedJob extends ActiveCreep {
             return;
         }
 
-        // Standard mode
+        // Standard mode: disengage if the coordinator says enemies have retreated
+        if (!this.gameState.isCombatEngaged()) {
+            this.idle(creep, damagedCreeps);
+            return;
+        }
+
         const range = getRange(creep, result.attackTarget);
 
         if (enemiesInRange.length > 0 && range < DESIRED_RANGE) {
