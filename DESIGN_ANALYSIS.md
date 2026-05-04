@@ -189,15 +189,15 @@ INITIAL_BUILD: [
 `buildItem.job || buildItem`, which is a code smell indicating the data
 model is ambiguous.
 
-**Recommendation:** Use the object format consistently for every entry:
+**Recommendation:** Swap to just a string format. Create a new job for tier 1 and tier 2 miners.
 
 ```js
 INITIAL_BUILD: [
-    { job: 'miner',   tier: 1 },
-    { job: 'blocker', tier: 1 },
-    { job: 'mule',    tier: 1 },
-    { job: 'miner',   tier: 2 },
-    { job: 'mule',    tier: 1 },
+    'miner1',
+    'blocker',
+    'mule',
+    'miner2',
+    'mule',
 ]
 ```
 
@@ -397,18 +397,14 @@ The `handleDefensiveRetreat`, `shouldAdoptDefensivePosture`, and
 `findDefensiveRampartPosition` methods in `CombatUtils` are therefore fully
 unreachable at runtime.
 
-**Recommendation:** Either re-enable the defensive retreat system and remove
-the `const inDefensiveMode = false` workaround, or delete the feature
-entirely. Leaving dead code in place creates confusion about the system's
-intended behavior and inflates the maintenance surface.
+**Recommendation:** Remove unused code
 
 ### 8.2 `EXTENSIONS_PER_MINER: 0`
 
 `MapTopology.EXTENSIONS_PER_MINER` is set to `0`. If extensions are never
 built, this constant (and any code that reads it) serves no purpose.
 
-**Recommendation:** Either restore extension building and set the constant to a
-useful value, or remove the constant and any associated code paths.
+**Recommendation:** remove the constant and any associated code paths.
 
 ---
 
@@ -453,7 +449,7 @@ Selector
 
 This makes the priority ordering explicit, self-documenting, and trivially
 extensible — adding a new behavior is adding a new node, not modifying an
-existing chain.
+existing chain. <-- prefered.
 
 ### 9.2 Decompose `CombatUtils.selectPrimaryTarget`
 
