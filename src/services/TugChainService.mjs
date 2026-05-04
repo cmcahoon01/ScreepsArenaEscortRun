@@ -63,16 +63,14 @@ export class TugChainService {
                                     ? pos : best
                             )
                             : { x: target.x, y: target.y - 1 };
-                        console.log("evade a");
                     } else {
                         evadePos = { x: target.x, y: target.y - 1 };
-                        console.log("evade b");
                     }
                     creeps[idx].moveTo(evadePos);
-                        console.log("move a");
+                    console.log("evading to");
+                    console.log(evadePos);
                 } else {
                     creeps[idx].moveTo(target);
-                        console.log("move b");
                 }
             } else {
                 // Subsequent creeps pull and follow
