@@ -1,7 +1,7 @@
 import { getObjectById } from 'game/utils';
 import { MOVE, CARRY, RESOURCE_ENERGY, ERR_NOT_IN_RANGE } from 'game/constants';
 import { TugJob } from './tug.mjs';
-import { BodyPartCalculator } from '../constants.mjs';
+import { BodyPartCalculator } from '../services/BodyPartService.mjs';
 
 // Mule job - transports resources from a paired miner to the spawn
 export class MuleJob extends TugJob {

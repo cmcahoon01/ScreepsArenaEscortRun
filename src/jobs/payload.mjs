@@ -2,26 +2,7 @@ import { getObjectById, getTicks } from 'game/utils';
 import { ActiveCreep } from './ActiveCreep.mjs';
 import { TugChainService } from '../services/TugChainService.mjs';
 import { compareTeamStrengths } from '../combat/strengthEstimator.mjs';
-
-const PAYLOAD_STATE_WAITING = 'waiting';
-const PAYLOAD_STATE_MOVING = 'moving';
-
-/**
- * Strength ratio threshold for "significant military advantage".
- * When myStrength / enemyStrength >= this value, we consider ourselves to have
- * sufficient advantage to advance the payload.
- */
-const MILITARY_ADVANTAGE_THRESHOLD = 1.5;
-
-/**
- * Game tick threshold after which the payload advances regardless of military strength.
- */
-const GAME_TIME_THRESHOLD = 1500;
-
-/**
- * Chebyshev distance from our spawn at which the payload waits on a rampart.
- */
-const WAITING_RAMPART_DISTANCE = 2;
+import { PayloadConfig } from '../constants.mjs';
 
 /**
  * PayloadJob - manages the EscortCreep (payload) unit in two states.
@@ -63,7 +44,7 @@ export class PayloadJob extends ActiveCreep {
     constructor(id, jobName, tier, controller, gameState, flag) {
         super(id, jobName, tier, controller, gameState);
         this.flag = flag;
-        this.memory.state = PAYLOAD_STATE_WAITING;
+        this.memory.state = PayloadConfig.STATE_WAITING;
         this.gameState.setPayloadId(this.id);
     }
 
@@ -73,7 +54,7 @@ export class PayloadJob extends ActiveCreep {
      */
     hasMilitaryAdvantage() {
         const comparison = compareTeamStrengths(this.gameState);
-        return comparison.ratio >= MILITARY_ADVANTAGE_THRESHOLD && comparison.myTeam.strength > comparison.enemyTeam.strength + 300;
+        return comparison.ratio >= PayloadConfig.MILITARY_ADVANTAGE_THRESHOLD && comparison.myTeam.strength > comparison.enemyTeam.strength + 300;
     }
 
     /**
@@ -82,7 +63,7 @@ export class PayloadJob extends ActiveCreep {
      * @returns {boolean}
      */
     shouldTransitionToMoving() {
-        return this.hasMilitaryAdvantage() || getTicks() >= GAME_TIME_THRESHOLD;
+        return this.hasMilitaryAdvantage() || getTicks() >= PayloadConfig.GAME_TIME_THRESHOLD;
     }
 
     /**
@@ -99,7 +80,7 @@ export class PayloadJob extends ActiveCreep {
 
         const nearRamparts = this.gameState.getMyRamparts().filter(r => {
             const dist = Math.max(Math.abs(r.x - spawn.x), Math.abs(r.y - spawn.y));
-            return dist === WAITING_RAMPART_DISTANCE;
+            return dist === PayloadConfig.WAITING_RAMPART_DISTANCE;
         });
 
         if (nearRamparts.length === 0) {
@@ -116,12 +97,12 @@ export class PayloadJob extends ActiveCreep {
         }
 
         // Sync the payload's moving state into GameState so combat jobs can read it.
-        this.gameState.setPayloadMoving(this.memory.state === PAYLOAD_STATE_MOVING);
+        this.gameState.setPayloadMoving(this.memory.state === PayloadConfig.STATE_MOVING);
 
         // ── State 1: waiting on a rampart near spawn ──────────────────────────
-        if (this.memory.state === PAYLOAD_STATE_WAITING) {
+        if (this.memory.state === PayloadConfig.STATE_WAITING) {
             if (this.shouldTransitionToMoving()) {
-                this.memory.state = PAYLOAD_STATE_MOVING;
+                this.memory.state = PayloadConfig.STATE_MOVING;
                 // Seed the tug chain with this payload as the sole entry.
                 // When the first tug arrives adjacent to the payload it will
                 // prepend itself: tugChain becomes [tugId, payloadId], so the
@@ -138,7 +119,7 @@ export class PayloadJob extends ActiveCreep {
         }
 
         // ── State 2: moving toward the flag with tug assistance ───────────────
-        if (this.memory.state === PAYLOAD_STATE_MOVING) {
+        if (this.memory.state === PayloadConfig.STATE_MOVING) {
             // Re-claim the tug chain if it was cleared (e.g. after a delivery).
             const tugChain = this.gameState.getTugChain();
             if (tugChain.length === 0) {

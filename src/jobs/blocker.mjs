@@ -1,7 +1,7 @@
 import { getObjectById } from 'game/utils';
 import { MOVE } from 'game/constants';
 import { ActiveCreep } from './ActiveCreep.mjs';
-import { BodyPartCalculator } from '../constants.mjs';
+import { BodyPartCalculator } from '../services/BodyPartService.mjs';
 import { MinerStateMachine } from './MinerStateMachine.mjs';
 
 // Blocker job - rushes to the enemy flag and stands on it to prevent the enemy from winning

@@ -1,7 +1,7 @@
 import { ATTACK, MOVE, HEAL } from 'game/constants';
 import { MeleeJob } from './MeleeJob.mjs';
 import { isInHealRange } from '../services/RangeUtils.mjs';
-import { BodyPartCalculator } from '../constants.mjs';
+import { BodyPartCalculator } from '../services/BodyPartService.mjs';
 
 // Paladin job - melee combat with self-healing
 export class PaladinJob extends MeleeJob {

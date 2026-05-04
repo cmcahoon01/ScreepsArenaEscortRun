@@ -4,10 +4,7 @@ import { ActiveCreep } from './ActiveCreep.mjs';
 import { KitingBehavior } from '../combat/KitingBehavior.mjs';
 import { isInRangedAttackRange } from '../services/RangeUtils.mjs';
 import { CombatUtils } from '../services/CombatUtils.mjs';
-import { MapTopology } from '../constants.mjs';
-
-// Kiting behavior constants
-const DESIRED_RANGE = 3;
+import { MapTopology, RangeConfig } from '../constants.mjs';
 
 // Base class for ranged combat units (archer and cleric)
 export class RangedJob extends ActiveCreep {
@@ -119,12 +116,12 @@ export class RangedJob extends ActiveCreep {
                 const target = creep.findClosestByRange(result.combatEnemiesInRange);
                 if (target) {
                     const rangeToTarget = getRange(creep, target);
-                    if (rangeToTarget < DESIRED_RANGE) {
+                    if (rangeToTarget < RangeConfig.RANGED_ATTACK_RANGE) {
                         const retreatPos = this.findBestRetreatPosition(creep, allHostileCreeps, allCreeps, allStructures);
                         if (retreatPos) {
                             creep.moveTo(retreatPos);
                         }
-                    } else if (rangeToTarget > DESIRED_RANGE) {
+                    } else if (rangeToTarget > RangeConfig.RANGED_ATTACK_RANGE) {
                         creep.moveTo(target);
                     }
                     creep.rangedAttack(target);
@@ -132,7 +129,7 @@ export class RangedJob extends ActiveCreep {
             } else {
                 // No combat enemies in attack range — pursue and attack the enemy payload
                 const rangeToPayload = getRange(creep, result.enemyPayload);
-                if (rangeToPayload > DESIRED_RANGE) {
+                if (rangeToPayload > RangeConfig.RANGED_ATTACK_RANGE) {
                     creep.moveTo(result.enemyPayload);
                 }
                 creep.rangedAttack(result.enemyPayload);
@@ -148,7 +145,7 @@ export class RangedJob extends ActiveCreep {
 
         const range = getRange(creep, result.attackTarget);
 
-        if (enemiesInRange.length > 0 && range < DESIRED_RANGE) {
+        if (enemiesInRange.length > 0 && range < RangeConfig.RANGED_ATTACK_RANGE) {
             // Kite: move away from enemies
             const retreatPos = this.findBestRetreatPosition(creep, allHostileCreeps, allCreeps, allStructures);
             if (retreatPos) {
@@ -167,12 +164,12 @@ export class RangedJob extends ActiveCreep {
                     }
                 }
                 // Otherwise move towards movement target
-                else if (rangeToTarget > DESIRED_RANGE) {
+                else if (rangeToTarget > RangeConfig.RANGED_ATTACK_RANGE) {
                     creep.moveTo(result.movementTarget);
                 }
             } else {
                 // Non-healing units just move towards movement target
-                if (rangeToTarget > DESIRED_RANGE) {
+                if (rangeToTarget > RangeConfig.RANGED_ATTACK_RANGE) {
                     creep.moveTo(result.movementTarget);
                 }
             }
