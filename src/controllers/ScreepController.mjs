@@ -1,5 +1,5 @@
 import { getObjectById } from 'game/utils';
-import { Jobs } from '../services/JobRegistry.mjs';
+import { Jobs } from '../services/jobs/JobRegistry.mjs';
 import { DEFAULT_TIER } from '../constants.mjs';
 
 // Controller class to manage all creeps

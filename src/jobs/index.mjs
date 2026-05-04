@@ -12,4 +12,4 @@ export { ClericJob } from './ClericJob.mjs';
 export { TugJob } from './TugJob.mjs';
 export { PayloadJob } from './PayloadJob.mjs';
 export { BlockerJob } from './BlockerJob.mjs';
-export { Jobs } from '../services/JobRegistry.mjs';
+export { Jobs } from '../services/jobs/JobRegistry.mjs';
