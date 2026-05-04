@@ -67,8 +67,6 @@ export class TugChainService {
                         evadePos = { x: target.x, y: target.y - 1 };
                     }
                     creeps[idx].moveTo(evadePos);
-                    console.log("evading to");
-                    console.log(evadePos);
                 } else {
                     creeps[idx].moveTo(target);
                 }
