@@ -1,14 +1,15 @@
-// Export all job classes and utilities
-export { ActiveCreep } from './ActiveCreep.mjs';
-export { RangedJob } from './RangedJob.mjs';
-export { MeleeJob } from './MeleeJob.mjs';
-export { FighterJob } from './fighter.mjs';
-export { PaladinJob } from './paladin.mjs';
-export { ArcherJob } from './archer.mjs';
-export { HaulerJob } from './hauler.mjs';
-export { MinerJob } from './miner.mjs';
-export { MuleJob } from './mule.mjs';
-export { ClericJob } from './cleric.mjs';
-export { PayloadJob } from './payload.mjs';
-export { BlockerJob } from './blocker.mjs';
-export { Jobs } from './JobRegistry.mjs';
+// Export all job classes and base classes
+export { ActiveCreep } from '../services/ActiveCreep.mjs';
+export { RangedJob } from '../services/RangedJob.mjs';
+export { MeleeJob } from '../services/MeleeJob.mjs';
+export { FighterJob } from './FighterJob.mjs';
+export { PaladinJob } from './PaladinJob.mjs';
+export { ArcherJob } from './ArcherJob.mjs';
+export { HaulerJob } from './HaulerJob.mjs';
+export { MinerJob } from './MinerJob.mjs';
+export { MuleJob } from './MuleJob.mjs';
+export { ClericJob } from './ClericJob.mjs';
+export { TugJob } from './TugJob.mjs';
+export { PayloadJob } from './PayloadJob.mjs';
+export { BlockerJob } from './BlockerJob.mjs';
+export { Jobs } from '../services/JobRegistry.mjs';

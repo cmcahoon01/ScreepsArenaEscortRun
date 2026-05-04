@@ -1,5 +1,5 @@
 import { ATTACK, MOVE, HEAL } from 'game/constants';
-import { MeleeJob } from './MeleeJob.mjs';
+import { MeleeJob } from '../services/MeleeJob.mjs';
 import { isInHealRange } from '../services/RangeUtils.mjs';
 import { BodyPartCalculator } from '../services/BodyPartService.mjs';
 

@@ -1,6 +1,6 @@
 import {getObjectById} from 'game/utils';
 import {WORK, CARRY, MOVE, ERR_NOT_IN_RANGE, RESOURCE_ENERGY} from 'game/constants';
-import {ActiveCreep} from './ActiveCreep.mjs';
+import {ActiveCreep} from '../services/ActiveCreep.mjs';
 import {BodyPartCalculator} from '../services/BodyPartService.mjs';
 import {MapTopology} from '../constants.mjs';
 import {CombatUtils} from '../services/CombatUtils.mjs';

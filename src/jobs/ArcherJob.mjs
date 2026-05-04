@@ -1,5 +1,5 @@
 import { RANGED_ATTACK, MOVE } from 'game/constants';
-import { RangedJob } from './RangedJob.mjs';
+import { RangedJob } from '../services/RangedJob.mjs';
 import { BodyPartCalculator } from '../services/BodyPartService.mjs';
 
 // Archer job - ranged combat without healing (behaves like cleric without healing)

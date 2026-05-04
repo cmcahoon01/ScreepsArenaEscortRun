@@ -1,5 +1,5 @@
 import { getRange, findInRange, getObjectsByPrototype } from 'game/utils';
-import { TerrainAnalyzer } from './TerrainAnalyzer.mjs';
+import { TerrainAnalyzer } from './TerrainAnalyzerService.mjs';
 
 /**
  * Handles tactical positioning for ranged units.

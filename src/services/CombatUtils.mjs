@@ -1,6 +1,6 @@
 import { getRange, getObjectById } from 'game/utils';
 import { ATTACK, RANGED_ATTACK } from 'game/constants';
-import { compareTeamStrengths } from '../combat/strengthEstimator.mjs';
+import { compareTeamStrengths } from './combat/StrengthEstimatorService.mjs';
 import { CombatConfig, MapTopology } from '../constants.mjs';
 
 // Job names that count as combat units eligible to be assigned as the flag killer

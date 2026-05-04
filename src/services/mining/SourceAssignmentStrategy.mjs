@@ -1,5 +1,5 @@
-import { TerrainAnalyzer } from '../combat/TerrainAnalyzer.mjs';
-import { MapTopology } from '../constants.mjs';
+import { TerrainAnalyzer } from '../combat/TerrainAnalyzerService.mjs';
+import { MapTopology } from '../../constants.mjs';
 
 /**
  * Handles source selection logic for miners.

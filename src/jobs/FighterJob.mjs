@@ -1,5 +1,5 @@
 import { ATTACK, MOVE } from 'game/constants';
-import { MeleeJob } from './MeleeJob.mjs';
+import { MeleeJob } from '../services/MeleeJob.mjs';
 import { BodyPartCalculator } from '../services/BodyPartService.mjs';
 
 // Fighter job - melee combat

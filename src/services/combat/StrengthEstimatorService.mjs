@@ -1,5 +1,5 @@
 import { ATTACK, RANGED_ATTACK, HEAL } from 'game/constants';
-import { CombatConfig } from '../constants.mjs';
+import { CombatConfig } from '../../constants.mjs';
 
 /**
  * Combat Strength Estimator

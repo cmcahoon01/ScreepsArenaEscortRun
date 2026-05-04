@@ -1,7 +1,7 @@
 import { getObjectById, getTicks } from 'game/utils';
-import { ActiveCreep } from './ActiveCreep.mjs';
+import { ActiveCreep } from '../services/ActiveCreep.mjs';
 import { TugChainService } from '../services/TugChainService.mjs';
-import { compareTeamStrengths } from '../combat/strengthEstimator.mjs';
+import { compareTeamStrengths } from '../services/combat/StrengthEstimatorService.mjs';
 import { PayloadConfig } from '../constants.mjs';
 
 /**

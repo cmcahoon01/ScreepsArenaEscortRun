@@ -1,6 +1,6 @@
 import { getTerrainAt } from 'game/utils';
 import { TERRAIN_WALL } from 'game/constants';
-import { TerrainAnalyzer } from '../combat/TerrainAnalyzer.mjs';
+import { TerrainAnalyzer } from '../combat/TerrainAnalyzerService.mjs';
 
 /**
  * Handles finding the correct tile for a mining container.
