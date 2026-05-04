@@ -7,7 +7,7 @@ import { BodyPartCalculator } from '../constants.mjs';
 // Cleric job - ranged combat with healing abilities
 export class ClericJob extends RangedJob {
     static get BODY() {
-        return [MOVE, MOVE, RANGED_ATTACK, HEAL];
+        return [MOVE, RANGED_ATTACK, MOVE, HEAL];
     }
 
     static get COST() {

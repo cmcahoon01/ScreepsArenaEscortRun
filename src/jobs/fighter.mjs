@@ -60,6 +60,7 @@ export class FighterJob extends ActiveCreep {
         // If the enemy payload is outside the spawn exclusion zone, prioritize killing it.
         // Exception: fight back against enemy combat units currently within melee attack range (1).
         const enemyEscortCreepId = this.gameState.getEnemyEscortCreepId();
+        console.log("a");
         if (enemyEscortCreepId) {
             const enemyPayload = getObjectById(enemyEscortCreepId);
             if (enemyPayload) {
@@ -83,6 +84,7 @@ export class FighterJob extends ActiveCreep {
                 }
             }
         }
+        console.log("b");
 
         // Check if there are any enemies within range 5 - fight back against nearby threats
         const enemiesInRange5 = movementTargets.filter(enemy => getRange(creep, enemy) <= 5);
@@ -95,6 +97,7 @@ export class FighterJob extends ActiveCreep {
             }
             return;
         }
+        console.log("c");
 
         // Not in combat - check if an enemy is blocking the flag while the payload is close.
         // Only the single designated flag killer pursues it; other units behave normally.
@@ -103,13 +106,7 @@ export class FighterJob extends ActiveCreep {
             this.attackOrMoveTo(creep, flagBlocker);
             return;
         }
-
-        // No enemy payload to hunt - check for fortified miner
-        const fortifiedMiner = this.gameState.getFortifiedMiner();
-        if (fortifiedMiner) {
-            this.attackFortifiedMiner(creep, fortifiedMiner);
-            return;
-        }
+        console.log("d");
 
         // If payload is moving, engage the closest enemy to the payload (not on a rampart, not in spawn zone)
         if (this.gameState.isPayloadMoving()) {
@@ -123,6 +120,7 @@ export class FighterJob extends ActiveCreep {
                 }
             }
         }
+        console.log("e");
 
         // No fortified miner, no payload priority - idle
         this.idle(creep);
