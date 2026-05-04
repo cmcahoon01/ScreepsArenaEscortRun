@@ -1,15 +1,14 @@
 import { ATTACK, MOVE } from 'game/constants';
-import { MeleeJob } from '../services/jobs/MeleeJob.mjs';
-import { BodyPartCalculator } from '../services/BodyPartService.mjs';
+import { MeleeJob } from './base/MeleeJob.mjs';
+import { calculateCost } from '../services/BodyPartService.mjs';
 
-// Fighter job - melee combat
 export class FighterJob extends MeleeJob {
     static get BODY() {
         return [ATTACK, MOVE];
     }
 
     static get COST() {
-        return BodyPartCalculator.calculateCost(this.BODY);
+        return calculateCost(this.BODY);
     }
 
     static get JOB_NAME() {

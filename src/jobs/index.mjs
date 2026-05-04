@@ -1,15 +1,16 @@
-// Export all job classes and base classes
-export { ActiveCreep } from '../services/jobs/ActiveCreep.mjs';
-export { RangedJob } from '../services/jobs/RangedJob.mjs';
-export { MeleeJob } from '../services/jobs/MeleeJob.mjs';
+export { ActiveCreep } from './base/ActiveCreep.mjs';
+export { RangedJob } from './base/RangedJob.mjs';
+export { MeleeJob } from './base/MeleeJob.mjs';
 export { FighterJob } from './FighterJob.mjs';
 export { PaladinJob } from './PaladinJob.mjs';
 export { ArcherJob } from './ArcherJob.mjs';
 export { HaulerJob } from './HaulerJob.mjs';
 export { MinerJob } from './MinerJob.mjs';
+export { Miner1Job } from './Miner1Job.mjs';
+export { Miner2Job } from './Miner2Job.mjs';
 export { MuleJob } from './MuleJob.mjs';
 export { ClericJob } from './ClericJob.mjs';
 export { TugJob } from './TugJob.mjs';
 export { PayloadJob } from './PayloadJob.mjs';
 export { BlockerJob } from './BlockerJob.mjs';
-export { Jobs } from '../services/jobs/JobRegistry.mjs';
+export { Jobs } from './JobRegistry.mjs';

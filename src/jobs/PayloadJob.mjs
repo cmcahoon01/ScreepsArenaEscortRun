@@ -1,27 +1,11 @@
 import { getObjectById, getTicks } from 'game/utils';
-import { ActiveCreep } from '../services/jobs/ActiveCreep.mjs';
-import { TugChainService } from '../services/TugChainService.mjs';
+import { ActiveCreep } from './base/ActiveCreep.mjs';
+import { moveChain } from '../services/TugChainService.mjs';
 import { compareTeamStrengths } from '../services/combat/StrengthEstimatorService.mjs';
 import { PayloadConfig } from '../constants.mjs';
 
-/**
- * PayloadJob - manages the EscortCreep (payload) unit in two states.
- *
- * State 1 (waiting): The payload moves onto a friendly rampart at Chebyshev
- *   distance 2 from our spawn and holds position there.
- *
- * State 2 (moving): The payload initialises the tug chain (placing itself as
- *   the anchor) and the chain is driven toward our flag each tick via
- *   TugChainService.  Tugs in the ScreepController automatically join the
- *   chain once it is non-empty.
- *
- * Transition from waiting → moving fires when EITHER:
- *   - Our combat-strength ratio is >= MILITARY_ADVANTAGE_THRESHOLD, OR
- *   - The game tick count exceeds GAME_TIME_THRESHOLD (1500)
- */
 export class PayloadJob extends ActiveCreep {
     static get BODY() {
-        // EscortCreep is pre-spawned by the arena, not built via the build order.
         return [];
     }
 
@@ -33,14 +17,6 @@ export class PayloadJob extends ActiveCreep {
         return 'payload';
     }
 
-    /**
-     * @param {string} id - EscortCreep object ID
-     * @param {string} jobName
-     * @param {number} tier
-     * @param {ScreepController} controller
-     * @param {GameState} gameState
-     * @param {Flag} flag - Our flag (move target in state 2)
-     */
     constructor(id, jobName, tier, controller, gameState, flag) {
         super(id, jobName, tier, controller, gameState);
         this.flag = flag;
@@ -48,86 +24,56 @@ export class PayloadJob extends ActiveCreep {
         this.gameState.setPayloadId(this.id);
     }
 
-    /**
-     * Check whether we have a significant military advantage over the enemy.
-     * @returns {boolean}
-     */
     hasMilitaryAdvantage() {
         const comparison = compareTeamStrengths(this.gameState);
-        return comparison.ratio >= PayloadConfig.MILITARY_ADVANTAGE_THRESHOLD && comparison.myTeam.strength > comparison.enemyTeam.strength + 300;
+        return comparison.ratio >= PayloadConfig.MILITARY_ADVANTAGE_THRESHOLD &&
+            comparison.myTeam.strength > comparison.enemyTeam.strength + 300;
     }
 
-    /**
-     * Return true when the waiting → moving transition should fire.
-     * Fires when we have a military advantage OR the game time exceeds the threshold.
-     * @returns {boolean}
-     */
     shouldTransitionToMoving() {
         return this.hasMilitaryAdvantage() || getTicks() >= PayloadConfig.GAME_TIME_THRESHOLD;
     }
 
-    /**
-     * Find a friendly rampart at exactly WAITING_RAMPART_DISTANCE (Chebyshev)
-     * from our spawn for the payload to shelter on while waiting.
-     * @param {Creep} creep
-     * @returns {StructureRampart|null}
-     */
     findWaitingRampart(creep) {
         const spawn = this.gameState.getMySpawn();
-        if (!spawn) {
-            return null;
-        }
+        if (!spawn) return null;
 
         const nearRamparts = this.gameState.getMyRamparts().filter(r => {
             const dist = Math.max(Math.abs(r.x - spawn.x), Math.abs(r.y - spawn.y));
             return dist === PayloadConfig.WAITING_RAMPART_DISTANCE;
         });
 
-        if (nearRamparts.length === 0) {
-            return null;
-        }
-
+        if (nearRamparts.length === 0) return null;
         return creep.findClosestByRange(nearRamparts);
     }
 
     act() {
         const creep = getObjectById(this.id);
-        if (!creep) {
-            return;
-        }
+        if (!creep) return;
 
-        // Sync the payload's moving state into GameState so combat jobs can read it.
         this.gameState.setPayloadMoving(this.memory.state === PayloadConfig.STATE_MOVING);
 
-        // ── State 1: waiting on a rampart near spawn ──────────────────────────
         if (this.memory.state === PayloadConfig.STATE_WAITING) {
             if (this.shouldTransitionToMoving()) {
                 this.memory.state = PayloadConfig.STATE_MOVING;
-                // Seed the tug chain with this payload as the sole entry.
-                // When the first tug arrives adjacent to the payload it will
-                // prepend itself: tugChain becomes [tugId, payloadId], so the
-                // payload moves to index 1 and is pulled by the tug at index 0.
                 this.gameState.setTugChain([this.id]);
                 console.log("Payload beginning pilgrimage");
             } else {
                 const targetRampart = this.findWaitingRampart(creep);
-                if (targetRampart) {
-                    creep.moveTo(targetRampart);
-                }
+                if (targetRampart) creep.moveTo(targetRampart);
                 return;
             }
         }
 
-        // ── State 2: moving toward the flag with tug assistance ───────────────
         if (this.memory.state === PayloadConfig.STATE_MOVING) {
-            // Re-claim the tug chain if it was cleared (e.g. after a delivery).
             const tugChain = this.gameState.getTugChain();
             if (tugChain.length === 0) {
                 this.gameState.setTugChain([this.id]);
             }
 
             if (this.flag) {
-                TugChainService.moveChain(this.gameState.getTugChain(), this.flag, this.gameState);
+                const chain = this.gameState.getTugChain();
+                moveChain(chain.ids, this.flag, this.gameState);
             }
         }
     }

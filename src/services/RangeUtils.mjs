@@ -50,3 +50,13 @@ export function isInHealRange(from, to) {
 export function isInRangedHealRange(from, to) {
     return getRange(from, to) <= RANGED_HEAL_RANGE;
 }
+
+/**
+ * Compute Chebyshev (chessboard) distance between two positions.
+ * @param {Object} a - Position with x, y
+ * @param {Object} b - Position with x, y
+ * @returns {number} Chebyshev distance
+ */
+export function chebyshevDistance(a, b) {
+    return Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
+}
