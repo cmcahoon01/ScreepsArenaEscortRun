@@ -1,5 +1,5 @@
 import { getObjectById } from 'game/utils';
-import { MOVE, CARRY, RESOURCE_ENERGY } from 'game/constants';
+import { MOVE, CARRY, RESOURCE_ENERGY, ERR_NOT_IN_RANGE } from 'game/constants';
 import { TugJob } from './tug.mjs';
 import { BodyPartCalculator } from '../constants.mjs';
 
@@ -76,8 +76,11 @@ export class MuleJob extends TugJob {
                     if (container) {
                         const containerEnergy = container.store[RESOURCE_ENERGY] || 0;
                         if (containerEnergy > 0) {
-                            creep.moveTo(container);
-                            creep.withdraw(container, RESOURCE_ENERGY);
+                            // Try to withdraw first; move only if out of range
+                            const withdrawResult = creep.withdraw(container, RESOURCE_ENERGY);
+                            if (withdrawResult === ERR_NOT_IN_RANGE) {
+                                creep.moveTo(container);
+                            }
                         }
                         // Container is empty this tick – nothing to do
                         return;
@@ -121,9 +124,11 @@ export class MuleJob extends TugJob {
 
             const spawn = this.gameState.getMySpawn();
             if (spawn) {
-                // Move and transfer in the same turn
-                creep.moveTo(spawn);
-                creep.transfer(spawn, RESOURCE_ENERGY);
+                // Try to transfer first; move only if out of range
+                const transferResult = creep.transfer(spawn, RESOURCE_ENERGY);
+                if (transferResult === ERR_NOT_IN_RANGE) {
+                    creep.moveTo(spawn);
+                }
             }
         }
     }
