@@ -49,6 +49,7 @@ export const BuildConfig = {
         'miner1',
         'blocker',
         'mule',
+        'paladin',
         'miner2',
         'mule',
     ],
