@@ -7,6 +7,7 @@
  */
 
 import { LEFT, RIGHT, TOP, BOTTOM, BOTTOM_LEFT, BOTTOM_RIGHT, TOP_LEFT, TOP_RIGHT } from "game/constants";
+import * as BuildConditions from "./config/BuildConditions.mjs";
 
 // ============================================================================
 // Body Part Costs
@@ -41,17 +42,25 @@ export const DEFAULT_TIER = 1;
 export const BuildConfig = {
     /**
      * Initial build order that always executes first.
-     * Builds in sequence: miner1 → blocker → mule → miner2 → mule.
-     * All are replaced if they die. After all are present, creeps are built
-     * according to PHASE2_BUILD weights.
+     * Builds in sequence: miner1 → blocker → mule → paladin → miner2 → mule.
+     * After all are present, creeps are built according to PHASE2_BUILD weights.
+     *
+     * Each entry is an object with the following fields:
+     *   job         {string}             - The job name (required).
+     *   tier        {number}             - Body tier (optional, defaults to DEFAULT_TIER).
+     *   replace_dead {boolean}           - If false, do not rebuild this creep when it
+     *                                      dies (optional, defaults to true).
+     *   only_if     {(gameState)=>boolean} - Skip this build step when the function
+     *                                      returns false (optional). See
+     *                                      src/config/BuildConditions.mjs for examples.
      */
     INITIAL_BUILD: [
-        'miner1',
-        'blocker',
-        'mule',
-        'paladin',
-        'miner2',
-        'mule',
+        { job: 'miner1' },
+        { job: 'blocker', replace_dead: false, only_if: BuildConditions.noEnemyCombatUnit },
+        { job: 'mule' },
+        { job: 'paladin' },
+        { job: 'miner2' },
+        { job: 'mule' },
     ],
 
     /**
