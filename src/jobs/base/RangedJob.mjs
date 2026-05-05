@@ -39,6 +39,26 @@ export class RangedJob extends ActiveCreep {
     }
 
     /**
+     * If this unit has healing capability and there are injured allies nearby,
+     * move toward the closest one and return true (movement was overridden).
+     * @param {Creep} creep
+     * @param {Creep[]} damagedCreeps - All injured friendly creeps
+     * @returns {boolean} True if healing movement was applied
+     */
+    tryHealingMove(creep, damagedCreeps) {
+        if (!this.shouldHealDuringIdle()) return false;
+        const damagedAllies = damagedCreeps.filter(c => c.id !== creep.id);
+        if (damagedAllies.length > 0) {
+            const closestDamagedAlly = creep.findClosestByRange(damagedAllies);
+            if (closestDamagedAlly && getRange(creep, closestDamagedAlly) > 1) {
+                creep.moveTo(closestDamagedAlly);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Idle behaviour: healing-capable ranged units move toward injured allies;
      * non-healing units defer to the base ActiveCreep.idle() (move to MAP_CENTER).
      * @param {Creep} creep
@@ -115,48 +135,22 @@ export class RangedJob extends ActiveCreep {
                 if (retreatPos) creep.moveTo(retreatPos);
             } else {
                 const rangeToTarget = getRange(creep, result.movementTarget);
-                if (this.shouldHealDuringIdle()) {
-                    const damagedAllies = damagedCreeps.filter(c => c.id !== creep.id);
-                    if (damagedAllies.length > 0) {
-                        const closestDamagedAlly = creep.findClosestByRange(damagedAllies);
-                        if (closestDamagedAlly && getRange(creep, closestDamagedAlly) > 1) {
-                            creep.moveTo(closestDamagedAlly);
-                        }
-                    } else if (rangeToTarget > RangeConfig.RANGED_ATTACK_RANGE) {
-                        creep.moveTo(result.movementTarget);
-                    }
-                } else if (rangeToTarget > RangeConfig.RANGED_ATTACK_RANGE) {
+                if (!this.tryHealingMove(creep, damagedCreeps) && rangeToTarget > RangeConfig.RANGED_ATTACK_RANGE) {
                     creep.moveTo(result.movementTarget);
                 }
             }
         } else if (combatMode === 'retreat') {
             // Cleric healing movement may override retreat
-            if (this.shouldHealDuringIdle()) {
-                const damagedAllies = damagedCreeps.filter(c => c.id !== creep.id);
-                if (damagedAllies.length > 0) {
-                    const closestDamagedAlly = creep.findClosestByRange(damagedAllies);
-                    if (closestDamagedAlly && getRange(creep, closestDamagedAlly) > 1) {
-                        creep.moveTo(closestDamagedAlly);
-                        return;
-                    }
-                }
+            if (!this.tryHealingMove(creep, damagedCreeps)) {
+                const target = this.gameState.getRetreatTarget();
+                if (target) creep.moveTo(target);
             }
-            const target = this.gameState.getRetreatTarget();
-            if (target) creep.moveTo(target);
         } else {
             // 'idle' mode — Cleric healing movement may override idle position
-            if (this.shouldHealDuringIdle()) {
-                const damagedAllies = damagedCreeps.filter(c => c.id !== creep.id);
-                if (damagedAllies.length > 0) {
-                    const closestDamagedAlly = creep.findClosestByRange(damagedAllies);
-                    if (closestDamagedAlly && getRange(creep, closestDamagedAlly) > 1) {
-                        creep.moveTo(closestDamagedAlly);
-                        return;
-                    }
-                }
+            if (!this.tryHealingMove(creep, damagedCreeps)) {
+                const target = this.gameState.getIdleTarget();
+                if (target) creep.moveTo(target);
             }
-            const target = this.gameState.getIdleTarget();
-            if (target) creep.moveTo(target);
         }
     }
 }

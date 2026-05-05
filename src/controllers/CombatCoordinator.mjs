@@ -68,11 +68,11 @@ export class CombatCoordinator {
             );
 
             // The vanguard is the leader plus all units within 4 y-units of it
-            const enemyVanguard = enemyCombatUnits.filter(u => Math.abs(u.y - enemyVanguardLeader.y) <= 4);
+            const enemyVanguard = enemyCombatUnits.filter(u => Math.abs(u.y - enemyVanguardLeader.y) < 4);
 
-            const enemyVanguardStepsFromEnemySpawn = numStepsAwayFromEnemySpawn(gameState, enemyVanguardLeader);
+            const vanguardStepsFromSpawn = numStepsAwayFromEnemySpawn(gameState, enemyVanguardLeader);
 
-            if (enemyVanguardStepsFromEnemySpawn < 25) {
+            if (vanguardStepsFromSpawn < 25) {
                 // Enemy is still near their base — idle forward and wait
                 gameState.setCombatMode('idle');
                 gameState.setIdleTarget(positionNStepsAwayFromEnemySpawn(gameState, 40));
