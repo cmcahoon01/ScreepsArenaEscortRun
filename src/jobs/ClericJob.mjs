@@ -6,7 +6,7 @@ import { calculateCost } from '../services/BodyPartService.mjs';
 
 export class ClericJob extends RangedJob {
     static get BODY() {
-        return [MOVE, RANGED_ATTACK, MOVE, HEAL];
+        return [MOVE, MOVE, RANGED_ATTACK, HEAL];
     }
 
     static get COST() {
