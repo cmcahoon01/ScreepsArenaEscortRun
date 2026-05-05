@@ -26,8 +26,8 @@ export class RangedJob extends ActiveCreep {
         return kitingFindNearestEnemy(position, enemies);
     }
 
-    findBestRetreatPosition(creep, enemies, allCreeps, allStructures) {
-        return kitingFindBestRetreatPosition(creep, enemies, allCreeps, allStructures);
+    findBestRetreatPosition(creep, enemies, allCreeps, allStructures, spawnPos = null) {
+        return kitingFindBestRetreatPosition(creep, enemies, allCreeps, allStructures, spawnPos);
     }
 
     shouldHealDuringIdle() {
@@ -86,6 +86,7 @@ export class RangedJob extends ActiveCreep {
         const allStructures = getObjectsByPrototype(Structure);
         const allHostileCreeps = this.gameState.getEnemyCreeps();
         const myCreeps = this.gameState.getMyCreeps();
+        const mySpawn = this.gameState.getMySpawn();
         const damagedCreeps = myCreeps.filter(c => c.hits < c.hitsMax);
         const enemiesInRange = allHostileCreeps.filter(e => isInRangedAttackRange(creep, e));
 
@@ -104,7 +105,7 @@ export class RangedJob extends ActiveCreep {
                 if (target) {
                     const rangeToTarget = getRange(creep, target);
                     if (rangeToTarget < RangeConfig.RANGED_ATTACK_RANGE) {
-                        const retreatPos = this.findBestRetreatPosition(creep, allHostileCreeps, allCreeps, allStructures);
+                        const retreatPos = this.findBestRetreatPosition(creep, allHostileCreeps, allCreeps, allStructures, mySpawn);
                         if (retreatPos) creep.moveTo(retreatPos);
                     } else if (rangeToTarget > RangeConfig.RANGED_ATTACK_RANGE) {
                         creep.moveTo(target);
@@ -131,7 +132,7 @@ export class RangedJob extends ActiveCreep {
             // Kite if enemies are too close, else advance toward target
             const range = getRange(creep, result.attackTarget);
             if (enemiesInRange.length > 0 && range < RangeConfig.RANGED_ATTACK_RANGE) {
-                const retreatPos = this.findBestRetreatPosition(creep, allHostileCreeps, allCreeps, allStructures);
+                const retreatPos = this.findBestRetreatPosition(creep, allHostileCreeps, allCreeps, allStructures, mySpawn);
                 if (retreatPos) creep.moveTo(retreatPos);
             } else {
                 const rangeToTarget = getRange(creep, result.movementTarget);

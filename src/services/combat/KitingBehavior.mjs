@@ -45,7 +45,23 @@ export function findNearestEnemy(position, enemies) {
     return nearestEnemy;
 }
 
-export function findBestRetreatPosition(unit, enemies, allCreeps, allStructures) {
+/**
+ * Find the best adjacent position for a ranged unit to kite to.
+ *
+ * Tiebreaking priority (highest to lowest):
+ *   1. Maximise minimum Chebyshev distance from any enemy.
+ *   2. Prefer non-swamp tiles.
+ *   3. If spawnPos is provided, prefer tiles closest to our spawn (kite toward spawn).
+ *   4. Maximise squared Euclidean distance from the nearest enemy (final fallback).
+ *
+ * @param {Object} unit          - The retreating creep
+ * @param {Object[]} enemies     - Hostile creeps to retreat from
+ * @param {Object[]} allCreeps   - All creeps (for obstacle checking)
+ * @param {Object[]} allStructures - All structures (for obstacle checking)
+ * @param {Object|null} spawnPos - Optional: our spawn position, used to bias kiting direction
+ * @returns {Object|null} Best retreat position, or null if none available
+ */
+export function findBestRetreatPosition(unit, enemies, allCreeps, allStructures, spawnPos = null) {
     if (enemies.length === 0) {
         console.log("No enemies to retreat from!");
         return null;
@@ -73,6 +89,22 @@ export function findBestRetreatPosition(unit, enemies, allCreeps, allStructures)
     const nonSwampPositions = bestPositions.filter(pos => !isSwamp(pos));
     if (nonSwampPositions.length > 0) {
         bestPositions = nonSwampPositions;
+    }
+
+    if (bestPositions.length === 1) return bestPositions[0];
+
+    // Prefer positions closest to our spawn to bias kiting direction toward spawn
+    if (spawnPos) {
+        let minSpawnDist = Infinity;
+        for (const pos of bestPositions) {
+            const d = Math.max(Math.abs(pos.x - spawnPos.x), Math.abs(pos.y - spawnPos.y));
+            if (d < minSpawnDist) minSpawnDist = d;
+        }
+        const spawnBiasedPositions = bestPositions.filter(pos =>
+            Math.max(Math.abs(pos.x - spawnPos.x), Math.abs(pos.y - spawnPos.y)) === minSpawnDist
+        );
+        if (spawnBiasedPositions.length === 1) return spawnBiasedPositions[0];
+        bestPositions = spawnBiasedPositions;
     }
 
     if (bestPositions.length === 1) return bestPositions[0];
