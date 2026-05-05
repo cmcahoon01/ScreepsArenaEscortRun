@@ -22,15 +22,15 @@ export class MeleeJob extends ActiveCreep {
         const allHostileCreeps = this.gameState.getEnemyCreeps();
         const myCreeps = this.gameState.getMyCreeps();
         const damagedCreeps = myCreeps.filter(c => c.id !== creep.id && c.hits < c.hitsMax);
+        const enemiesInMeleeRange = allHostileCreeps.filter(e =>
+            Math.max(Math.abs(e.x - creep.x), Math.abs(e.y - creep.y)) <= 1
+        );
 
         // FlagKiller override: ignore combat mode, always pursue flag blocker
         if (creep.id === this.gameState.getFlagKillerId()) {
             const flagBlocker = findFlagBlockingEnemy(this.gameState, allHostileCreeps);
             if (flagBlocker) {
                 creep.moveTo(flagBlocker);
-                const enemiesInMeleeRange = allHostileCreeps.filter(e =>
-                    Math.max(Math.abs(e.x - creep.x), Math.abs(e.y - creep.y)) <= 1
-                );
                 if (enemiesInMeleeRange.length > 0) {
                     creep.attack(creep.findClosestByRange(enemiesInMeleeRange));
                 }
@@ -40,10 +40,6 @@ export class MeleeJob extends ActiveCreep {
         }
 
         this.performHealing(creep, damagedCreeps);
-
-        const enemiesInMeleeRange = allHostileCreeps.filter(e =>
-            Math.max(Math.abs(e.x - creep.x), Math.abs(e.y - creep.y)) <= 1
-        );
 
         const result = selectPrimaryTarget(creep, this.gameState, enemiesInMeleeRange);
 
