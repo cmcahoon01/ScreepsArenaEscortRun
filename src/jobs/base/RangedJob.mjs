@@ -7,7 +7,7 @@ import {
     findBestRetreatPosition as kitingFindBestRetreatPosition,
 } from '../../services/combat/KitingBehavior.mjs';
 import { isInRangedAttackRange } from '../../services/RangeUtils.mjs';
-import { selectPrimaryTarget } from '../../services/combat/CombatUtils.mjs';
+import { selectPrimaryTarget, findFlagBlockingEnemy } from '../../services/combat/CombatUtils.mjs';
 import { RangeConfig } from '../../constants.mjs';
 
 export class RangedJob extends ActiveCreep {
@@ -91,6 +91,19 @@ export class RangedJob extends ActiveCreep {
         const enemiesInRange = allHostileCreeps.filter(e => isInRangedAttackRange(creep, e));
 
         this.performHealing(creep, damagedCreeps, allCreeps);
+
+        // FlagKiller override: ignore combat mode, always pursue flag blocker
+        if (creep.id === this.gameState.getFlagKillerId()) {
+            const flagBlocker = findFlagBlockingEnemy(this.gameState, allHostileCreeps);
+            if (flagBlocker) {
+                creep.moveTo(flagBlocker);
+                if (enemiesInRange.length > 0) {
+                    const target = creep.findClosestByRange(enemiesInRange);
+                    if (target) creep.rangedAttack(target);
+                }
+                return;
+            }
+        }
 
         const result = selectPrimaryTarget(creep, this.gameState, enemiesInRange);
 
