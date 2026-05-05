@@ -281,7 +281,7 @@ export const PayloadConfig = {
     /**
      * Game tick threshold after which the payload advances regardless of military strength.
      */
-    GAME_TIME_THRESHOLD: 400,
+    GAME_TIME_THRESHOLD: 1500,
 
     /**
      * Chebyshev distance from our spawn at which the payload waits on a rampart.

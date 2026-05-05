@@ -28,7 +28,6 @@ export class Miner2Job extends MinerJob {
     deposit(creep) {
         const tier1_miner = this.gameState.getMyCreeps().find(c => this.gameState.getCreepJobName(c.id) === 'miner1');
         if (!tier1_miner) {
-            console.error(`Miner2 ${this.id} cannot find tier-1 miner to deposit to`);
             return;
         }
         const transferResult = creep.transfer(tier1_miner, RESOURCE_ENERGY);
