@@ -2,7 +2,7 @@ import { getObjectsByPrototype, getObjectById } from 'game/utils';
 import { Creep, StructureSpawn, StructureRampart, StructureExtension, Source, ConstructionSite, StructureContainer } from 'game/prototypes';
 import { detectFortifiedMiner } from "./StructureUtils.mjs";
 import { findFlagBlockingEnemy, selectFlagKiller, hasAttackCapability } from "./combat/CombatUtils.mjs";
-import { BuildConfig, MINER_JOB_NAMES } from "../constants.mjs";
+import {BuildConfig, MapTopology, MINER_JOB_NAMES} from "../constants.mjs";
 import { TugChain } from "./TugChain.mjs";
 import { chebyshevDistance } from "./RangeUtils.mjs";
 
@@ -179,5 +179,5 @@ export class GameState {
 
     isCombatEngaged() { return this.combatEngaged; }
     setCombatEngaged(engaged) { this.combatEngaged = engaged; }
-    setTopTeam(flag) { this.topTeam = flag.y=9; }
+    setTopTeam(flag) { this.topTeam = flag.y===MapTopology.TOP_SPAWN_COORDINATES.y; }
 }
