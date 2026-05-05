@@ -95,6 +95,12 @@ export const MapTopology = {
      * Sources with y > 70 are considered "bottom corner" sources.
      */
     CORNER_BOTTOM_THRESHOLD: 70,
+
+    /**
+     * Spawn coordinates for top and bottom spawns.
+     */
+    TOP_SPAWN_COORDINATES: {x:9, y:9},
+    BOTTOM_SPAWN_COORDINATES: {x:9, y:90},
     
     /**
      * Arena map size (width and height).

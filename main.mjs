@@ -21,6 +21,7 @@ const payloadJob = escortCreep
 gameState.initializeEnemyEscortCreep(enemyEscortCreep);
 gameState.setFlag(flag);
 gameState.setEnemyFlag(enemyFlag);
+gameState.setTopTeam(flag);
 
 export function loop() {
     gameState.refresh();

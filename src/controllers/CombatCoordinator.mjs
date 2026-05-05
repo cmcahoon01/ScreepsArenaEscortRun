@@ -1,5 +1,6 @@
-import { CombatUtils } from '../services/combat/CombatUtils.mjs';
-import { CombatConfig } from '../constants.mjs';
+import {CombatUtils, findFlagBlockingEnemy} from '../services/combat/CombatUtils.mjs';
+import {CombatConfig} from '../constants.mjs';
+import {ATTACK, RANGED_ATTACK} from "game/constants";
 
 /**
  * CombatCoordinator — group-level engage / disengage logic.
@@ -89,6 +90,31 @@ export class CombatCoordinator {
                 gameState.setCombatEngaged(true);
             }
             // Otherwise stay disengaged (neutral gap)
+        }
+
+        const flagBlocker = findFlagBlockingEnemy(gameState, enemyCreeps);
+        if (flagBlocker && gameState.getFlagKillerId() === null) {
+            // pick a unit to assign to kill it, preferring melee units
+            const ourMeleeCombatUnits = gameState.getMyCreeps().filter(c => c.body.some(part => part.type === ATTACK));
+            const ourRangedCombatUnits = gameState.getMyCreeps().filter(c => c.body.some(part => part.type === RANGED_ATTACK));
+            const candidates = ourMeleeCombatUnits.length > 0 ? ourMeleeCombatUnits : ourRangedCombatUnits;
+            if (candidates.length > 0) {
+                const flagKiller = candidates.reduce((closest, c) => {
+                    const dist = CombatUtils.euclideanDistance(c, flagBlocker);
+                    if (dist < closest.dist) {
+                        return {creep: c, dist};
+                    } else {
+                        return closest;
+                    }
+                }, {creep: null, dist: Infinity}).creep;
+
+                if (flagKiller) {
+                    gameState.setFlagKillerId(flagKiller.id);
+                }
+            }
+        } else if (!flagBlocker) {
+            // flag is not blocked, clear the assignment
+            gameState.setFlagKillerId(null);
         }
     }
 }

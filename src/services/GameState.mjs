@@ -33,6 +33,7 @@ export class GameState {
         this.miningContainerPos = null;
         this.miningContainerId = null;
         this.combatEngaged = false;
+        this.weAreTop = false;
     }
 
     updateCreepRoster(rosterMap) {
@@ -117,6 +118,7 @@ export class GameState {
     getHasBuiltMiner() { return this.hasBuiltMiner; }
     getBlockerEverDied() { return this.blockerEverDied; }
     getEnemyHasCombatUnit() { return this.enemyHasCombatUnit; }
+    getWeAreTop() { return this.weAreTop; }
 
     getTugChain() { return this._tugChain; }
 
@@ -177,4 +179,5 @@ export class GameState {
 
     isCombatEngaged() { return this.combatEngaged; }
     setCombatEngaged(engaged) { this.combatEngaged = engaged; }
+    setTopTeam(flag) { this.topTeam = flag.y=9; }
 }
