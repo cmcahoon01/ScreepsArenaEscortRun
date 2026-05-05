@@ -53,6 +53,16 @@ export class MuleJob extends TugJob {
             }
         }
 
+        const otherMovingMiner = this.controller.creeps.find(c =>
+            MINER_JOB_NAMES.has(c.jobName) &&
+            c.id !== this.memory.pairedMinerId &&
+            isMovingToPosition(c.memory)
+        );
+        if (otherMovingMiner) {
+            this._actAsTug(creep, otherMovingMiner.id);
+            return;
+        }
+
         const usedCapacity = creep.store[RESOURCE_ENERGY] || 0;
         const totalCapacity = creep.store.getCapacity(RESOURCE_ENERGY);
 
@@ -125,18 +135,18 @@ export class MuleJob extends TugJob {
         }
     }
 
-    _actAsTug(creep) {
+    _actAsTug(creep, minerId = this.memory.pairedMinerId) {
         const tugChain = this.gameState.getTugChain();
 
         if (tugChain.isLeader(this.id)) {
             return;
         }
 
-        const pairedActiveCreep = this.controller.creeps.find(c => c.id === this.memory.pairedMinerId);
-        const miner = pairedActiveCreep ? getObjectById(pairedActiveCreep.id) : null;
+        const targetActiveCreep = this.controller.creeps.find(c => c.id === minerId);
+        const miner = targetActiveCreep ? getObjectById(targetActiveCreep.id) : null;
         if (!miner) return;
 
-        if (tugChain.hasSingleMember(this.memory.pairedMinerId)) {
+        if (tugChain.hasSingleMember(minerId)) {
             joinTugChain(this.id, creep, this.gameState);
         } else {
             creep.moveTo(miner);
