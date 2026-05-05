@@ -167,6 +167,13 @@ export class GameState {
         return chebyshevDistance(enemyEscortCreep, ourFlag) < BuildConfig.AGGRESSIVE_TRIGGER_DISTANCE;
     }
 
+    isEnemyPayloadOnRightSide() {
+        if (!this.enemyEscortCreepId) return false;
+        const enemyPayload = getObjectById(this.enemyEscortCreepId);
+        if (!enemyPayload) return false;
+        return enemyPayload.x >= MapTopology.ARENA_CENTER;
+    }
+
     setFlag(flag) { this.flag = flag; }
     getFlag() { return this.flag; }
     setEnemyFlag(flag) { this.enemyFlag = flag; }

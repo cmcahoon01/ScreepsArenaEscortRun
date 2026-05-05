@@ -41,13 +41,15 @@ export const DEFAULT_TIER = 1;
 export const BuildConfig = {
     /**
      * Initial build order that always executes first.
-     * Builds in sequence: miner1 → blocker → mule → miner2 → mule.
+     * Builds in sequence: miner1 → blocker → blocker2 → mule → miner2 → mule.
      * All are replaced if they die. After all are present, creeps are built
      * according to PHASE2_BUILD weights.
+     * blocker2 is only built when the enemy payload is on the right side of the map.
      */
     INITIAL_BUILD: [
         'miner1',
         'blocker',
+        'blocker2',
         'mule',
         'miner2',
         'mule',
@@ -72,7 +74,7 @@ export const BuildConfig = {
      * Jobs that should spawn facing the closest resource source.
      * All other jobs spawn in the opposite direction (away from the source).
      */
-    SOURCE_FACING_JOBS: ['miner1', 'miner2', 'mule', 'blocker'],
+    SOURCE_FACING_JOBS: ['miner1', 'miner2', 'mule', 'blocker', 'blocker2'],
 };
 
 // ============================================================================

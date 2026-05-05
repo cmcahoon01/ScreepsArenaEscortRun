@@ -31,6 +31,10 @@ export class BuildStrategy {
                 continue;
             }
 
+            if (jobName === 'blocker2' && !this.gameState.isEnemyPayloadOnRightSide()) {
+                continue;
+            }
+
             let expectedCount = 0;
             for (let j = 0; j <= i; j++) {
                 const checkItem = initialBuild[j];
