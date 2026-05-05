@@ -40,7 +40,7 @@ export class GameState {
     }
 
     getCreepJobName(id) {
-        return this.creepRoster.get(id) || null;
+        return this.creepRoster.get(String(id)) ?? null;
     }
 
     refresh() {

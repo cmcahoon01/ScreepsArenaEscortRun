@@ -75,7 +75,7 @@ export class MuleJob extends TugJob {
             const transferResult = creep.transfer(spawn, RESOURCE_ENERGY);
             if (transferResult === ERR_NOT_IN_RANGE) {
                 creep.moveTo(spawn);
-            } else if (transferResult === 0) {
+            } else if (transferResult === 0 && creep.store[RESOURCE_ENERGY] === 0) {
                 this.memory.state = 'collecting';
                 return this.collect(creep);
             }

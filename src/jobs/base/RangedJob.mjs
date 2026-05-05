@@ -102,6 +102,7 @@ export class RangedJob extends ActiveCreep {
         }
 
         if (!this.gameState.isCombatEngaged()) {
+            creep.rangedAttack(result.attackTarget);
             this.idle(creep);
             return;
         }

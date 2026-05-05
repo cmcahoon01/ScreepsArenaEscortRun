@@ -4,7 +4,7 @@ import { calculateCost } from '../services/BodyPartService.mjs';
 
 export class Miner2Job extends MinerJob {
     static get BODY() {
-        return [WORK, WORK, WORK, WORK, CARRY];
+        return [WORK, WORK, WORK, CARRY];
     }
 
     static get COST() {

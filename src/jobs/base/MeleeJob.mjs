@@ -31,45 +31,17 @@ export class MeleeJob extends ActiveCreep {
 
         const result = selectPrimaryTarget(creep, this.gameState, enemiesInMeleeRange);
 
-        if (!result || result.mode === 'idle') {
-            this.idle(creep);
-            return;
-        }
-
-        if (result.mode === 'payload_priority') {
-            if (result.combatEnemiesInRange.length > 0) {
-                const target = creep.findClosestByRange(result.combatEnemiesInRange);
-                if (target) { this.attackOrMoveTo(creep, target); return; }
-            }
-            this.attackOrMoveTo(creep, result.enemyPayload);
-            return;
-        }
-
-        if (!this.gameState.isCombatEngaged()) {
+        if (!result || result.mode === 'idle' || !this.gameState.isCombatEngaged()) {
             this.idle(creep);
             return;
         }
 
         const attackResult = creep.attack(result.attackTarget);
-        if (attackResult === ERR_NOT_IN_RANGE) {
+        if (result.mode === 'payload_priority') {
+            creep.moveTo(result.enemyPayload);
+        } else {
             creep.moveTo(result.movementTarget);
         }
-    }
 
-    attackOrMoveTo(creep, target) {
-        const attackResult = creep.attack(target);
-        if (attackResult === ERR_NOT_IN_RANGE) {
-            creep.moveTo(target);
-        }
-    }
-
-    attackFortifiedMiner(creep, fortifiedMiner) {
-        const attackCreepResult = creep.attack(fortifiedMiner.creep);
-        if (attackCreepResult === ERR_NOT_IN_RANGE) {
-            const attackRampartResult = creep.attack(fortifiedMiner.rampart);
-            if (attackRampartResult === ERR_NOT_IN_RANGE) {
-                creep.moveTo(fortifiedMiner.creep);
-            }
-        }
     }
 }

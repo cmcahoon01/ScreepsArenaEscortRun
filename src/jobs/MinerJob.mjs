@@ -82,101 +82,104 @@ export class MinerJob extends ActiveCreep {
         }
 
         if (isMovingToPosition(this.memory)) {
-            let targetPos = getTargetPosition(this.memory);
-            if (!targetPos) {
-                const occupiedPositions = this.controller.creeps
-                    .filter(c => MINER_JOB_NAMES.has(c.jobName) && c.id !== this.id &&
-                        c.memory.targetX != null && c.memory.targetY != null)
-                    .map(c => ({ x: c.memory.targetX, y: c.memory.targetY }));
-                const miningPos = findMiningPosition(source, this.gameState, occupiedPositions);
-                if (miningPos) {
-                    setTargetPosition(this.memory, miningPos);
-                    targetPos = miningPos;
-                } else {
-                    console.log(`Miner ${this.id} couldn't find mining position`);
-                    return;
-                }
-            }
-
-            if (!isAtTargetPosition(creep, this.memory)) {
-                const tugChain = this.gameState.getTugChain();
-                if (tugChain.length === 0) {
-                    tugChain.claim(this.id);
-                    tugChain.tick(targetPos, this.gameState);
-                } else if (tugChain.getChainPosition(this.id) === 1) {
-                    // This miner is the subject (index 1) of the active chain
-                    tugChain.tick(targetPos, this.gameState);
-                }
-                // Else another miner is using the chain — wait this tick
-                return;
-            }
-
-            transitionToMining(this.memory);
-            console.log(`Miner ${this.id} arrived at mining position`);
-
-            if (this.shouldPlaceContainer() && !this.gameState.getMiningContainerPos()) {
-                // Find the companion miner (the one that does not place the container)
-                const companionMiner = this.controller.creeps.find(c =>
-                    MINER_JOB_NAMES.has(c.jobName) && c.id !== this.id &&
-                    typeof c.shouldPlaceContainer === 'function' && !c.shouldPlaceContainer()
-                );
-                const tier1Pos = (companionMiner && companionMiner.memory.targetX != null)
-                    ? { x: companionMiner.memory.targetX, y: companionMiner.memory.targetY }
-                    : null;
-                const containerPos = findContainerPosition(creep, tier1Pos, source);
-                if (containerPos) {
-                    const result = createConstructionSite(containerPos, StructureContainer);
-                    if (result.object) {
-                        this.gameState.setMiningContainerPos(containerPos.x, containerPos.y);
-                        console.log(`Miner ${this.id} placed container site at (${containerPos.x}, ${containerPos.y})`);
-                    } else {
-                        console.log(`Miner ${this.id} failed to place container site: error ${result.error}`);
-                    }
-                } else {
-                    console.log(`Miner ${this.id} could not find a valid container position`);
-                }
-            }
+            this.moveToMiningPosition(creep, source);
         }
 
         if (isMining(this.memory)) {
-            const usedCapacity = creep.store[RESOURCE_ENERGY] || 0;
-            const energyThreshold = Math.min(this.totalCapacity, this.miningProduction * 2);
+            this.mine(creep, source);
+        }
+    }
 
-            if (usedCapacity < energyThreshold) {
-                const harvestResult = creep.harvest(source);
-                if (harvestResult === ERR_NOT_IN_RANGE) {
-                    console.log(`Miner ${this.id} not in range of source`);
+    moveToMiningPosition(creep, source) {
+        let targetPos = getTargetPosition(this.memory);
+        if (!targetPos) {
+            const occupiedPositions = this.controller.creeps
+                .filter(c => MINER_JOB_NAMES.has(c.jobName) && c.id !== this.id &&
+                    c.memory.targetX != null && c.memory.targetY != null)
+                .map(c => ({ x: c.memory.targetX, y: c.memory.targetY }));
+            const miningPos = findMiningPosition(source, this.gameState, occupiedPositions);
+            if (miningPos) {
+                setTargetPosition(this.memory, miningPos);
+                targetPos = miningPos;
+            } else {
+                console.log(`Miner ${this.id} couldn't find mining position`);
+                return;
+            }
+        }
+
+        if (!isAtTargetPosition(creep, this.memory)) {
+            const tugChain = this.gameState.getTugChain();
+            if (tugChain.length === 0) {
+                tugChain.claim(this.id);
+                tugChain.tick(targetPos, this.gameState);
+            } else if (tugChain.getChainPosition(this.id) === 1) {
+                // This miner is the subject (index 1) of the active chain
+                tugChain.tick(targetPos, this.gameState);
+            }
+            // Else another miner is using the chain — wait this tick
+            return;
+        }
+
+        transitionToMining(this.memory);
+        console.log(`Miner ${this.id} arrived at mining position`);
+
+        if (this.shouldPlaceContainer() && !this.gameState.getMiningContainerPos()) {
+            // Find the companion miner (the one that does not place the container)
+            const companionMiner = this.controller.creeps.find(c =>
+                MINER_JOB_NAMES.has(c.jobName) && c.id !== this.id &&
+                typeof c.shouldPlaceContainer === 'function' && !c.shouldPlaceContainer()
+            );
+            const tier1Pos = (companionMiner && companionMiner.memory.targetX != null)
+                ? { x: companionMiner.memory.targetX, y: companionMiner.memory.targetY }
+                : null;
+            const containerPos = findContainerPosition(creep, tier1Pos, source);
+            if (containerPos) {
+                const result = createConstructionSite(containerPos, StructureContainer);
+                if (result.object) {
+                    this.gameState.setMiningContainerPos(containerPos.x, containerPos.y);
+                    console.log(`Miner ${this.id} placed container site at (${containerPos.x}, ${containerPos.y})`);
+                } else {
+                    console.log(`Miner ${this.id} failed to place container site: error ${result.error}`);
                 }
             } else {
-                const containerId = this.gameState.getMiningContainerId();
-                const containerPos = this.gameState.getMiningContainerPos();
+                console.log(`Miner ${this.id} could not find a valid container position`);
+            }
+        }
+    }
 
-                if (containerId) {
-                    const container = getObjectById(containerId);
-                    if (container) {
-                        const transferResult = creep.transfer(container, RESOURCE_ENERGY);
-                        if (transferResult === ERR_NOT_IN_RANGE) {
-                            console.log(`Miner ${this.id} not in range of container`);
-                        }
-                    }
-                } else if (containerPos) {
-                    const site = this.gameState.getMyConstructionSites().find(s =>
-                        s.x === containerPos.x && s.y === containerPos.y
-                    );
-                    if (site) {
-                        const buildResult = creep.build(site);
-                        if (buildResult === ERR_NOT_IN_RANGE) {
-                            console.log(`Miner ${this.id} not in range of container site`);
-                        }
-                    }
-                } else {
-                    const adjacentMule = this.findAdjacentMule(creep);
-                    if (adjacentMule) {
-                        creep.transfer(adjacentMule, RESOURCE_ENERGY);
-                    }
-                    // Otherwise skip — wait for a mule to arrive
+    mine(creep, source) {
+
+        const harvestResult = creep.harvest(source);
+        if (harvestResult === ERR_NOT_IN_RANGE) {
+            console.log(`Miner ${this.id} not in range of source`);
+        }
+        const containerId = this.gameState.getMiningContainerId();
+        const containerPos = this.gameState.getMiningContainerPos();
+
+        if (containerId) {
+            const container = getObjectById(containerId);
+            if (container) {
+                const transferResult = creep.transfer(container, RESOURCE_ENERGY);
+                if (transferResult === ERR_NOT_IN_RANGE) {
+                    console.log(`Miner ${this.id} not in range of container`);
                 }
             }
+        } else if (containerPos) {
+            const site = this.gameState.getMyConstructionSites().find(s =>
+                s.x === containerPos.x && s.y === containerPos.y
+            );
+            if (site) {
+                const buildResult = creep.build(site);
+                if (buildResult === ERR_NOT_IN_RANGE) {
+                    console.log(`Miner ${this.id} not in range of container site`);
+                }
+            }
+        } else {
+            const adjacentMule = this.findAdjacentMule(creep);
+            if (adjacentMule) {
+                creep.transfer(adjacentMule, RESOURCE_ENERGY);
+            }
+            // Otherwise skip — wait for a mule to arrive
         }
     }
 }
