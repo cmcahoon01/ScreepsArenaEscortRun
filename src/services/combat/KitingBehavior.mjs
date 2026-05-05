@@ -107,8 +107,6 @@ export function findBestRetreatPosition(unit, enemies, allCreeps, allStructures,
         bestPositions = spawnBiasedPositions;
     }
 
-    if (bestPositions.length === 1) return bestPositions[0];
-
     let furthestPosition = bestPositions[0];
     let closestEnemy = findNearestEnemy(furthestPosition, enemies);
     let maxSquaredDistance = (furthestPosition.x - closestEnemy.x) ** 2 +
