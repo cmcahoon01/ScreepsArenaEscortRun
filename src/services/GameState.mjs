@@ -73,7 +73,6 @@ export class GameState {
             );
             if (container) {
                 this.miningContainerId = container.id;
-                console.log(`Mining container built at (${this.miningContainerPos.x}, ${this.miningContainerPos.y})`);
             }
         }
 
@@ -187,5 +186,5 @@ export class GameState {
     setRetreatTarget(pos) { this.retreatTarget = pos; }
     getIdleTarget() { return this.idleTarget; }
     setIdleTarget(pos) { this.idleTarget = pos; }
-    setTopTeam(flag) { this.weAreTop = flag.y===MapTopology.TOP_SPAWN_COORDINATES.y; }
+    setTopTeam(flag) {this.weAreTop = (flag.y < MapTopology.MAP_CENTER.y); }
 }

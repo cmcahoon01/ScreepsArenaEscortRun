@@ -6,7 +6,7 @@ import { CombatConfig } from '../constants.mjs';
 import {
     numStepsAwayFromOurSpawn,
     numStepsAwayFromEnemySpawn,
-    positionNStepsAwayFromSpawn,
+    positionNStepsAwayFromOurSpawn,
     positionNStepsAwayFromEnemySpawn,
 } from '../services/PositionTools.js';
 
@@ -118,7 +118,7 @@ export class CombatCoordinator {
                 } else {
                     // Retreat to halfway between our spawn and the enemy vanguard leader
                     const stepsFromOurSpawn = numStepsAwayFromOurSpawn(gameState, enemyVanguardLeader);
-                    const retreatTarget = positionNStepsAwayFromSpawn(gameState, Math.floor(stepsFromOurSpawn / 2));
+                    const retreatTarget = positionNStepsAwayFromOurSpawn(gameState, Math.floor(stepsFromOurSpawn / 2));
                     gameState.setRetreatTarget(retreatTarget);
                     CombatCoordinator.setMode(gameState, 'retreat', {
                         myVanguardSize: myVanguard.length,
