@@ -1,16 +1,15 @@
 import { ATTACK, MOVE, HEAL } from 'game/constants';
-import { MeleeJob } from '../services/jobs/MeleeJob.mjs';
+import { MeleeJob } from './base/MeleeJob.mjs';
 import { isInHealRange } from '../services/RangeUtils.mjs';
-import { BodyPartCalculator } from '../services/BodyPartService.mjs';
+import { calculateCost } from '../services/BodyPartService.mjs';
 
-// Paladin job - melee combat with self-healing
 export class PaladinJob extends MeleeJob {
     static get BODY() {
         return [MOVE, ATTACK, MOVE, HEAL];
     }
 
     static get COST() {
-        return BodyPartCalculator.calculateCost(this.BODY);
+        return calculateCost(this.BODY);
     }
 
     static get JOB_NAME() {
@@ -20,13 +19,11 @@ export class PaladinJob extends MeleeJob {
     performHealing(creep, damagedCreeps) {
         const selfIsDamaged = creep.hits < creep.hitsMax;
 
-        // Priority 1: Heal self if damaged
         if (selfIsDamaged) {
             creep.heal(creep);
             return;
         }
 
-        // Priority 2: If self is full HP, heal an adjacent ally that is missing HP
         const adjacentDamagedAlly = damagedCreeps.find(c => isInHealRange(creep, c));
         if (adjacentDamagedAlly) {
             creep.heal(adjacentDamagedAlly);

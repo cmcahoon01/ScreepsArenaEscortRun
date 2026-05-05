@@ -1,5 +1,6 @@
 import { WORK } from 'game/constants';
 import { MapTopology } from '../constants.mjs';
+import { chebyshevDistance } from './RangeUtils.mjs';
 
 /**
  * Detect if there's an enemy miner on a rampart near a corner source.
@@ -50,11 +51,7 @@ export function detectFortifiedMiner(gameState) {
         // Check if this creep is near a corner source (within range 2)
         // Range 2 allows for sources in corners with ramparts blocking direct adjacency
         for (const source of cornerSources) {
-            const dx = Math.abs(creep.x - source.x);
-            const dy = Math.abs(creep.y - source.y);
-            const distance = Math.max(dx, dy); // Chebyshev distance
-
-            if (distance <= 2) {
+            if (chebyshevDistance(creep, source) <= 2) {
                 // Found a fortified miner!
                 return {
                     creep: creep,

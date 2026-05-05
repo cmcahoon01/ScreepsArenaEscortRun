@@ -1,16 +1,18 @@
 import { getObjectById } from 'game/utils';
 import { MOVE, CARRY, RESOURCE_ENERGY, ERR_NOT_IN_RANGE } from 'game/constants';
 import { TugJob } from './TugJob.mjs';
-import { BodyPartCalculator } from '../services/BodyPartService.mjs';
+import { calculateCost } from '../services/BodyPartService.mjs';
+import { MINER_JOB_NAMES } from '../constants.mjs';
+import { isMovingToPosition } from '../services/mining/MinerStateMachine.mjs';
+import { joinTugChain } from '../services/TugChainService.mjs';
 
-// Mule job - transports resources from a paired miner to the spawn
 export class MuleJob extends TugJob {
     static get BODY() {
         return [MOVE, CARRY];
     }
 
     static get COST() {
-        return BodyPartCalculator.calculateCost(this.BODY);
+        return calculateCost(this.BODY);
     }
 
     static get JOB_NAME() {
@@ -19,17 +21,12 @@ export class MuleJob extends TugJob {
 
     act() {
         const creep = getObjectById(this.id);
-        if (!creep) {
-            return;
-        }
+        if (!creep) return;
 
-        // Initialize state if not set
         if (!this.memory.state) {
             this.memory.state = 'collecting';
         }
 
-        // If the paired miner has died or left, clear the pair so we can re-pair.
-        // This ensures mules and miners can be built in any order and always form pairs.
         if (this.memory.pairedMinerId) {
             const pairedStillAlive = this.controller.creeps.some(c => c.id === this.memory.pairedMinerId);
             if (!pairedStillAlive) {
@@ -37,11 +34,8 @@ export class MuleJob extends TugJob {
             }
         }
 
-        // Pair this mule with its corresponding miner by matching indices.
-        // Find the first miner not already claimed by another mule, so pairing
-        // remains correct even if a mule dies and is replaced.
         if (!this.memory.pairedMinerId) {
-            const miners = this.controller.creeps.filter(c => c.jobName === 'miner');
+            const miners = this.controller.creeps.filter(c => MINER_JOB_NAMES.has(c.jobName));
             const claimedMinerIds = this.controller.creeps
                 .filter(c => c.jobName === 'mule' && c.id !== this.id && c.memory.pairedMinerId)
                 .map(c => c.memory.pairedMinerId);
@@ -51,11 +45,9 @@ export class MuleJob extends TugJob {
             }
         }
 
-        // If the paired miner is still travelling to its mining position, act as a tug
-        // to pull it there before resuming normal collecting behaviour.
         if (this.memory.pairedMinerId) {
             const pairedActiveCreep = this.controller.creeps.find(c => c.id === this.memory.pairedMinerId);
-            if (pairedActiveCreep && pairedActiveCreep.memory.state === 'moving_to_position') {
+            if (pairedActiveCreep && isMovingToPosition(pairedActiveCreep.memory)) {
                 this._actAsTug(creep);
                 return;
             }
@@ -65,16 +57,14 @@ export class MuleJob extends TugJob {
         const totalCapacity = creep.store.getCapacity(RESOURCE_ENERGY);
 
         if (usedCapacity >= totalCapacity) {
-            // Switch to depositing when full
             this.memory.state = 'depositing';
         } else if (usedCapacity === 0) {
-            // Switch to collecting when empty
             this.memory.state = 'collecting';
         }
 
         if (this.memory.state === 'collecting') {
             this.collect(creep);
-        }else if (this.memory.state === 'depositing') {
+        } else if (this.memory.state === 'depositing') {
             this.deposit(creep);
         }
     }
@@ -82,11 +72,10 @@ export class MuleJob extends TugJob {
     deposit(creep) {
         const spawn = this.gameState.getMySpawn();
         if (spawn) {
-            // Try to transfer first; move only if out of range
-            let transferResult = creep.transfer(spawn, RESOURCE_ENERGY);
+            const transferResult = creep.transfer(spawn, RESOURCE_ENERGY);
             if (transferResult === ERR_NOT_IN_RANGE) {
                 creep.moveTo(spawn);
-            } else if (transferResult === 0){
+            } else if (transferResult === 0 && creep.store[RESOURCE_ENERGY] === 0) {
                 this.memory.state = 'collecting';
                 return this.collect(creep);
             }
@@ -94,14 +83,12 @@ export class MuleJob extends TugJob {
     }
 
     collect(creep) {
-        // If the mining container is built, withdraw from it instead of waiting on the miner
         const containerId = this.gameState.getMiningContainerId();
         if (containerId) {
             const container = getObjectById(containerId);
             if (container) {
                 const containerEnergy = container.store[RESOURCE_ENERGY] || 0;
                 if (containerEnergy > 0) {
-                    // Try to withdraw first; move only if out of range
                     let withdrawResult = creep.withdraw(container, RESOURCE_ENERGY);
                     if (withdrawResult === ERR_NOT_IN_RANGE) {
                         creep.moveTo(container);
@@ -111,14 +98,11 @@ export class MuleJob extends TugJob {
                         this.memory.state = 'depositing';
                         return this.deposit(creep);
                     }
-
                 }
-                // Container is empty this tick – nothing to do
                 return;
             }
         }
 
-        // Find the paired miner creep
         const pairedActiveCreep = this.memory.pairedMinerId
             ? this.controller.creeps.find(c => c.id === this.memory.pairedMinerId)
             : null;
@@ -126,53 +110,34 @@ export class MuleJob extends TugJob {
 
         const usedCapacity = creep.store[RESOURCE_ENERGY] || 0;
         if (!miner) {
-            // Paired miner is gone; deposit any energy we're carrying
             if (usedCapacity > 0) {
                 this.memory.state = 'depositing';
-                console.log(`Mule ${creep.id} has no paired miner but is carrying energy; switching to depositing state`);
                 return this.deposit(creep);
             }
         } else {
             const minerEnergy = miner.store[RESOURCE_ENERGY] || 0;
-
             if (minerEnergy === 0 && usedCapacity > 0) {
-                // Miner is empty but we still have energy - go deposit
                 this.memory.state = 'depositing';
                 return this.deposit(creep);
             } else {
-                // Move towards the paired miner; the miner will transfer when adjacent
                 creep.moveTo(miner);
             }
         }
     }
 
-    /**
-     * Act as a tug for the paired miner while it travels to its mining position.
-     * Moves toward the miner and, once adjacent, joins the tug chain as the leader
-     * so the miner can be pulled to its source without needing a dedicated tug creep.
-     * @param {Creep} creep - The mule creep object
-     */
     _actAsTug(creep) {
         const tugChain = this.gameState.getTugChain();
 
-        // If this mule is already leading the chain, nothing more to do here;
-        // the miner's act() drives the chain movement each tick.
-        if (tugChain.length >= 1 && tugChain[0] === this.id) {
+        if (tugChain.isLeader(this.id)) {
             return;
         }
 
-        // Resolve the paired miner game object.
         const pairedActiveCreep = this.controller.creeps.find(c => c.id === this.memory.pairedMinerId);
         const miner = pairedActiveCreep ? getObjectById(pairedActiveCreep.id) : null;
-        if (!miner) {
-            return;
-        }
+        if (!miner) return;
 
-        // If the chain contains only the miner, use the shared joining logic to
-        // become the chain leader. Otherwise, stay close to the miner so we can
-        // take over if the dedicated tug dies.
-        if (tugChain.length === 1 && tugChain[0] === this.memory.pairedMinerId) {
-            this._joinOrLeadChain(creep);
+        if (tugChain.hasSingleMember(this.memory.pairedMinerId)) {
+            joinTugChain(this.id, creep, this.gameState);
         } else {
             creep.moveTo(miner);
         }

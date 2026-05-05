@@ -1,25 +1,22 @@
-import {getObjectById} from 'game/utils';
-import {WORK, CARRY, MOVE, ERR_NOT_IN_RANGE, RESOURCE_ENERGY} from 'game/constants';
-import {ActiveCreep} from '../services/jobs/ActiveCreep.mjs';
-import {BodyPartCalculator} from '../services/BodyPartService.mjs';
-import {MapTopology} from '../constants.mjs';
-import {CombatUtils} from '../services/combat/CombatUtils.mjs';
+import { getObjectById } from 'game/utils';
+import { WORK, CARRY, MOVE, ERR_NOT_IN_RANGE, RESOURCE_ENERGY } from 'game/constants';
+import { ActiveCreep } from './base/ActiveCreep.mjs';
+import { calculateCost } from '../services/BodyPartService.mjs';
+import { MapTopology } from '../constants.mjs';
 
-// Hauler job - resource gathering and construction
 export class HaulerJob extends ActiveCreep {
     static get BODY() {
         return [WORK, WORK, WORK, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE];
     }
 
     static get COST() {
-        return BodyPartCalculator.calculateCost(this.BODY);
+        return calculateCost(this.BODY);
     }
 
     static get JOB_NAME() {
         return 'hauler';
     }
 
-    // Helper function to deliver resources to spawn
     deliverToSpawn(creep) {
         const spawn = this.gameState.getMySpawn();
         if (spawn) {
@@ -32,57 +29,36 @@ export class HaulerJob extends ActiveCreep {
 
     act() {
         const creep = getObjectById(this.id);
-        if (!creep) {
-            return;
-        }
+        if (!creep) return;
 
-        // === DEFENSIVE POSTURING CHECK ===
-        const inDefensiveMode = CombatUtils.handleDefensiveRetreat(creep, this.gameState);
-
-        if (inDefensiveMode) {
-            // Haulers don't attack, just stay on ramparts
-            return;
-        }
-
-        // Initialize state if not set
         if (!this.memory.state) {
             this.memory.state = 'mining';
         }
 
-        // Get current carry capacity and amount
         const usedCapacity = creep.store[RESOURCE_ENERGY] || 0;
         const totalCapacity = creep.store.getCapacity(RESOURCE_ENERGY);
 
-        // State machine logic
         if (this.memory.state === 'mining') {
-            // Check if we're at capacity
             if (usedCapacity >= totalCapacity) {
                 this.memory.state = 'hauling';
                 return;
             }
 
-            // Find the closest source, excluding corner sources (y < CORNER_TOP or y > CORNER_BOTTOM)
-            // This forces haulers to use the central sources near the middle of the map
             const allSources = this.gameState.getSources();
             const centralSources = allSources.filter(source =>
                 source.y >= MapTopology.CORNER_TOP_THRESHOLD &&
                 source.y <= MapTopology.CORNER_BOTTOM_THRESHOLD
             );
-            // Fallback to all sources if no central sources exist
             const sourcesToUse = centralSources.length > 0 ? centralSources : allSources;
             const closestSource = creep.findClosestByRange(sourcesToUse);
 
             if (closestSource) {
-                // Try to harvest
                 const harvestResult = creep.harvest(closestSource);
-
-                // If not in range, move towards the source
                 if (harvestResult === ERR_NOT_IN_RANGE) {
                     creep.moveTo(closestSource);
                 }
             }
         } else if (this.memory.state === 'hauling') {
-            // Check if we're empty
             if (usedCapacity === 0) {
                 this.memory.state = 'mining';
                 return;

@@ -41,29 +41,38 @@ export const DEFAULT_TIER = 1;
 export const BuildConfig = {
     /**
      * Initial build order that always executes first.
-     * Builds in sequence: miner → blocker → mule → cleric → tug → miner → mule → miner → mule.
-     * All are replaced if they die. After all are present, fighters and clerics are built
-     * continuously at a FIGHTER_TO_CLERIC_RATIO ratio.
+     * Builds in sequence: miner1 → blocker → mule → miner2 → mule.
+     * All are replaced if they die. After all are present, creeps are built
+     * according to PHASE2_BUILD weights.
      */
     INITIAL_BUILD: [
-        {job: 'miner', tier: 1},
+        'miner1',
         'blocker',
         'mule',
-        {job: 'miner', tier: 2},
+        'miner2',
         'mule',
     ],
 
     /**
-     * Ratio of fighters to clerics built after the initial build order completes.
-     * For every 1 cleric, this many fighters are built.
+     * Phase 2 build weights. After the initial build order completes, creeps
+     * are built to maintain proportions defined here.
      */
-    FIGHTER_TO_CLERIC_RATIO: 5,
+    PHASE2_BUILD: [
+        // { job: 'fighter', weight: 5 },
+        { job: 'cleric', weight: 1 },
+    ],
+
+    /**
+     * Distance (Chebyshev) threshold at which enemy escort creep approaching
+     * the goal triggers aggressive behavior.
+     */
+    AGGRESSIVE_TRIGGER_DISTANCE: 82,
 
     /**
      * Jobs that should spawn facing the closest resource source.
      * All other jobs spawn in the opposite direction (away from the source).
      */
-    SOURCE_FACING_JOBS: ['miner', 'mule', 'blocker'],
+    SOURCE_FACING_JOBS: ['miner1', 'miner2', 'mule', 'blocker'],
 };
 
 // ============================================================================
@@ -88,14 +97,6 @@ export const MapTopology = {
     CORNER_BOTTOM_THRESHOLD: 70,
     
     /**
-     * Number of extensions each miner should build around their source.
-     * 
-     * Rationale: 5 extensions per miner provides good energy storage capacity
-     * without overcrowding the source area (which has limited space).
-     */
-    EXTENSIONS_PER_MINER: 0,
-    
-    /**
      * Arena map size (width and height).
      * Standard Screeps Arena maps are 100x100.
      */
@@ -106,6 +107,12 @@ export const MapTopology = {
      * Used to determine which side of the map a spawn is on.
      */
     ARENA_CENTER: 50,
+
+    /**
+     * Center position of the arena map (x, y).
+     * Used as an idle position for combat creeps when no enemies are targetable.
+     */
+    MAP_CENTER: { x: 50, y: 50 },
 
     /**
      * All 8 spawn directions starting with RIGHT (clockwise).
@@ -274,10 +281,21 @@ export const PayloadConfig = {
     /**
      * Game tick threshold after which the payload advances regardless of military strength.
      */
-    GAME_TIME_THRESHOLD: 1500,
+    GAME_TIME_THRESHOLD: 400,
 
     /**
      * Chebyshev distance from our spawn at which the payload waits on a rampart.
      */
     WAITING_RAMPART_DISTANCE: 2,
 };
+
+// ============================================================================
+// Miner Job Configuration
+// ============================================================================
+
+/**
+ * Set of job names that count as miner-type creeps.
+ * Used to replace `c.jobName === "miner"` checks throughout the codebase.
+ */
+export const MINER_JOB_NAMES = new Set(["miner1", "miner2"]);
+
