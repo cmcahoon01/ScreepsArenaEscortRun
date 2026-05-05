@@ -69,7 +69,7 @@ export class MinerJob extends ActiveCreep {
             if (assignedSource) {
                 initialize(this.memory, minerIndex, assignedSource);
             } else {
-                console.log(`Miner ${this.id} could not be assigned a source (index: ${minerIndex})`);
+                console.log(`⚠️Miner ${this.id} could not be assigned a source (index: ${minerIndex})`);
                 this.memory.initialized = true;
                 return;
             }
@@ -77,7 +77,7 @@ export class MinerJob extends ActiveCreep {
 
         const source = getObjectById(this.memory.sourceId);
         if (!source) {
-            console.log(`Miner ${this.id} has no valid source`);
+            console.log(`⚠️Miner ${this.id} has no valid source`);
             return;
         }
 
@@ -102,7 +102,7 @@ export class MinerJob extends ActiveCreep {
                 setTargetPosition(this.memory, miningPos);
                 targetPos = miningPos;
             } else {
-                console.log(`Miner ${this.id} couldn't find mining position`);
+                console.log(`⚠️Miner ${this.id} couldn't find mining position`);
                 return;
             }
         }
@@ -121,7 +121,6 @@ export class MinerJob extends ActiveCreep {
         }
 
         transitionToMining(this.memory);
-        console.log(`Miner ${this.id} arrived at mining position`);
 
         if (this.shouldPlaceContainer() && !this.gameState.getMiningContainerPos()) {
             // Find the companion miner (the one that does not place the container)
@@ -137,9 +136,8 @@ export class MinerJob extends ActiveCreep {
                 const result = createConstructionSite(containerPos, StructureContainer);
                 if (result.object) {
                     this.gameState.setMiningContainerPos(containerPos.x, containerPos.y);
-                    console.log(`Miner ${this.id} placed container site at (${containerPos.x}, ${containerPos.y})`);
                 } else {
-                    console.log(`Miner ${this.id} failed to place container site: error ${result.error}`);
+                    console.log(`⚠️Miner ${this.id} failed to place container site: error ${result.error}`);
                 }
             } else {
                 console.log(`Miner ${this.id} could not find a valid container position`);

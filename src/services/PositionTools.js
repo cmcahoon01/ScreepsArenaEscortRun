@@ -18,6 +18,13 @@ export function positionNStepsAwayFromSpawn(gameState, N) {
     return { x, y };
 }
 
+export function positionNStepsAwayFromEnemySpawn(gameState, N) {
+    const ourSpawnCoordinates = gameState.getWeAreTop() ? MapTopology.TOP_SPAWN_COORDINATES : MapTopology.BOTTOM_SPAWN_COORDINATES;
+    const enemySpawnCoordinates = gameState.getWeAreTop() ? MapTopology.BOTTOM_SPAWN_COORDINATES : MapTopology.TOP_SPAWN_COORDINATES;
+    const totalPath = chebyshevDistance(ourSpawnCoordinates, enemySpawnCoordinates);
+    return positionNStepsAwayFromSpawn(gameState, totalPath - N);
+}
+
 export function numStepsAwayFromOurSpawn(gameState, position) {
     const ourSpawnCoordinates = gameState.getWeAreTop() ? MapTopology.TOP_SPAWN_COORDINATES : MapTopology.BOTTOM_SPAWN_COORDINATES;
     return chebyshevDistance(position, ourSpawnCoordinates);
@@ -26,11 +33,4 @@ export function numStepsAwayFromOurSpawn(gameState, position) {
 export function numStepsAwayFromEnemySpawn(gameState, position) {
     const enemySpawnCoordinates = gameState.getWeAreTop() ? MapTopology.BOTTOM_SPAWN_COORDINATES : MapTopology.TOP_SPAWN_COORDINATES;
     return chebyshevDistance(position, enemySpawnCoordinates);
-}
-
-export function positionNStepsAwayFromEnemySpawn(gameState, N) {
-    const ourSpawnCoordinates = gameState.getWeAreTop() ? MapTopology.TOP_SPAWN_COORDINATES : MapTopology.BOTTOM_SPAWN_COORDINATES;
-    const enemySpawnCoordinates = gameState.getWeAreTop() ? MapTopology.BOTTOM_SPAWN_COORDINATES : MapTopology.TOP_SPAWN_COORDINATES;
-    const totalPath = chebyshevDistance(ourSpawnCoordinates, enemySpawnCoordinates);
-    return positionNStepsAwayFromSpawn(gameState, totalPath - N);
 }
