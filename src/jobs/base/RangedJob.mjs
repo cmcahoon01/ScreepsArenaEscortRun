@@ -101,33 +101,62 @@ export class RangedJob extends ActiveCreep {
             return;
         }
 
-        if (!this.gameState.isCombatEngaged()) {
-            creep.rangedAttack(result.attackTarget);
-            this.idle(creep);
-            return;
-        }
+        // Targeting is unchanged — always attack the target
+        creep.rangedAttack(result.attackTarget);
 
-        const range = getRange(creep, result.attackTarget);
+        // Movement depends on combat mode
+        const combatMode = this.gameState.getCombatMode();
 
-        if (enemiesInRange.length > 0 && range < RangeConfig.RANGED_ATTACK_RANGE) {
-            const retreatPos = this.findBestRetreatPosition(creep, allHostileCreeps, allCreeps, allStructures);
-            if (retreatPos) creep.moveTo(retreatPos);
-        } else {
-            const rangeToTarget = getRange(creep, result.movementTarget);
+        if (combatMode === 'attack') {
+            // Kite if enemies are too close, else advance toward target
+            const range = getRange(creep, result.attackTarget);
+            if (enemiesInRange.length > 0 && range < RangeConfig.RANGED_ATTACK_RANGE) {
+                const retreatPos = this.findBestRetreatPosition(creep, allHostileCreeps, allCreeps, allStructures);
+                if (retreatPos) creep.moveTo(retreatPos);
+            } else {
+                const rangeToTarget = getRange(creep, result.movementTarget);
+                if (this.shouldHealDuringIdle()) {
+                    const damagedAllies = damagedCreeps.filter(c => c.id !== creep.id);
+                    if (damagedAllies.length > 0) {
+                        const closestDamagedAlly = creep.findClosestByRange(damagedAllies);
+                        if (closestDamagedAlly && getRange(creep, closestDamagedAlly) > 1) {
+                            creep.moveTo(closestDamagedAlly);
+                        }
+                    } else if (rangeToTarget > RangeConfig.RANGED_ATTACK_RANGE) {
+                        creep.moveTo(result.movementTarget);
+                    }
+                } else if (rangeToTarget > RangeConfig.RANGED_ATTACK_RANGE) {
+                    creep.moveTo(result.movementTarget);
+                }
+            }
+        } else if (combatMode === 'retreat') {
+            // Cleric healing movement may override retreat
             if (this.shouldHealDuringIdle()) {
                 const damagedAllies = damagedCreeps.filter(c => c.id !== creep.id);
                 if (damagedAllies.length > 0) {
                     const closestDamagedAlly = creep.findClosestByRange(damagedAllies);
                     if (closestDamagedAlly && getRange(creep, closestDamagedAlly) > 1) {
                         creep.moveTo(closestDamagedAlly);
+                        return;
                     }
-                } else if (rangeToTarget > RangeConfig.RANGED_ATTACK_RANGE) {
-                    creep.moveTo(result.movementTarget);
                 }
-            } else if (rangeToTarget > RangeConfig.RANGED_ATTACK_RANGE) {
-                creep.moveTo(result.movementTarget);
             }
+            const target = this.gameState.getRetreatTarget();
+            if (target) creep.moveTo(target);
+        } else {
+            // 'idle' mode — Cleric healing movement may override idle position
+            if (this.shouldHealDuringIdle()) {
+                const damagedAllies = damagedCreeps.filter(c => c.id !== creep.id);
+                if (damagedAllies.length > 0) {
+                    const closestDamagedAlly = creep.findClosestByRange(damagedAllies);
+                    if (closestDamagedAlly && getRange(creep, closestDamagedAlly) > 1) {
+                        creep.moveTo(closestDamagedAlly);
+                        return;
+                    }
+                }
+            }
+            const target = this.gameState.getIdleTarget();
+            if (target) creep.moveTo(target);
         }
-        creep.rangedAttack(result.attackTarget);
     }
 }

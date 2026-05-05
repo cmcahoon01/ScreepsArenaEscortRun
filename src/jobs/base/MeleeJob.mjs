@@ -31,17 +31,31 @@ export class MeleeJob extends ActiveCreep {
 
         const result = selectPrimaryTarget(creep, this.gameState, enemiesInMeleeRange);
 
-        if (!result || result.mode === 'idle' || !this.gameState.isCombatEngaged()) {
+        if (!result || result.mode === 'idle') {
             this.idle(creep);
             return;
         }
 
-        const attackResult = creep.attack(result.attackTarget);
+        // Targeting is unchanged — always attack if a target is available
+        creep.attack(result.attackTarget);
+
+        // Payload priority overrides combat mode movement
         if (result.mode === 'payload_priority') {
             creep.moveTo(result.enemyPayload);
-        } else {
-            creep.moveTo(result.movementTarget);
+            return;
         }
 
+        // Movement is determined by the current combat mode
+        const combatMode = this.gameState.getCombatMode();
+        if (combatMode === 'retreat') {
+            const target = this.gameState.getRetreatTarget();
+            if (target) creep.moveTo(target);
+        } else if (combatMode === 'idle') {
+            const target = this.gameState.getIdleTarget();
+            if (target) creep.moveTo(target);
+        } else {
+            // 'attack' mode — move toward the movement target
+            creep.moveTo(result.movementTarget);
+        }
     }
 }

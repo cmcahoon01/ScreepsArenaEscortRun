@@ -1,106 +1,108 @@
 import {CombatUtils, findFlagBlockingEnemy} from '../services/combat/CombatUtils.mjs';
-import {CombatConfig} from '../constants.mjs';
 import {ATTACK, RANGED_ATTACK} from "game/constants";
+import { getRange } from 'game/utils';
+import { calculateTeamStrength } from '../services/combat/StrengthEstimatorService.mjs';
+import {
+    numStepsAwayFromOurSpawn,
+    numStepsAwayFromEnemySpawn,
+    positionNStepsAwayFromSpawn,
+    positionNStepsAwayFromEnemySpawn,
+} from '../services/PositionTools.js';
 
 /**
- * CombatCoordinator — group-level engage / disengage logic.
+ * CombatCoordinator — group-level combat strategy logic.
  *
- * Ensures all combat units behave as a unit: they either all fight together
- * or all fall back to the map center together.
+ * Each tick, identifies the vanguard of each team (the frontmost combat units),
+ * compares their strengths, and sets a combat mode:
  *
- * Hysteresis is used to prevent rapid toggling when enemies hover near the
- * territory boundary.  Two separate Euclidean radii (measured from the enemy
- * spawn) define a neutral gap:
+ *   ATTACK  — our vanguard is stronger; units advance and engage.
+ *   RETREAT — our vanguard is weaker; units fall back to halfway position.
+ *   IDLE    — enemy vanguard is < 25 steps from their spawn; units wait at
+ *             40 steps from the enemy spawn.
  *
- *   ENGAGE   — triggered when any enemy combat unit crosses outside
- *              CombatConfig.COMBAT_ENGAGE_RADIUS (the outer / larger radius).
- *   NEUTRAL  — enemy is between the two radii; current state is held.
- *   DISENGAGE — triggered when ALL enemy combat units retreat inside
- *              CombatConfig.ENEMY_SPAWN_EXCLUSION_RADIUS (the inner radius).
- *
- * The result is stored in GameState and consulted by each combat job during
- * its act() call.  The enemy-escort / payload-priority path in each job is
- * always active regardless of this state so that units never ignore an
- * advancing enemy payload.
+ * The vanguard is the set of combat units whose y-coordinate is within 4 of
+ * the unit closest to the enemy spawn y.
  */
 export class CombatCoordinator {
     /**
-     * Compute the Euclidean distance from a position to the enemy spawn.
-     * @param {Object} pos - Position with x and y coordinates
-     * @param {{x: number, y: number}|null} enemySpawn - Enemy spawn structure
-     * @returns {number} Euclidean distance, or Infinity if spawn is unknown
+     * Find a team's vanguard: the combat unit closest (in y) to the given
+     * target y, plus all teammates within 4 y-units of that leader.
+     *
+     * @param {Creep[]} combatUnits - Array of combat-capable creeps
+     * @param {number} targetY - The enemy spawn's y-coordinate
+     * @returns {Creep[]} The vanguard group (may be empty)
      */
-    static distanceToEnemySpawn(pos, enemySpawn) {
-        if (!enemySpawn) {
-            return Infinity;
-        }
-        const dx = pos.x - enemySpawn.x;
-        const dy = pos.y - enemySpawn.y;
-        return Math.sqrt(dx * dx + dy * dy);
+    static findVanguard(combatUnits, targetY) {
+        if (combatUnits.length === 0) return [];
+
+        const leader = combatUnits.reduce((best, unit) =>
+            Math.abs(unit.y - targetY) < Math.abs(best.y - targetY) ? unit : best
+        );
+
+        return combatUnits.filter(u => Math.abs(u.y - leader.y) < 4);
     }
 
     /**
-     * Update the combat engagement state for the current tick.
+     * Update the combat strategy mode for the current tick.
      * Must be called once per tick, after gameState.refresh().
      *
      * @param {GameState} gameState - The game state service
      */
     static tick(gameState) {
         const enemyCreeps = gameState.getEnemyCreeps();
+        const myCreeps = gameState.getMyCreeps();
         const enemySpawn = gameState.getEnemySpawn();
+        const mySpawn = gameState.getMySpawn();
 
-        if (enemyCreeps.length === 0) {
-            gameState.setCombatEngaged(false);
-            return;
-        }
-
-        // Only count enemies that can actually threaten our units
         const enemyCombatUnits = enemyCreeps.filter(e => CombatUtils.hasAttackCapability(e));
 
-        if (enemyCombatUnits.length === 0) {
-            // Non-combat enemies only (miners, tugs, etc.) - stay disengaged
-            gameState.setCombatEngaged(false);
-            return;
-        }
-
-        const currentlyEngaged = gameState.isCombatEngaged();
-
-        if (currentlyEngaged) {
-            // === ALREADY ENGAGED ===
-            // Disengage only when ALL combat enemies have fully retreated inside the
-            // inner exclusion radius.  Enemies lingering in the neutral gap keep the
-            // engagement active, avoiding oscillation.
-            const anyEnemyOutsideInnerRadius = enemyCombatUnits.some(
-                e => CombatCoordinator.distanceToEnemySpawn(e, enemySpawn) >
-                    CombatConfig.ENEMY_SPAWN_EXCLUSION_RADIUS
-            );
-            if (!anyEnemyOutsideInnerRadius) {
-                gameState.setCombatEngaged(false);
-            }
-            // Otherwise stay engaged (neutral gap or still outside)
+        if (enemyCombatUnits.length === 0 || !enemySpawn || !mySpawn) {
+            gameState.setCombatMode('attack');
         } else {
-            // === CURRENTLY DISENGAGED ===
-            // Engage only when at least one combat enemy has crossed the outer radius.
-            // Enemies still within the neutral gap do not trigger engagement.
-            const anyEnemyOutsideEngageRadius = enemyCombatUnits.some(
-                e => CombatCoordinator.distanceToEnemySpawn(e, enemySpawn) >
-                    CombatConfig.COMBAT_ENGAGE_RADIUS
+            const enemySpawnY = enemySpawn.y;
+            const mySpawnY = mySpawn.y;
+
+            // Find the enemy vanguard leader: the enemy combat unit closest to our spawn y
+            const enemyVanguardLeader = enemyCombatUnits.reduce((best, unit) =>
+                Math.abs(unit.y - mySpawnY) < Math.abs(best.y - mySpawnY) ? unit : best
             );
-            if (anyEnemyOutsideEngageRadius) {
-                gameState.setCombatEngaged(true);
+
+            // The vanguard is the leader plus all units within 4 y-units of it
+            const enemyVanguard = enemyCombatUnits.filter(u => Math.abs(u.y - enemyVanguardLeader.y) <= 4);
+
+            const enemyVanguardStepsFromEnemySpawn = numStepsAwayFromEnemySpawn(gameState, enemyVanguardLeader);
+
+            if (enemyVanguardStepsFromEnemySpawn < 25) {
+                // Enemy is still near their base — idle forward and wait
+                gameState.setCombatMode('idle');
+                gameState.setIdleTarget(positionNStepsAwayFromEnemySpawn(gameState, 40));
+            } else {
+                const myCombatUnits = myCreeps.filter(c => CombatUtils.hasAttackCapability(c));
+                const myVanguard = CombatCoordinator.findVanguard(myCombatUnits, enemySpawnY);
+
+                const myVanguardStrength = calculateTeamStrength(myVanguard);
+                const enemyVanguardStrength = calculateTeamStrength(enemyVanguard);
+
+                if (myVanguard.length > 0 && myVanguardStrength >= enemyVanguardStrength) {
+                    gameState.setCombatMode('attack');
+                } else {
+                    // Retreat to halfway between our spawn and the enemy vanguard leader
+                    const stepsFromOurSpawn = numStepsAwayFromOurSpawn(gameState, enemyVanguardLeader);
+                    gameState.setRetreatTarget(positionNStepsAwayFromSpawn(gameState, Math.floor(stepsFromOurSpawn / 2)));
+                    gameState.setCombatMode('retreat');
+                }
             }
-            // Otherwise stay disengaged (neutral gap)
         }
 
+        // Flag blocker assignment (unchanged)
         const flagBlocker = findFlagBlockingEnemy(gameState, enemyCreeps);
         if (flagBlocker && gameState.getFlagKillerId() === null) {
-            // pick a unit to assign to kill it, preferring melee units
             const ourMeleeCombatUnits = gameState.getMyCreeps().filter(c => c.body.some(part => part.type === ATTACK));
             const ourRangedCombatUnits = gameState.getMyCreeps().filter(c => c.body.some(part => part.type === RANGED_ATTACK));
             const candidates = ourMeleeCombatUnits.length > 0 ? ourMeleeCombatUnits : ourRangedCombatUnits;
             if (candidates.length > 0) {
                 const flagKiller = candidates.reduce((closest, c) => {
-                    const dist = CombatUtils.euclideanDistance(c, flagBlocker);
+                    const dist = getRange(c, flagBlocker);
                     if (dist < closest.dist) {
                         return {creep: c, dist};
                     } else {
@@ -113,7 +115,6 @@ export class CombatCoordinator {
                 }
             }
         } else if (!flagBlocker) {
-            // flag is not blocked, clear the assignment
             gameState.setFlagKillerId(null);
         }
     }
