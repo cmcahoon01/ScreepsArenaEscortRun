@@ -2,6 +2,7 @@ import {CombatUtils, findFlagBlockingEnemy} from '../services/combat/CombatUtils
 import {ATTACK, RANGED_ATTACK} from "game/constants";
 import { getRange } from 'game/utils';
 import { calculateTeamStrength } from '../services/combat/StrengthEstimatorService.mjs';
+import { CombatConfig } from '../constants.mjs';
 import {
     numStepsAwayFromOurSpawn,
     numStepsAwayFromEnemySpawn,
@@ -20,13 +21,13 @@ import {
  *   IDLE    — enemy vanguard is < 25 steps from their spawn; units wait at
  *             40 steps from the enemy spawn.
  *
- * The vanguard is the set of combat units whose y-coordinate is within 4 of
- * the unit closest to the enemy spawn y.
+ * The vanguard is the set of combat units whose y-coordinate is within
+ * CombatConfig.VANGUARD_GROUP_HEIGHT of the unit closest to the enemy spawn y.
  */
 export class CombatCoordinator {
     /**
      * Find a team's vanguard: the combat unit closest (in y) to the given
-     * target y, plus all teammates within 4 y-units of that leader.
+     * target y, plus all teammates within VANGUARD_GROUP_HEIGHT y-units of that leader.
      *
      * @param {Creep[]} combatUnits - Array of combat-capable creeps
      * @param {number} targetY - The enemy spawn's y-coordinate
@@ -39,7 +40,24 @@ export class CombatCoordinator {
             Math.abs(unit.y - targetY) < Math.abs(best.y - targetY) ? unit : best
         );
 
-        return combatUnits.filter(u => Math.abs(u.y - leader.y) < 4);
+        return combatUnits.filter(u => Math.abs(u.y - leader.y) < CombatConfig.VANGUARD_GROUP_HEIGHT);
+    }
+
+    /**
+     * Set the combat mode on gameState and log whenever it changes.
+     * @param {GameState} gameState
+     * @param {string} newMode - 'attack' | 'retreat' | 'idle'
+     * @param {Object} details - Extra context to include in the log
+     */
+    static setMode(gameState, newMode, details = {}) {
+        const prevMode = gameState.getCombatMode();
+        gameState.setCombatMode(newMode);
+        if (prevMode !== newMode) {
+            const detailStr = Object.entries(details)
+                .map(([k, v]) => `${k}=${JSON.stringify(v)}`)
+                .join(' ');
+            console.log(`[CombatCoordinator] mode: ${prevMode} → ${newMode}${detailStr ? ' | ' + detailStr : ''}`);
+        }
     }
 
     /**
@@ -57,7 +75,7 @@ export class CombatCoordinator {
         const enemyCombatUnits = enemyCreeps.filter(e => CombatUtils.hasAttackCapability(e));
 
         if (enemyCombatUnits.length === 0 || !enemySpawn || !mySpawn) {
-            gameState.setCombatMode('attack');
+            CombatCoordinator.setMode(gameState, 'attack', { reason: 'no_enemy_combat_units' });
         } else {
             const enemySpawnY = enemySpawn.y;
             const mySpawnY = mySpawn.y;
@@ -67,15 +85,22 @@ export class CombatCoordinator {
                 Math.abs(unit.y - mySpawnY) < Math.abs(best.y - mySpawnY) ? unit : best
             );
 
-            // The vanguard is the leader plus all units within 4 y-units of it
-            const enemyVanguard = enemyCombatUnits.filter(u => Math.abs(u.y - enemyVanguardLeader.y) < 4);
+            // The vanguard is the leader plus all units within VANGUARD_GROUP_HEIGHT y-units of it
+            const enemyVanguard = enemyCombatUnits.filter(
+                u => Math.abs(u.y - enemyVanguardLeader.y) < CombatConfig.VANGUARD_GROUP_HEIGHT
+            );
 
             const vanguardStepsFromSpawn = numStepsAwayFromEnemySpawn(gameState, enemyVanguardLeader);
 
             if (vanguardStepsFromSpawn < 25) {
                 // Enemy is still near their base — idle forward and wait
-                gameState.setCombatMode('idle');
-                gameState.setIdleTarget(positionNStepsAwayFromEnemySpawn(gameState, 40));
+                const idleTarget = positionNStepsAwayFromEnemySpawn(gameState, 40);
+                gameState.setIdleTarget(idleTarget);
+                CombatCoordinator.setMode(gameState, 'idle', {
+                    enemyVanguardSize: enemyVanguard.length,
+                    enemyVanguardStepsFromSpawn: vanguardStepsFromSpawn,
+                    idleTarget,
+                });
             } else {
                 const myCombatUnits = myCreeps.filter(c => CombatUtils.hasAttackCapability(c));
                 const myVanguard = CombatCoordinator.findVanguard(myCombatUnits, enemySpawnY);
@@ -84,12 +109,24 @@ export class CombatCoordinator {
                 const enemyVanguardStrength = calculateTeamStrength(enemyVanguard);
 
                 if (myVanguard.length > 0 && myVanguardStrength >= enemyVanguardStrength) {
-                    gameState.setCombatMode('attack');
+                    CombatCoordinator.setMode(gameState, 'attack', {
+                        myVanguardSize: myVanguard.length,
+                        myVanguardStrength,
+                        enemyVanguardSize: enemyVanguard.length,
+                        enemyVanguardStrength,
+                    });
                 } else {
                     // Retreat to halfway between our spawn and the enemy vanguard leader
                     const stepsFromOurSpawn = numStepsAwayFromOurSpawn(gameState, enemyVanguardLeader);
-                    gameState.setRetreatTarget(positionNStepsAwayFromSpawn(gameState, Math.floor(stepsFromOurSpawn / 2)));
-                    gameState.setCombatMode('retreat');
+                    const retreatTarget = positionNStepsAwayFromSpawn(gameState, Math.floor(stepsFromOurSpawn / 2));
+                    gameState.setRetreatTarget(retreatTarget);
+                    CombatCoordinator.setMode(gameState, 'retreat', {
+                        myVanguardSize: myVanguard.length,
+                        myVanguardStrength,
+                        enemyVanguardSize: enemyVanguard.length,
+                        enemyVanguardStrength,
+                        retreatTarget,
+                    });
                 }
             }
         }
