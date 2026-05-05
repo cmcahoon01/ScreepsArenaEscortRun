@@ -58,7 +58,7 @@ export const BuildConfig = {
         { job: 'miner1' },
         { job: 'blocker', replace_dead: false, only_if: BuildConditions.noEnemyCombatUnit },
         { job: 'mule' },
-        { job: 'paladin' },
+        { job: 'paladin', replace_dead: false, only_if: BuildConditions.enemyNearOurBase },
         { job: 'miner2' },
         { job: 'mule' },
     ],
@@ -190,7 +190,7 @@ export const CombatConfig = {
          * Two pure melee units beat one melee+heal unit, indicating healing
          * provides less than 50% bonus in melee combat.
          */
-        MELEE_HEAL: 0.5,
+        MELEE_HEAL: 2,
         
         /**
          * Support healing multiplier = 1
@@ -219,11 +219,9 @@ export const CombatConfig = {
      */
     FLAG_BLOCKER_RANGE: 40,
 
-    /**
-     * Euclidean radius around the enemy spawn that combat units must never enter.
-     * If all enemies are within this zone, combat units idle near the map center.
-     */
-    ENEMY_SPAWN_EXCLUSION_RADIUS: 30,
+    SPAWN_EXCLUSION_RADIUS: 20,
+
+    IN_OUR_QUADRANT_DISTANCE: 40,
 
     /**
      * Euclidean radius around the enemy spawn that an enemy combat unit must cross
