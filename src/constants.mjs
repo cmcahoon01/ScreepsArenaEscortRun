@@ -287,6 +287,23 @@ export const PayloadConfig = {
      * Chebyshev distance from our spawn at which the payload waits on a rampart.
      */
     WAITING_RAMPART_DISTANCE: 2,
+
+    /**
+     * X offset from spawn for the forward waiting position (toward the goal).
+     */
+    WAITING_FORWARD_OFFSET_X: 3,
+
+    /**
+     * Y offset magnitude from spawn for the forward waiting position.
+     * Applied as negative (upward) when spawn is on top, positive (downward) when on bottom.
+     */
+    WAITING_FORWARD_OFFSET_Y: 3,
+
+    /**
+     * Chebyshev distance threshold for detecting nearby enemies while waiting.
+     * If any enemy is within this range, the payload seeks cover on a rampart.
+     */
+    ENEMY_NEARBY_RANGE: 8,
 };
 
 // ============================================================================
