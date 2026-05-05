@@ -12,8 +12,6 @@ export class BuildStrategy {
             creepCounts[activeCreep.jobName] = (creepCounts[activeCreep.jobName] || 0) + 1;
         }
 
-        const blockerForbidden = this.gameState.getEnemyHasCombatUnit() || this.gameState.getBlockerEverDied();
-
         // Phase 1: Initial build order — replace any lost creeps immediately.
         const initialBuild = BuildConfig.INITIAL_BUILD;
         for (let i = 0; i < initialBuild.length; i++) {
@@ -27,7 +25,14 @@ export class BuildStrategy {
                 continue;
             }
 
-            if (jobName === 'blocker' && blockerForbidden) {
+            // Skip permanently if replace_dead is explicitly false and this job has already died.
+            // When replace_dead is omitted (undefined), creeps are replaced by default.
+            if (buildItem.replace_dead === false && this.gameState.getJobEverDied(jobName)) {
+                continue;
+            }
+
+            // Skip this tick if the only_if condition is not satisfied.
+            if (typeof buildItem.only_if === 'function' && !buildItem.only_if(this.gameState)) {
                 continue;
             }
 

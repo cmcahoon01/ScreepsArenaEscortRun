@@ -7,6 +7,7 @@
  */
 
 import { LEFT, RIGHT, TOP, BOTTOM, BOTTOM_LEFT, BOTTOM_RIGHT, TOP_LEFT, TOP_RIGHT } from "game/constants";
+import * as BuildConditions from "./config/BuildConditions.mjs";
 
 // ============================================================================
 // Body Part Costs
@@ -41,17 +42,25 @@ export const DEFAULT_TIER = 1;
 export const BuildConfig = {
     /**
      * Initial build order that always executes first.
-     * Builds in sequence: miner1 → blocker → mule → miner2 → mule.
-     * All are replaced if they die. After all are present, creeps are built
-     * according to PHASE2_BUILD weights.
+     * Builds in sequence: miner1 → blocker → mule → paladin → miner2 → mule.
+     * After all are present, creeps are built according to PHASE2_BUILD weights.
+     *
+     * Each entry is an object with the following fields:
+     *   job         {string}             - The job name (required).
+     *   tier        {number}             - Body tier (optional, defaults to DEFAULT_TIER).
+     *   replace_dead {boolean}           - If false, do not rebuild this creep when it
+     *                                      dies (optional, defaults to true).
+     *   only_if     {(gameState)=>boolean} - Skip this build step when the function
+     *                                      returns false (optional). See
+     *                                      src/config/BuildConditions.mjs for examples.
      */
     INITIAL_BUILD: [
-        'miner1',
-        'blocker',
-        'mule',
-        'paladin',
-        'miner2',
-        'mule',
+        { job: 'miner1' },
+        { job: 'blocker', replace_dead: false, only_if: BuildConditions.noEnemyCombatUnit },
+        { job: 'mule' },
+        { job: 'paladin', replace_dead: false, only_if: BuildConditions.enemyNearOurBase },
+        { job: 'miner2' },
+        { job: 'mule' },
     ],
 
     /**
@@ -181,7 +190,7 @@ export const CombatConfig = {
          * Two pure melee units beat one melee+heal unit, indicating healing
          * provides less than 50% bonus in melee combat.
          */
-        MELEE_HEAL: 0.5,
+        MELEE_HEAL: 2,
         
         /**
          * Support healing multiplier = 1
@@ -210,11 +219,9 @@ export const CombatConfig = {
      */
     FLAG_BLOCKER_RANGE: 40,
 
-    /**
-     * Euclidean radius around the enemy spawn that combat units must never enter.
-     * If all enemies are within this zone, combat units idle near the map center.
-     */
-    ENEMY_SPAWN_EXCLUSION_RADIUS: 30,
+    SPAWN_EXCLUSION_RADIUS: 20,
+
+    IN_OUR_QUADRANT_DISTANCE: 40,
 
     /**
      * Euclidean radius around the enemy spawn that an enemy combat unit must cross

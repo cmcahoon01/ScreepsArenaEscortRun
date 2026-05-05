@@ -1,7 +1,7 @@
 import { getRange, getObjectById } from 'game/utils';
 import { ATTACK, RANGED_ATTACK } from 'game/constants';
-import { compareTeamStrengths } from './StrengthEstimatorService.mjs';
 import { CombatConfig, MapTopology } from '../../constants.mjs';
+import { chebyshevDistance } from '../RangeUtils.mjs';
 
 const COMBAT_JOBS = new Set(CombatConfig.COMBAT_JOBS);
 
@@ -32,9 +32,7 @@ export function isInEnemyThird(pos, enemySpawn) {
 
 export function isWithinEnemySpawnRadius(pos, enemySpawn) {
     if (!enemySpawn) return false;
-    const dx = pos.x - enemySpawn.x;
-    const dy = pos.y - enemySpawn.y;
-    return Math.sqrt(dx * dx + dy * dy) <= CombatConfig.ENEMY_SPAWN_EXCLUSION_RADIUS;
+    return chebyshevDistance(pos, enemySpawn) <= CombatConfig.SPAWN_EXCLUSION_RADIUS;
 }
 
 export function filterEnemiesByRampartStatus(enemies, ramparts) {

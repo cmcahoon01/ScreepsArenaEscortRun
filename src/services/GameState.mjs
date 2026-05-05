@@ -27,8 +27,8 @@ export class GameState {
         this.flag = null;
         this.enemyFlag = null;
         this.flagKillerId = null;
-        this.blockerEverBuilt = false;
-        this.blockerEverDied = false;
+        this._jobsEverBuilt = new Set();
+        this._jobsEverDied = new Set();
         this.enemyHasCombatUnit = false;
         this.miningContainerPos = null;
         this.miningContainerId = null;
@@ -82,11 +82,15 @@ export class GameState {
         const rosterJobNames = Array.from(this.creepRoster.values());
         this.hasBuiltMiner = rosterJobNames.some(jobName => MINER_JOB_NAMES.has(jobName));
 
-        const hasBlockerNow = rosterJobNames.some(jobName => jobName === 'blocker');
-        if (hasBlockerNow) {
-            this.blockerEverBuilt = true;
-        } else if (this.blockerEverBuilt) {
-            this.blockerEverDied = true;
+        // Track which jobs have been built and have since died (for replace_dead support).
+        const rosterJobNameSet = new Set(rosterJobNames);
+        for (const jobName of this._jobsEverBuilt) {
+            if (!rosterJobNameSet.has(jobName)) {
+                this._jobsEverDied.add(jobName);
+            }
+        }
+        for (const jobName of rosterJobNames) {
+            this._jobsEverBuilt.add(jobName);
         }
 
         // Maintain flag killer assignment
@@ -117,7 +121,7 @@ export class GameState {
     getMyConstructionSites() { return this.myConstructionSites; }
     getFortifiedMiner() { return this.fortifiedMiner; }
     getHasBuiltMiner() { return this.hasBuiltMiner; }
-    getBlockerEverDied() { return this.blockerEverDied; }
+    getJobEverDied(jobName) { return this._jobsEverDied.has(jobName); }
     getEnemyHasCombatUnit() { return this.enemyHasCombatUnit; }
     getWeAreTop() { return this.weAreTop; }
 
