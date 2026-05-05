@@ -21,7 +21,6 @@ export class CreepController {
         this.creeps = this.creeps.filter(activeCreep => {
             const creep = getObjectById(activeCreep.id);
             if (!creep || !creep.exists) {
-                console.log(`Removing dead creep ${activeCreep.id}`);
                 return false;
             }
             if (!creep.spawning) {

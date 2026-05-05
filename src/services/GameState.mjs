@@ -32,7 +32,9 @@ export class GameState {
         this.enemyHasCombatUnit = false;
         this.miningContainerPos = null;
         this.miningContainerId = null;
-        this.combatEngaged = false;
+        this.combatMode = 'idle';
+        this.retreatTarget = null;
+        this.idleTarget = null;
         this.weAreTop = false;
     }
 
@@ -71,7 +73,6 @@ export class GameState {
             );
             if (container) {
                 this.miningContainerId = container.id;
-                console.log(`Mining container built at (${this.miningContainerPos.x}, ${this.miningContainerPos.y})`);
             }
         }
 
@@ -177,7 +178,13 @@ export class GameState {
     getMiningContainerPos() { return this.miningContainerPos; }
     getMiningContainerId() { return this.miningContainerId; }
 
-    isCombatEngaged() { return this.combatEngaged; }
-    setCombatEngaged(engaged) { this.combatEngaged = engaged; }
-    setTopTeam(flag) { this.topTeam = flag.y===MapTopology.TOP_SPAWN_COORDINATES.y; }
+    isCombatEngaged() { return this.combatMode === 'attack'; }
+    setCombatEngaged(engaged) { this.combatMode = engaged ? 'attack' : 'idle'; }
+    getCombatMode() { return this.combatMode; }
+    setCombatMode(mode) { this.combatMode = mode; }
+    getRetreatTarget() { return this.retreatTarget; }
+    setRetreatTarget(pos) { this.retreatTarget = pos; }
+    getIdleTarget() { return this.idleTarget; }
+    setIdleTarget(pos) { this.idleTarget = pos; }
+    setTopTeam(flag) {this.weAreTop = (flag.y < MapTopology.MAP_CENTER.y); }
 }

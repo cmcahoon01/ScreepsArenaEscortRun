@@ -7,7 +7,7 @@ import {
     findBestRetreatPosition as kitingFindBestRetreatPosition,
 } from '../../services/combat/KitingBehavior.mjs';
 import { isInRangedAttackRange } from '../../services/RangeUtils.mjs';
-import { selectPrimaryTarget } from '../../services/combat/CombatUtils.mjs';
+import { selectPrimaryTarget, findFlagBlockingEnemy } from '../../services/combat/CombatUtils.mjs';
 import { RangeConfig } from '../../constants.mjs';
 
 export class RangedJob extends ActiveCreep {
@@ -26,8 +26,8 @@ export class RangedJob extends ActiveCreep {
         return kitingFindNearestEnemy(position, enemies);
     }
 
-    findBestRetreatPosition(creep, enemies, allCreeps, allStructures) {
-        return kitingFindBestRetreatPosition(creep, enemies, allCreeps, allStructures);
+    findBestRetreatPosition(creep, enemies, allCreeps, allStructures, spawnPos = null) {
+        return kitingFindBestRetreatPosition(creep, enemies, allCreeps, allStructures, spawnPos);
     }
 
     shouldHealDuringIdle() {
@@ -36,6 +36,26 @@ export class RangedJob extends ActiveCreep {
 
     performHealing(creep, damagedCreeps, allCreeps) {
         // Default: no healing
+    }
+
+    /**
+     * If this unit has healing capability and there are injured allies nearby,
+     * move toward the closest one and return true (movement was overridden).
+     * @param {Creep} creep
+     * @param {Creep[]} damagedCreeps - All injured friendly creeps
+     * @returns {boolean} True if healing movement was applied
+     */
+    tryHealingMove(creep, damagedCreeps) {
+        if (!this.shouldHealDuringIdle()) return false;
+        const damagedAllies = damagedCreeps.filter(c => c.id !== creep.id);
+        if (damagedAllies.length > 0) {
+            const closestDamagedAlly = creep.findClosestByRange(damagedAllies);
+            if (closestDamagedAlly && getRange(creep, closestDamagedAlly) > 1) {
+                creep.moveTo(closestDamagedAlly);
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -66,10 +86,24 @@ export class RangedJob extends ActiveCreep {
         const allStructures = getObjectsByPrototype(Structure);
         const allHostileCreeps = this.gameState.getEnemyCreeps();
         const myCreeps = this.gameState.getMyCreeps();
+        const mySpawn = this.gameState.getMySpawn();
         const damagedCreeps = myCreeps.filter(c => c.hits < c.hitsMax);
         const enemiesInRange = allHostileCreeps.filter(e => isInRangedAttackRange(creep, e));
 
         this.performHealing(creep, damagedCreeps, allCreeps);
+
+        // FlagKiller override: ignore combat mode, always pursue flag blocker
+        if (creep.id === this.gameState.getFlagKillerId()) {
+            const flagBlocker = findFlagBlockingEnemy(this.gameState, allHostileCreeps);
+            if (flagBlocker) {
+                creep.moveTo(flagBlocker);
+                if (enemiesInRange.length > 0) {
+                    const target = creep.findClosestByRange(enemiesInRange);
+                    if (target) creep.rangedAttack(target);
+                }
+                return;
+            }
+        }
 
         const result = selectPrimaryTarget(creep, this.gameState, enemiesInRange);
 
@@ -84,7 +118,7 @@ export class RangedJob extends ActiveCreep {
                 if (target) {
                     const rangeToTarget = getRange(creep, target);
                     if (rangeToTarget < RangeConfig.RANGED_ATTACK_RANGE) {
-                        const retreatPos = this.findBestRetreatPosition(creep, allHostileCreeps, allCreeps, allStructures);
+                        const retreatPos = this.findBestRetreatPosition(creep, allHostileCreeps, allCreeps, allStructures, mySpawn);
                         if (retreatPos) creep.moveTo(retreatPos);
                     } else if (rangeToTarget > RangeConfig.RANGED_ATTACK_RANGE) {
                         creep.moveTo(target);
@@ -101,33 +135,36 @@ export class RangedJob extends ActiveCreep {
             return;
         }
 
-        if (!this.gameState.isCombatEngaged()) {
-            creep.rangedAttack(result.attackTarget);
-            this.idle(creep);
-            return;
-        }
+        // Targeting is unchanged — always attack the target
+        creep.rangedAttack(result.attackTarget);
 
-        const range = getRange(creep, result.attackTarget);
+        // Movement depends on combat mode
+        const combatMode = this.gameState.getCombatMode();
 
-        if (enemiesInRange.length > 0 && range < RangeConfig.RANGED_ATTACK_RANGE) {
-            const retreatPos = this.findBestRetreatPosition(creep, allHostileCreeps, allCreeps, allStructures);
-            if (retreatPos) creep.moveTo(retreatPos);
-        } else {
-            const rangeToTarget = getRange(creep, result.movementTarget);
-            if (this.shouldHealDuringIdle()) {
-                const damagedAllies = damagedCreeps.filter(c => c.id !== creep.id);
-                if (damagedAllies.length > 0) {
-                    const closestDamagedAlly = creep.findClosestByRange(damagedAllies);
-                    if (closestDamagedAlly && getRange(creep, closestDamagedAlly) > 1) {
-                        creep.moveTo(closestDamagedAlly);
-                    }
-                } else if (rangeToTarget > RangeConfig.RANGED_ATTACK_RANGE) {
+        if (combatMode === 'attack') {
+            // Kite if enemies are too close, else advance toward target
+            const range = getRange(creep, result.attackTarget);
+            if (enemiesInRange.length > 0 && range < RangeConfig.RANGED_ATTACK_RANGE) {
+                const retreatPos = this.findBestRetreatPosition(creep, allHostileCreeps, allCreeps, allStructures, mySpawn);
+                if (retreatPos) creep.moveTo(retreatPos);
+            } else {
+                const rangeToTarget = getRange(creep, result.movementTarget);
+                if (!this.tryHealingMove(creep, damagedCreeps) && rangeToTarget > RangeConfig.RANGED_ATTACK_RANGE) {
                     creep.moveTo(result.movementTarget);
                 }
-            } else if (rangeToTarget > RangeConfig.RANGED_ATTACK_RANGE) {
-                creep.moveTo(result.movementTarget);
+            }
+        } else if (combatMode === 'retreat') {
+            // Cleric healing movement may override retreat
+            if (!this.tryHealingMove(creep, damagedCreeps)) {
+                const target = this.gameState.getRetreatTarget();
+                if (target) creep.moveTo(target);
+            }
+        } else {
+            // 'idle' mode — Cleric healing movement may override idle position
+            if (!this.tryHealingMove(creep, damagedCreeps)) {
+                const target = this.gameState.getIdleTarget();
+                if (target) creep.moveTo(target);
             }
         }
-        creep.rangedAttack(result.attackTarget);
     }
 }

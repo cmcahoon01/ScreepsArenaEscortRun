@@ -228,6 +228,14 @@ export const CombatConfig = {
      * or filtered as combat-capable creeps.
      */
     COMBAT_JOBS: ['fighter', 'paladin', 'archer', 'cleric'],
+
+    /**
+     * Y-distance window used to define a vanguard group.
+     * The vanguard leader is the combat unit closest (in y) to the enemy spawn,
+     * and all units within this many y-units of the leader are included in
+     * the vanguard for strength estimation.
+     */
+    VANGUARD_GROUP_HEIGHT: 4,
 };
 
 // ============================================================================
