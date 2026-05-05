@@ -157,29 +157,37 @@ export class MinerJob extends ActiveCreep {
         const containerPos = this.gameState.getMiningContainerPos();
 
         if (containerId) {
-            const container = getObjectById(containerId);
-            if (container) {
-                const transferResult = creep.transfer(container, RESOURCE_ENERGY);
-                if (transferResult === ERR_NOT_IN_RANGE) {
-                    console.log(`Miner ${this.id} not in range of container`);
-                }
-            }
+            this.deposit(creep, containerId);
         } else if (containerPos) {
-            const site = this.gameState.getMyConstructionSites().find(s =>
-                s.x === containerPos.x && s.y === containerPos.y
-            );
-            if (site) {
-                const buildResult = creep.build(site);
-                if (buildResult === ERR_NOT_IN_RANGE) {
-                    console.log(`Miner ${this.id} not in range of container site`);
-                }
-            }
+            this.build(creep, containerPos);
         } else {
             const adjacentMule = this.findAdjacentMule(creep);
             if (adjacentMule) {
                 creep.transfer(adjacentMule, RESOURCE_ENERGY);
             }
             // Otherwise skip — wait for a mule to arrive
+        }
+    }
+
+    deposit(creep, containerId) {
+        const container = getObjectById(containerId);
+        if (container) {
+            const transferResult = creep.transfer(container, RESOURCE_ENERGY);
+            if (transferResult === ERR_NOT_IN_RANGE) {
+                console.log(`Miner ${this.id} not in range of container`);
+            }
+        }
+    }
+
+    build(creep, containerPos) {
+        const site = this.gameState.getMyConstructionSites().find(s =>
+            s.x === containerPos.x && s.y === containerPos.y
+        );
+        if (site) {
+            const buildResult = creep.build(site);
+            if (buildResult === ERR_NOT_IN_RANGE) {
+                console.log(`Miner ${this.id} not in range of container site`);
+            }
         }
     }
 }
