@@ -190,6 +190,8 @@ export const CombatConfig = {
 
     IN_OUR_QUADRANT_DISTANCE: 40,
 
+    AWAY_FROM_SPAWN_DISTANCE: 10,
+
     /**
      * Euclidean radius around the enemy spawn that an enemy combat unit must cross
      * before our units will engage.  Must be larger than ENEMY_SPAWN_EXCLUSION_RADIUS

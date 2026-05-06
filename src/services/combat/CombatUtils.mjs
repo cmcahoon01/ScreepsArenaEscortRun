@@ -79,7 +79,7 @@ export function selectFlagKiller(gameState, flagBlocker) {
 }
 
 export function getEnemyPayloadIfActive(gameState, ramparts, enemySpawn) {
-    const enemyEscortCreepId = gameState.getEnemyEscortCreepId();
+    const enemyEscortCreepId = gameState.getEnemyPayloadId();
     if (!enemyEscortCreepId) return null;
     const enemyPayload = getObjectById(enemyEscortCreepId);
     if (!enemyPayload) return null;
@@ -110,9 +110,13 @@ export function selectPrimaryTarget(creep, gameState, enemiesInAttackRange) {
     const enemyPayload = getEnemyPayloadIfActive(gameState, ramparts, enemySpawn);
     if (enemyPayload) {
         const combatEnemiesInRange = enemiesInAttackRange.filter(
-            e => e.id !== gameState.getEnemyEscortCreepId() && hasAttackCapability(e)
+            e => e.id !== gameState.getEnemyPayloadId() && hasAttackCapability(e)
         );
-        return { mode: 'payload_priority', enemyPayload, combatEnemiesInRange, validTargets };
+        let attackTarget = enemyPayload;
+        if (enemiesInAttackRange.length > 0 && !enemiesInAttackRange.some(e => e.id === enemyPayload.id)) {
+            attackTarget = enemiesInAttackRange[0]
+        }
+        return { mode: 'payload_priority', attackTarget, enemyPayload, combatEnemiesInRange, validTargets };
     }
 
     if (validTargets.length === 0) {

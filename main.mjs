@@ -18,7 +18,7 @@ const payloadJob = escortCreep
     ? new PayloadJob(escortCreep.id, 'payload', 1, screepController, gameState, flag)
     : null;
 
-gameState.initializeEnemyEscortCreep(enemyEscortCreep);
+gameState.initializeEnemyPayload(enemyEscortCreep);
 gameState.setFlag(flag);
 gameState.setEnemyFlag(enemyFlag);
 gameState.setTopTeam(flag);

@@ -1,4 +1,5 @@
 import * as BuildConditions from './BuildConditions.mjs';
+import {enemyRushing} from "./BuildConditions.mjs";
 
 export class BuildOrder {
     /**
@@ -37,8 +38,13 @@ export class BuildOrder {
      *     weight {number} - Relative spawn weight for this job (required).
      */
     static PHASE2_OPTIONS = [
-        {
-            // Default option — no only_if, always matches.
+        { // paladins if they are rushing
+            only_if: enemyRushing,
+            build: [
+                { job: 'paladin', weight: 1},
+            ]
+        },
+        { // Default option — no only_if, always matches.
             build: [
                 { job: 'cleric', weight: 1 },
             ],
