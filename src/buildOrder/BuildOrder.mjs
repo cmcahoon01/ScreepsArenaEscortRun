@@ -1,5 +1,5 @@
 import * as BuildConditions from './BuildConditions.mjs';
-import {enemyRushing} from "./BuildConditions.mjs";
+import {enemyRushing, weAreDominating} from "./BuildConditions.mjs";
 
 export class BuildOrder {
     /**
@@ -44,9 +44,16 @@ export class BuildOrder {
                 { job: 'paladin', weight: 1},
             ]
         },
+        { // tugs if we are dominating
+            only_if: weAreDominating,
+            build: [
+                { job: 'tug' },
+            ]
+        },
         { // Default option — no only_if, always matches.
             build: [
                 { job: 'cleric', weight: 1 },
+                { job: 'archer', weight: 1 },
             ],
         },
     ];
