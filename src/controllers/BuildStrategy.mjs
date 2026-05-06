@@ -1,5 +1,6 @@
 import { Jobs } from '../jobs/JobRegistry.mjs';
-import { BuildConfig, DEFAULT_TIER } from '../constants.mjs';
+import { DEFAULT_TIER } from '../constants.mjs';
+import { BuildOrder } from '../buildOrder/BuildOrder.mjs';
 
 export class BuildStrategy {
     constructor(gameState) {
@@ -13,7 +14,7 @@ export class BuildStrategy {
         }
 
         // Phase 1: Initial build order — replace any lost creeps immediately.
-        const initialBuild = BuildConfig.INITIAL_BUILD;
+        const initialBuild = BuildOrder.INITIAL_BUILD;
         for (let i = 0; i < initialBuild.length; i++) {
             const buildItem = initialBuild[i];
             const jobName = buildItem.job || buildItem;
@@ -54,8 +55,16 @@ export class BuildStrategy {
             }
         }
 
-        // Phase 2: Build according to PHASE2_BUILD weights.
-        const phase2Build = BuildConfig.PHASE2_BUILD;
+        // Phase 2: Select the first option whose only_if condition is met (or the last as default).
+        const phase2Options = BuildOrder.PHASE2_OPTIONS;
+        let phase2Build = phase2Options[phase2Options.length - 1].build;
+        for (const option of phase2Options) {
+            if (typeof option.only_if !== 'function' || option.only_if(this.gameState)) {
+                phase2Build = option.build;
+                break;
+            }
+        }
+
         const totalWeight = phase2Build.reduce((sum, e) => sum + e.weight, 0);
         const phase2Total = phase2Build.reduce((sum, e) => sum + (creepCounts[e.job] || 0), 0);
 
