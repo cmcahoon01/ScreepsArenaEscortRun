@@ -8,7 +8,7 @@ import {
 } from '../../services/combat/KitingBehavior.mjs';
 import { isInRangedAttackRange } from '../../services/RangeUtils.mjs';
 import { selectPrimaryTarget, findFlagBlockingEnemy } from '../../services/combat/CombatUtils.mjs';
-import { RangeConfig } from '../../constants.mjs';
+import { RangeConfig, CombatConfig, MapTopology } from '../../constants.mjs';
 
 export class RangedJob extends ActiveCreep {
     constructor(id, jobName, tier, controller, gameState) {
@@ -26,8 +26,8 @@ export class RangedJob extends ActiveCreep {
         return kitingFindNearestEnemy(position, enemies);
     }
 
-    findBestRetreatPosition(creep, enemies, allCreeps, allStructures, spawnPos = null) {
-        return kitingFindBestRetreatPosition(creep, enemies, allCreeps, allStructures, spawnPos);
+    findBestRetreatPosition(creep, enemies, allCreeps, allStructures, spawnPos = null, anchorConstraint = null) {
+        return kitingFindBestRetreatPosition(creep, enemies, allCreeps, allStructures, spawnPos, anchorConstraint);
     }
 
     shouldHealDuringIdle() {
@@ -156,8 +156,27 @@ export class RangedJob extends ActiveCreep {
         } else if (combatMode === 'retreat') {
             // Cleric healing movement may override retreat
             if (!this.tryHealingMove(creep, damagedCreeps)) {
-                const target = this.gameState.getRetreatTarget();
-                if (target) creep.moveTo(target);
+                const vanguardLeaderPos = this.gameState.getMyVanguardLeaderPos();
+                const inVanguard = !vanguardLeaderPos ||
+                    Math.abs(creep.y - vanguardLeaderPos.y) < CombatConfig.VANGUARD_GROUP_HEIGHT;
+                if (!inVanguard) {
+                    // Non-vanguard units move toward the vanguard to reinforce it
+                    creep.moveTo(vanguardLeaderPos);
+                } else if (enemiesInRange.length > 0 && getRange(creep, result.attackTarget) < RangeConfig.RANGED_ATTACK_RANGE) {
+                    // Vanguard unit with enemies too close: kite, but never increase distance
+                    // from our spawn (if in our quadrant) or from map center (otherwise).
+                    const spawnDist = Math.max(Math.abs(creep.x - mySpawn.x), Math.abs(creep.y - mySpawn.y));
+                    const centerDist = Math.max(Math.abs(creep.x - MapTopology.MAP_CENTER.x), Math.abs(creep.y - MapTopology.MAP_CENTER.y));
+                    const anchorConstraint = spawnDist <= CombatConfig.RETREAT_OUR_QUADRANT_DISTANCE
+                        ? { pos: mySpawn, maxDist: spawnDist }
+                        : { pos: MapTopology.MAP_CENTER, maxDist: centerDist };
+                    const retreatPos = this.findBestRetreatPosition(creep, allHostileCreeps, allCreeps, allStructures, mySpawn, anchorConstraint);
+                    if (retreatPos) creep.moveTo(retreatPos);
+                } else {
+                    // Vanguard unit, no immediate threat: move to retreat target
+                    const target = this.gameState.getRetreatTarget();
+                    if (target) creep.moveTo(target);
+                }
             }
         } else {
             // 'idle' mode — Cleric healing movement may override idle position

@@ -3,7 +3,7 @@ import { ERR_NOT_IN_RANGE } from 'game/constants';
 import { ActiveCreep } from './ActiveCreep.mjs';
 import { selectPrimaryTarget, findFlagBlockingEnemy } from '../../services/combat/CombatUtils.mjs';
 import {chebyshevDistance} from "../../services/RangeUtils.mjs";
-import {PayloadConfig} from "../../constants.mjs";
+import {PayloadConfig, CombatConfig} from "../../constants.mjs";
 
 export class MeleeJob extends ActiveCreep {
     constructor(id, jobName, tier, controller, gameState) {
@@ -70,8 +70,16 @@ export class MeleeJob extends ActiveCreep {
         // Movement is determined by the current combat mode
         const combatMode = this.gameState.getCombatMode();
         if (combatMode === 'retreat') {
-            const target = this.gameState.getRetreatTarget();
-            if (target) creep.moveTo(target);
+            const vanguardLeaderPos = this.gameState.getMyVanguardLeaderPos();
+            const inVanguard = !vanguardLeaderPos ||
+                Math.abs(creep.y - vanguardLeaderPos.y) < CombatConfig.VANGUARD_GROUP_HEIGHT;
+            if (!inVanguard) {
+                // Non-vanguard units move toward the vanguard to reinforce it
+                creep.moveTo(vanguardLeaderPos);
+            } else {
+                const target = this.gameState.getRetreatTarget();
+                if (target) creep.moveTo(target);
+            }
         } else if (combatMode === 'idle') {
             const target = this.gameState.getIdleTarget();
             if (target) creep.moveTo(target);
