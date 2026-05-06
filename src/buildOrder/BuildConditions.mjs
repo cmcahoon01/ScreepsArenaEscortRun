@@ -31,11 +31,11 @@ export const noEnemyCombatUnit = (gameState) => !gameState.getEnemyHasCombatUnit
  * @param {GameState} gameState
  * @returns {boolean}
  */
-export const enemyNearOurBase = (gameState) => {
+export const needRushPaladin = (gameState) => {
     const mySpawn = gameState.getMySpawn();
     return gameState.getEnemyCreeps().some(enemy =>
         chebyshevDistance(enemy, mySpawn) <= CombatConfig.IN_OUR_QUADRANT_DISTANCE
-    );
+    ) ;
 };
 
 /**

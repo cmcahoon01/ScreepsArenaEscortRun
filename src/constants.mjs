@@ -197,7 +197,7 @@ export const CombatConfig = {
      */
     RETREAT_OUR_QUADRANT_DISTANCE: 45,
 
-    AWAY_FROM_SPAWN_DISTANCE: 10,
+    AWAY_FROM_SPAWN_DISTANCE: 6,
 
     /**
      * Euclidean radius around the enemy spawn that an enemy combat unit must cross

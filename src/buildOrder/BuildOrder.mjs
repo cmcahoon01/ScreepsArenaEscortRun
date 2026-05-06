@@ -18,9 +18,9 @@ export class BuildOrder {
      */
     static INITIAL_BUILD = [
         { job: 'miner1' },
-        { job: 'blocker', replace_dead: false, only_if: BuildConditions.noEnemyCombatUnit },
         { job: 'mule' },
-        { job: 'paladin', replace_dead: false, only_if: BuildConditions.enemyNearOurBase },
+        { job: 'blocker', replace_dead: false, only_if: BuildConditions.enemyRushing },
+        { job: 'paladin', replace_dead: false, only_if: BuildConditions.needRushPaladin },
         { job: 'miner2' },
         { job: 'mule' },
     ];
