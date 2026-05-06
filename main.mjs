@@ -2,14 +2,14 @@ import { EscortCreep } from 'arena/season_3/escort_run/basic';
 import { Flag, getObjectsByPrototype } from 'game';
 
 import { CreepController } from './src/controllers/CreepController.mjs';
-import { BuildOrder } from './src/controllers/BuildOrder.mjs';
 import { GameState } from './src/services/GameState.mjs';
-import { PayloadJob } from './src/jobs/PayloadJob.mjs';
+import { PayloadJob } from './src/jobs/index.mjs';
 import { CombatCoordinator } from './src/controllers/CombatCoordinator.mjs';
+import { BuildQueue } from "./src/controllers/BuildQueue.mjs";
 
 const screepController = new CreepController();
 const gameState = new GameState();
-const buildOrder = new BuildOrder(screepController, gameState);
+const buildQueue = new BuildQueue(screepController, gameState);
 const escortCreep = getObjectsByPrototype(EscortCreep).find(i => i.my);
 const enemyEscortCreep = getObjectsByPrototype(EscortCreep).find(i => !i.my);
 const flag = getObjectsByPrototype(Flag).find(i => i.my);
@@ -28,9 +28,9 @@ export function loop() {
 
     CombatCoordinator.tick(gameState);
 
-    buildOrder.checkAndAddSpawningCreep();
+    buildQueue.checkAndAddSpawningCreep();
 
-    buildOrder.trySpawnNextCreep();
+    buildQueue.trySpawnNextCreep();
 
     screepController.updateCreeps(gameState);
 

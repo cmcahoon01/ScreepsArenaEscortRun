@@ -68,7 +68,7 @@ export const BuildConfig = {
      * are built to maintain proportions defined here.
      */
     PHASE2_BUILD: [
-        // { job: 'fighter', weight: 5 },
+        // { job: 'paladin', weight: 1 },
         { job: 'cleric', weight: 1 },
     ],
 

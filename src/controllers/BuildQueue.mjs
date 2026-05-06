@@ -1,5 +1,7 @@
 import { MapTopology, DEFAULT_TIER, BuildConfig } from '../constants.mjs';
 import { TOP, TOP_RIGHT, RIGHT, BOTTOM_RIGHT, BOTTOM, BOTTOM_LEFT, LEFT, TOP_LEFT } from 'game/constants';
+import {EnergyManager} from "./EnergyManager.mjs";
+import {BuildStrategy} from "./BuildStrategy.mjs";
 
 /**
  * Manages spawn queue and tracks pending spawns.
@@ -9,8 +11,30 @@ export class BuildQueue {
     constructor(screepController, gameState) {
         this.screepController = screepController;
         this.gameState = gameState;
+        this.energyManager = new EnergyManager(gameState);
+        this.buildStrategy = new BuildStrategy(gameState);
         // Track the job type and tier of the creep currently being spawned
         this.pendingSpawn = null; // Will be {job: string, tier: number}
+    }
+
+    /**
+     * Attempt to spawn the next creep in the build order.
+     * Coordinates between BuildStrategy to decide what to build,
+     * EnergyManager to check available resources, and BuildQueue to spawn.
+     * @returns {boolean} True if spawn was successful, false otherwise
+     */
+    trySpawnNextCreep() {
+        // Get the next creep to build from strategy
+        const nextCreep = this.buildStrategy.getNextCreepToBuild(this.screepController.creeps);
+        if (!nextCreep) {
+            return false;
+        }
+
+        // Check available energy
+        const totalEnergy = this.energyManager.getTotalEnergy();
+
+        // Try to spawn using the build queue
+        return this.trySpawn(nextCreep, totalEnergy);
     }
 
     /**
