@@ -5,6 +5,7 @@ import { BuildOrder } from '../buildOrder/BuildOrder.mjs';
 export class BuildStrategy {
     constructor(gameState) {
         this.gameState = gameState;
+        this.highestStepBuilt = 0;
     }
 
     getNextCreepToBuild(creeps) {
@@ -15,8 +16,8 @@ export class BuildStrategy {
 
         // Phase 1: Initial build order — replace any lost creeps immediately.
         const initialBuild = BuildOrder.INITIAL_BUILD;
-        for (let i = 0; i < initialBuild.length; i++) {
-            const buildItem = initialBuild[i];
+        for (let stepNumber = 0; stepNumber < initialBuild.length; stepNumber++) {
+            const buildItem = initialBuild[stepNumber];
             const jobName = buildItem.job || buildItem;
             const tier = buildItem.tier || DEFAULT_TIER;
             const jobClass = Jobs[jobName];
@@ -33,12 +34,15 @@ export class BuildStrategy {
             }
 
             // Skip this tick if the only_if condition is not satisfied.
-            if (typeof buildItem.only_if === 'function' && !buildItem.only_if(this.gameState)) {
-                continue;
+            //
+            if (typeof buildItem.only_if === 'function') {
+                if (!buildItem.only_if(this.gameState) || this.highestStepBuilt > stepNumber){
+                    continue;
+                }
             }
 
             let expectedCount = 0;
-            for (let j = 0; j <= i; j++) {
+            for (let j = 0; j <= stepNumber; j++) {
                 const checkItem = initialBuild[j];
                 if ((checkItem.job || checkItem) === jobName) {
                     expectedCount++;
@@ -46,6 +50,7 @@ export class BuildStrategy {
             }
 
             if ((creepCounts[jobName] || 0) < expectedCount) {
+                this.highestStepBuilt = Math.max(this.highestStepBuilt, stepNumber - 1);
                 return {
                     job: jobName,
                     tier: tier,
