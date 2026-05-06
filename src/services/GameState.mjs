@@ -35,6 +35,7 @@ export class GameState {
         this.combatMode = 'idle';
         this.retreatTarget = null;
         this.idleTarget = null;
+        this.myVanguardLeaderPos = null;
         this.weAreTop = false;
     }
 
@@ -174,5 +175,7 @@ export class GameState {
     setRetreatTarget(pos) { this.retreatTarget = pos; }
     getIdleTarget() { return this.idleTarget; }
     setIdleTarget(pos) { this.idleTarget = pos; }
+    getMyVanguardLeaderPos() { return this.myVanguardLeaderPos; }
+    setMyVanguardLeaderPos(pos) { this.myVanguardLeaderPos = pos; }
     setTopTeam(flag) {this.weAreTop = (flag.y < MapTopology.MAP_CENTER.y); }
 }

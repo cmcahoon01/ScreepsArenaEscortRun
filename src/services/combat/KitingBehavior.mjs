@@ -59,18 +59,33 @@ export function findNearestEnemy(position, enemies) {
  * @param {Object[]} allCreeps   - All creeps (for obstacle checking)
  * @param {Object[]} allStructures - All structures (for obstacle checking)
  * @param {Object|null} spawnPos - Optional: our spawn position, used to bias kiting direction
+ * @param {Object|null} anchorConstraint - Optional: { pos, maxDist } — filters out positions
+ *   that would increase the unit's Chebyshev distance from pos beyond maxDist.
+ *   Falls back to unconstrained positions if no candidate satisfies the constraint.
  * @returns {Object|null} Best retreat position, or null if none available
  */
-export function findBestRetreatPosition(unit, enemies, allCreeps, allStructures, spawnPos = null) {
+export function findBestRetreatPosition(unit, enemies, allCreeps, allStructures, spawnPos = null, anchorConstraint = null) {
     if (enemies.length === 0) {
         console.log("No enemies to retreat from!");
         return null;
     }
 
-    const validPositions = getValidAdjacentPositions(unit, allCreeps, allStructures);
+    let validPositions = getValidAdjacentPositions(unit, allCreeps, allStructures);
 
     if (validPositions.length === 0) {
         return null;
+    }
+
+    // If an anchor constraint is provided, prefer positions that do not increase the
+    // unit's Chebyshev distance from the anchor beyond the allowed maximum.
+    if (anchorConstraint) {
+        const constrained = validPositions.filter(pos =>
+            Math.max(Math.abs(pos.x - anchorConstraint.pos.x), Math.abs(pos.y - anchorConstraint.pos.y)) <= anchorConstraint.maxDist
+        );
+        if (constrained.length > 0) {
+            validPositions = constrained;
+        }
+        // If no position satisfies the constraint, fall back to the full valid set.
     }
 
     const positionsWithDistances = validPositions.map(pos => {

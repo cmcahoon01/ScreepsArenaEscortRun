@@ -190,6 +190,13 @@ export const CombatConfig = {
 
     IN_OUR_QUADRANT_DISTANCE: 40,
 
+    /**
+     * Chebyshev distance from our spawn that defines "our quadrant" during retreat.
+     * Ranged units within this distance of our spawn will not kite further away from it.
+     * Ranged units outside this distance will not kite further away from the map center.
+     */
+    RETREAT_OUR_QUADRANT_DISTANCE: 45,
+
     AWAY_FROM_SPAWN_DISTANCE: 10,
 
     /**

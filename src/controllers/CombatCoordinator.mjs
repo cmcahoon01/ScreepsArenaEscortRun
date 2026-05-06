@@ -72,6 +72,9 @@ export class CombatCoordinator {
         const enemySpawn = gameState.getEnemySpawn();
         const mySpawn = gameState.getMySpawn();
 
+        // Reset vanguard leader each tick; set only when in retreat mode
+        gameState.setMyVanguardLeaderPos(null);
+
         const enemyCombatUnits = enemyCreeps.filter(e => CombatUtils.hasAttackCapability(e));
 
         if (enemyCombatUnits.length === 0 || !enemySpawn || !mySpawn) {
@@ -120,6 +123,15 @@ export class CombatCoordinator {
                     const stepsFromOurSpawn = numStepsAwayFromOurSpawn(gameState, enemyVanguardLeader);
                     const retreatTarget = positionNStepsAwayFromOurSpawn(gameState, Math.floor(stepsFromOurSpawn / 2));
                     gameState.setRetreatTarget(retreatTarget);
+
+                    // Store our vanguard leader position so non-vanguard units can move toward it
+                    if (myVanguard.length > 0) {
+                        const myVanguardLeader = myVanguard.reduce((best, unit) =>
+                            Math.abs(unit.y - enemySpawnY) < Math.abs(best.y - enemySpawnY) ? unit : best
+                        );
+                        gameState.setMyVanguardLeaderPos({ x: myVanguardLeader.x, y: myVanguardLeader.y });
+                    }
+
                     CombatCoordinator.setMode(gameState, 'retreat', {
                         myVanguardSize: myVanguard.length,
                         myVanguardStrength,
