@@ -23,7 +23,7 @@ export class GameState {
         this._tugChain = new TugChain();
         this.payloadMoving = false;
         this.payloadId = null;
-        this.enemyEscortCreepId = null;
+        this.enemyPayloadId = null;
         this.flag = null;
         this.enemyFlag = null;
         this.flagKillerId = null;
@@ -149,27 +149,11 @@ export class GameState {
     getPayloadId() { return this.payloadId; }
     setPayloadId(id) { this.payloadId = id; }
 
-    initializeEnemyEscortCreep(enemyEscortCreep) {
-        this.enemyEscortCreepId = enemyEscortCreep ? enemyEscortCreep.id : null;
+    initializeEnemyPayload(enemyEscortCreep) {
+        this.enemyPayloadId = enemyEscortCreep ? enemyEscortCreep.id : null;
     }
 
-    getEnemyEscortCreepId() { return this.enemyEscortCreepId; }
-
-    isEnemyEscortCreepOnRampart() {
-        if (!this.enemyEscortCreepId) return false;
-        const enemyEscortCreep = getObjectById(this.enemyEscortCreepId);
-        if (!enemyEscortCreep) return false;
-        return this.ramparts.some(r => !r.my && r.x === enemyEscortCreep.x && r.y === enemyEscortCreep.y);
-    }
-
-    isEnemyEscortCreepApproachingGoal() {
-        if (!this.enemyEscortCreepId) return false;
-        const enemyEscortCreep = getObjectById(this.enemyEscortCreepId);
-        if (!enemyEscortCreep) return false;
-        const ourFlag = this.flag;
-        if (!ourFlag) return false;
-        return chebyshevDistance(enemyEscortCreep, ourFlag) < BuildConfig.AGGRESSIVE_TRIGGER_DISTANCE;
-    }
+    getEnemyPayloadId() { return this.enemyPayloadId; }
 
     setFlag(flag) { this.flag = flag; }
     getFlag() { return this.flag; }

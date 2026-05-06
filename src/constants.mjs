@@ -7,7 +7,6 @@
  */
 
 import { LEFT, RIGHT, TOP, BOTTOM, BOTTOM_LEFT, BOTTOM_RIGHT, TOP_LEFT, TOP_RIGHT } from "game/constants";
-import * as BuildConditions from "./buildOrder/BuildConditions.mjs";
 
 // ============================================================================
 // Body Part Costs
@@ -40,38 +39,6 @@ export const DEFAULT_TIER = 1;
  * Configuration for build order and strategy decisions.
  */
 export const BuildConfig = {
-    /**
-     * Initial build order that always executes first.
-     * Builds in sequence: miner1 → blocker → mule → paladin → miner2 → mule.
-     * After all are present, creeps are built according to PHASE2_BUILD weights.
-     *
-     * Each entry is an object with the following fields:
-     *   job         {string}             - The job name (required).
-     *   tier        {number}             - Body tier (optional, defaults to DEFAULT_TIER).
-     *   replace_dead {boolean}           - If false, do not rebuild this creep when it
-     *                                      dies (optional, defaults to true).
-     *   only_if     {(gameState)=>boolean} - Skip this build step when the function
-     *                                      returns false (optional). See
-     *                                      src/buildOrder/BuildConditions.mjs for examples.
-     */
-    INITIAL_BUILD: [
-        { job: 'miner1' },
-        { job: 'blocker', replace_dead: false, only_if: BuildConditions.noEnemyCombatUnit },
-        { job: 'mule' },
-        { job: 'paladin', replace_dead: false, only_if: BuildConditions.enemyNearOurBase },
-        { job: 'miner2' },
-        { job: 'mule' },
-    ],
-
-    /**
-     * Phase 2 build weights. After the initial build order completes, creeps
-     * are built to maintain proportions defined here.
-     */
-    PHASE2_BUILD: [
-        // { job: 'paladin', weight: 1 },
-        { job: 'cleric', weight: 1 },
-    ],
-
     /**
      * Distance (Chebyshev) threshold at which enemy escort creep approaching
      * the goal triggers aggressive behavior.
@@ -222,6 +189,8 @@ export const CombatConfig = {
     SPAWN_EXCLUSION_RADIUS: 20,
 
     IN_OUR_QUADRANT_DISTANCE: 40,
+
+    AWAY_FROM_SPAWN_DISTANCE: 10,
 
     /**
      * Euclidean radius around the enemy spawn that an enemy combat unit must cross

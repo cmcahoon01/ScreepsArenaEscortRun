@@ -1,4 +1,6 @@
 import { CombatConfig } from '../constants.mjs';
+import * as game from "game";
+import {getObjectById} from "game/utils";
 /**
  * Build Conditions
  *
@@ -29,6 +31,16 @@ export const enemyNearOurBase = (gameState) => {
         chebyshevDistance(enemy, mySpawn) <= CombatConfig.IN_OUR_QUADRANT_DISTANCE
     );
 };
+
+/**
+ * Only go paladins when the enemy is rushing the payload.
+ * @param {GameState} gameState
+ * @returns {boolean}
+ */
+export const enemyRushing = (gameState) => {
+    const enemyPayload = getObjectById(gameState.getEnemyPayloadId());
+    return chebyshevDistance(gameState.getEnemySpawn(), enemyPayload) >= CombatConfig.AWAY_FROM_SPAWN_DISTANCE;
+}
 
 /**
  * Compute Chebyshev (chessboard) distance between two positions. Duplicate to avoid circular import

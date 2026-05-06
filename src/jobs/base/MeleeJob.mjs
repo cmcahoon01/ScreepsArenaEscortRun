@@ -1,7 +1,9 @@
-import { getObjectById } from 'game/utils';
+import {findInRange, getObjectById} from 'game/utils';
 import { ERR_NOT_IN_RANGE } from 'game/constants';
 import { ActiveCreep } from './ActiveCreep.mjs';
 import { selectPrimaryTarget, findFlagBlockingEnemy } from '../../services/combat/CombatUtils.mjs';
+import {chebyshevDistance} from "../../services/RangeUtils.mjs";
+import {PayloadConfig} from "../../constants.mjs";
 
 export class MeleeJob extends ActiveCreep {
     constructor(id, jobName, tier, controller, gameState) {
@@ -21,10 +23,14 @@ export class MeleeJob extends ActiveCreep {
 
         const allHostileCreeps = this.gameState.getEnemyCreeps();
         const myCreeps = this.gameState.getMyCreeps();
+        const allCreeps = this.gameState.getAllCreeps();
         const damagedCreeps = myCreeps.filter(c => c.id !== creep.id && c.hits < c.hitsMax);
+        const enemyFlag = this.gameState.getEnemyFlag();
         const enemiesInMeleeRange = allHostileCreeps.filter(e =>
             Math.max(Math.abs(e.x - creep.x), Math.abs(e.y - creep.y)) <= 1
         );
+
+        this.performHealing(creep, damagedCreeps);
 
         // FlagKiller override: ignore combat mode, always pursue flag blocker
         if (creep.id === this.gameState.getFlagKillerId()) {
@@ -34,15 +40,19 @@ export class MeleeJob extends ActiveCreep {
                 if (enemiesInMeleeRange.length > 0) {
                     creep.attack(creep.findClosestByRange(enemiesInMeleeRange));
                 }
-                this.performHealing(creep, damagedCreeps);
                 return;
             }
         }
 
-        this.performHealing(creep, damagedCreeps);
+        // Need to block override: move onto enemy flag If I am nearby and no one is on it
+        if (chebyshevDistance(creep, enemyFlag) < PayloadConfig.ENEMY_NEARBY_RANGE && findInRange(enemyFlag, allCreeps, 0).length === 0) {
+            this.moveTo(enemyFlag);
+            if (enemiesInMeleeRange.length > 0) {
+                creep.attack(creep.findClosestByRange(enemiesInMeleeRange));
+            }
+        }
 
         const result = selectPrimaryTarget(creep, this.gameState, enemiesInMeleeRange);
-
         if (!result || result.mode === 'idle') {
             this.idle(creep);
             return;
