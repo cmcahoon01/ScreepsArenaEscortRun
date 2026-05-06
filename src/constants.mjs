@@ -184,7 +184,7 @@ export const CombatConfig = {
      * on the flag, all attackers not currently in combat will prioritize killing
      * that enemy.
      */
-    FLAG_BLOCKER_RANGE: 40,
+    FLAG_BLOCKER_RANGE: 60,
 
     SPAWN_EXCLUSION_RADIUS: 20,
 
@@ -302,6 +302,8 @@ export const PayloadConfig = {
      * If any enemy is within this range, the payload seeks cover on a rampart.
      */
     ENEMY_NEARBY_RANGE: 8,
+
+    CRITICAL_HP: 4000,
 };
 
 // ============================================================================

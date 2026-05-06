@@ -1,6 +1,12 @@
-import { CombatConfig } from '../constants.mjs';
+import {CombatConfig, PayloadConfig} from '../constants.mjs';
 import * as game from "game";
 import {getObjectById} from "game/utils";
+import {chebyshevDistance} from "../services/RangeUtils.mjs";
+import {
+    compareTeamStrengths,
+    getEnemyTeamStrength,
+    getMyTeamStrength
+} from "../services/combat/StrengthEstimatorService.mjs";
 /**
  * Build Conditions
  *
@@ -43,11 +49,12 @@ export const enemyRushing = (gameState) => {
 }
 
 /**
- * Compute Chebyshev (chessboard) distance between two positions. Duplicate to avoid circular import
- * @param {Object} a - Position with x, y
- * @param {Object} b - Position with x, y
- * @returns {number} Chebyshev distance
+ * Only go tugs if we have a big military advantage
+ * @param {GameState} gameState
+ * @returns {boolean}
  */
-function chebyshevDistance(a, b) {
-    return Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
+export const weAreDominating = (gameState) => {
+    const comparison = compareTeamStrengths(gameState);
+    return comparison.ratio >= PayloadConfig.MILITARY_ADVANTAGE_THRESHOLD &&
+        comparison.myTeam.strength > comparison.enemyTeam.strength + 300;
 }
