@@ -7,7 +7,7 @@
  */
 
 import { LEFT, RIGHT, TOP, BOTTOM, BOTTOM_LEFT, BOTTOM_RIGHT, TOP_LEFT, TOP_RIGHT } from "game/constants";
-import * as BuildConditions from "./config/BuildConditions.mjs";
+import * as BuildConditions from "./buildOrder/BuildConditions.mjs";
 
 // ============================================================================
 // Body Part Costs
@@ -52,7 +52,7 @@ export const BuildConfig = {
      *                                      dies (optional, defaults to true).
      *   only_if     {(gameState)=>boolean} - Skip this build step when the function
      *                                      returns false (optional). See
-     *                                      src/config/BuildConditions.mjs for examples.
+     *                                      src/buildOrder/BuildConditions.mjs for examples.
      */
     INITIAL_BUILD: [
         { job: 'miner1' },
