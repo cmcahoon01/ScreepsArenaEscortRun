@@ -20,11 +20,6 @@ export class Miner2Job extends MinerJob {
         return this.BODY;
     }
 
-    /** Tier-2 miners are responsible for placing the mining container. */
-    shouldPlaceContainer() {
-        return true;
-    }
-
     deposit(creep) {
         const tier1_miner = this.gameState.getMyCreeps().find(c => this.gameState.getCreepJobName(c.id) === 'miner1');
         if (!tier1_miner) {

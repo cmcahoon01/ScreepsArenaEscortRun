@@ -18,4 +18,9 @@ export class Miner1Job extends MinerJob {
     static getTierBody(_tier) {
         return this.BODY;
     }
+
+    /** Tier-1 miners are responsible for placing the mining container. */
+    shouldPlaceContainer() {
+        return true;
+    }
 }

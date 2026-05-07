@@ -31,8 +31,8 @@ export class MinerJob extends ActiveCreep {
     }
 
     /**
-     * Whether this miner should place the mining container on arrival.
-     * Overridden to true by Miner2Job.
+     * Whether this miner should place the mining container.
+     * Overridden to true by Miner1Job.
      * @returns {boolean}
      */
     shouldPlaceContainer() {
@@ -121,28 +121,6 @@ export class MinerJob extends ActiveCreep {
         }
 
         transitionToMining(this.memory);
-
-        if (this.shouldPlaceContainer() && !this.gameState.getMiningContainerPos()) {
-            // Find the companion miner (the one that does not place the container)
-            const companionMiner = this.controller.creeps.find(c =>
-                MINER_JOB_NAMES.has(c.jobName) && c.id !== this.id &&
-                typeof c.shouldPlaceContainer === 'function' && !c.shouldPlaceContainer()
-            );
-            const tier1Pos = (companionMiner && companionMiner.memory.targetX != null)
-                ? { x: companionMiner.memory.targetX, y: companionMiner.memory.targetY }
-                : null;
-            const containerPos = findContainerPosition(creep, tier1Pos, source);
-            if (containerPos) {
-                const result = createConstructionSite(containerPos, StructureContainer);
-                if (result.object) {
-                    this.gameState.setMiningContainerPos(containerPos.x, containerPos.y);
-                } else {
-                    console.log(`⚠️Miner ${this.id} failed to place container site: error ${result.error}`);
-                }
-            } else {
-                console.log(`Miner ${this.id} could not find a valid container position`);
-            }
-        }
     }
 
     mine(creep, source) {
@@ -152,7 +130,27 @@ export class MinerJob extends ActiveCreep {
             console.log(`Miner ${this.id} not in range of source`);
         }
         const containerId = this.gameState.getMiningContainerId();
-        const containerPos = this.gameState.getMiningContainerPos();
+        let containerPos = this.gameState.getMiningContainerPos();
+
+        if (this.shouldPlaceContainer() && !containerPos) {
+            const miner2Exists = this.gameState.getMyCreeps().some(
+                c => this.gameState.getCreepJobName(c.id) === 'miner2'
+            );
+            if (miner2Exists) {
+                const pos = findContainerPosition(creep, { x: creep.x, y: creep.y }, source);
+                if (pos) {
+                    const result = createConstructionSite(pos, StructureContainer);
+                    if (result.object) {
+                        this.gameState.setMiningContainerPos(pos.x, pos.y);
+                        containerPos = this.gameState.getMiningContainerPos();
+                    } else {
+                        console.log(`⚠️Miner ${this.id} failed to place container site: error ${result.error}`);
+                    }
+                } else {
+                    console.log(`Miner ${this.id} could not find a valid container position`);
+                }
+            }
+        }
 
         if (containerId) {
             this.deposit(creep, containerId);
