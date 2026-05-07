@@ -52,12 +52,12 @@ export class CombatCoordinator {
     static setMode(gameState, newMode, details = {}) {
         const prevMode = gameState.getCombatMode();
         gameState.setCombatMode(newMode);
-        if (prevMode !== newMode) {
-            const detailStr = Object.entries(details)
-                .map(([k, v]) => `${k}=${JSON.stringify(v)}`)
-                .join(' ');
-            console.log(`[CombatCoordinator] mode: ${prevMode} → ${newMode}${detailStr ? ' | ' + detailStr : ''}`);
-        }
+        // if (prevMode !== newMode) {
+        //     const detailStr = Object.entries(details)
+        //         .map(([k, v]) => `${k}=${JSON.stringify(v)}`)
+        //         .join(' ');
+        //     console.log(`[CombatCoordinator] mode: ${prevMode} → ${newMode}${detailStr ? ' | ' + detailStr : ''}`);
+        // }
     }
 
     /**
