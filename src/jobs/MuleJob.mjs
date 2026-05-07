@@ -1,5 +1,5 @@
 import { getObjectById } from 'game/utils';
-import { MOVE, CARRY, RESOURCE_ENERGY, ERR_NOT_IN_RANGE, OK } from 'game/constants';
+import { MOVE, CARRY, RESOURCE_ENERGY, OK, LEFT } from 'game/constants';
 import { TugJob } from './TugJob.mjs';
 import { calculateCost } from '../services/BodyPartService.mjs';
 import { MINER_JOB_NAMES } from '../constants.mjs';

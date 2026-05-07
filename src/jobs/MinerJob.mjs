@@ -133,9 +133,10 @@ export class MinerJob extends ActiveCreep {
         let containerPos = this.gameState.getMiningContainerPos();
 
         if (this.shouldPlaceContainer() && !containerPos) {
-            const miner2Exists = this.gameState.getMyCreeps().some(
+            const miner2 = this.gameState.getMyCreeps().find(
                 c => this.gameState.getCreepJobName(c.id) === 'miner2'
             );
+            const miner2Exists = miner2 ? !getObjectById(miner2.id).spawning: false;
             if (miner2Exists) {
                 const pos = findContainerPosition(creep, { x: creep.x, y: creep.y }, source);
                 if (pos) {
