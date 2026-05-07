@@ -89,10 +89,7 @@ export function getEnemyPayloadIfActive(gameState, ramparts, enemySpawn) {
 }
 
 export function getValidTargets(allHostileCreeps, ramparts, enemySpawn) {
-    const { enemiesNotOnRamparts } = filterEnemiesByRampartStatus(allHostileCreeps, ramparts);
-    return enemySpawn
-        ? enemiesNotOnRamparts.filter(e => !isWithinEnemySpawnRadius(e, enemySpawn))
-        : enemiesNotOnRamparts;
+    return allHostileCreeps;
 }
 
 export function getFlagBlocker(gameState, enemies) {
