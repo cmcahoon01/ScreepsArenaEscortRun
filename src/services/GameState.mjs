@@ -41,6 +41,7 @@ export class GameState {
         this.weAreTop = false;
         this.highestBuildStep = 0;
         this.tunnelBreached = false;
+        this.lastStanceChange = -1;
     }
 
     updateCreepRoster(rosterMap) {
@@ -137,6 +138,7 @@ export class GameState {
     getWeAreTop() { return this.weAreTop; }
     getHighestBuildStep() { return this.highestBuildStep; }
     getTunnelBreached() { return this.tunnelBreached; }
+    getLastStanceChange() { return this.lastStanceChange; }
 
     getTugChain() { return this._tugChain; }
 
@@ -192,4 +194,5 @@ export class GameState {
     setTopTeam(flag) {this.weAreTop = (flag.y < MapTopology.MAP_CENTER.y); }
     setHighestBuildStep(buildStep) {this.highestBuildStep = buildStep; }
     setTunnelBreached(isBreached) { this.tunnelBreached = isBreached; }
+    setLastStanceChange(tick) { this.lastStanceChange = tick; }
 }
