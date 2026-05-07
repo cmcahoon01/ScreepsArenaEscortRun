@@ -2,6 +2,7 @@ import { getObjectById } from 'game/utils';
 import { MOVE, CARRY, RESOURCE_ENERGY, ERR_NOT_IN_RANGE } from 'game/constants';
 import { TugJob } from './TugJob.mjs';
 import { calculateCost } from '../services/BodyPartService.mjs';
+import { MINER_JOB_NAMES } from '../constants.mjs';
 import { isMovingToPosition } from '../services/mining/MinerStateMachine.mjs';
 import { joinTugChain } from '../services/TugChainService.mjs';
 
@@ -33,7 +34,7 @@ export class MuleJob extends TugJob {
             this.memory.muleSlot = claimedSlots.includes(1) ? 2 : 1;
         }
 
-        const otherMovingMiner = this.controller.creeps.find(c => c.jobName.startsWith('miner') && isMovingToPosition(c.memory));
+        const otherMovingMiner = this.controller.creeps.find(c => MINER_JOB_NAMES.has(c.jobName) && isMovingToPosition(c.memory));
         if (otherMovingMiner) {
             this._actAsTug(creep, otherMovingMiner.id);
             return;
@@ -61,10 +62,10 @@ export class MuleJob extends TugJob {
                 .find(c => c.jobName === 'mule' && c.id !== this.id);
             const otherMuleObj = otherMule ? getObjectById(otherMule.id) : null;
             if (otherMuleObj) {
-                let transferResult = creep.transfer(otherMuleObj, RESOURCE_ENERGY);
-                if (transferResult !== 0) {
+                const transferResult = creep.transfer(otherMuleObj, RESOURCE_ENERGY);
+                if (transferResult === ERR_NOT_IN_RANGE) {
                     creep.moveTo(otherMuleObj);
-                    transferResult = creep.transfer(otherMuleObj, RESOURCE_ENERGY);
+                    return;
                 }
                 if (transferResult === 0) {
                     this.memory.state = 'collecting';
