@@ -88,38 +88,34 @@ export class MuleJob extends TugJob {
     }
 
     collect(creep) {
+        const containerId = this.gameState.getMiningContainerId();
+        const container = containerId ? getObjectById(containerId) : null;
+
         if (this.memory.muleSlot === 2) {
             if ((creep.store[RESOURCE_ENERGY] || 0) > 0) {
                 this.memory.state = 'depositing';
                 return this.deposit(creep);
             }
 
-            const containerId = this.gameState.getMiningContainerId();
-            const container = containerId ? getObjectById(containerId) : null;
             if (container) {
                 creep.moveTo(container);
-                // Intentionally continue into the generic collection logic below.
             }
         }
 
-        const containerId = this.gameState.getMiningContainerId();
-        if (containerId) {
-            const container = getObjectById(containerId);
-            if (container) {
-                const containerEnergy = container.store[RESOURCE_ENERGY] || 0;
-                if (containerEnergy > 0) {
-                    let withdrawResult = creep.withdraw(container, RESOURCE_ENERGY);
-                    if (withdrawResult === ERR_NOT_IN_RANGE) {
-                        creep.moveTo(container);
-                        withdrawResult = creep.withdraw(container, RESOURCE_ENERGY);
-                    }
-                    if (withdrawResult === 0) {
-                        this.memory.state = 'depositing';
-                        return this.deposit(creep);
-                    }
+        if (container) {
+            const containerEnergy = container.store[RESOURCE_ENERGY] || 0;
+            if (containerEnergy > 0) {
+                let withdrawResult = creep.withdraw(container, RESOURCE_ENERGY);
+                if (withdrawResult === ERR_NOT_IN_RANGE) {
+                    creep.moveTo(container);
+                    withdrawResult = creep.withdraw(container, RESOURCE_ENERGY);
                 }
-                return;
+                if (withdrawResult === 0) {
+                    this.memory.state = 'depositing';
+                    return this.deposit(creep);
+                }
             }
+            return;
         }
     }
 
