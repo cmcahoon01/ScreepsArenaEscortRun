@@ -52,8 +52,8 @@ export class TunnelerJob extends FighterJob {
         );
         if (tunnelWalls.length === 0) return null;
 
-        return tunnelWalls.reduce((leftMostWall, wall) =>
-            wall.x < leftMostWall.x ? wall : leftMostWall
+        return tunnelWalls.reduce((nextWall, wall) =>
+            wall.x < nextWall.x ? wall : nextWall
         );
     }
 }
