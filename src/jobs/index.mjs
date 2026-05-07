@@ -4,7 +4,6 @@ export { MeleeJob } from './base/MeleeJob.mjs';
 export { FighterJob } from './FighterJob.mjs';
 export { PaladinJob } from './PaladinJob.mjs';
 export { ArcherJob } from './ArcherJob.mjs';
-export { HaulerJob } from './HaulerJob.mjs';
 export { MinerJob } from './MinerJob.mjs';
 export { Miner1Job } from './Miner1Job.mjs';
 export { Miner2Job } from './Miner2Job.mjs';
