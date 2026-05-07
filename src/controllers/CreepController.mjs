@@ -39,8 +39,8 @@ export class CreepController {
 
     syncTurrets(gameState) {
         for (const turret of gameState.getMyTowers()) {
-            const alreadyAdded = this.creeps.some(activeCreep => activeCreep.id === turret.id);
-            if (!alreadyAdded) {
+            const turretAlreadyRegistered = this.creeps.some(activeCreep => activeCreep.id === turret.id);
+            if (!turretAlreadyRegistered) {
                 this.addCreep(turret.id, 'turret', DEFAULT_TIER, gameState);
             }
         }
