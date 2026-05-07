@@ -21,9 +21,9 @@ export class BuildOrder {
         { job: 'blocker'},
         { job: 'mule' },
         { job: 'pioneer' },
-        { job: 'tunneler' },
         { job: 'miner2' }, // slightly bigger miner
         { job: 'mule' },
+        { job: 'tunneler' },
     ];
 
     /**
@@ -41,7 +41,7 @@ export class BuildOrder {
     static PHASE2_OPTIONS = [
         { // Default option.
             build: [
-                { job: 'cleric', weight: 1 },
+                { job: 'archer', weight: 1 },
             ],
         },
     ];

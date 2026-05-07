@@ -2,15 +2,16 @@ import { getObjectById } from 'game/utils';
 import { ATTACK, MOVE, ERR_NOT_IN_RANGE } from 'game/constants';
 import { FighterJob } from './FighterJob.mjs';
 import { calculateCost } from '../services/BodyPartService.mjs';
+import {BlockerJob} from "./BlockerJob.mjs";
 
 const TUNNEL_X_START = 43;
 const TUNNEL_X_END = 61;
 const TOP_TUNNEL_Y = 9;
 const BOTTOM_TUNNEL_Y = 90;
 
-export class TunnelerJob extends FighterJob {
+export class TunnelerJob extends BlockerJob {
     static get BODY() {
-        return [ATTACK, ATTACK, ATTACK, MOVE];
+        return [ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, MOVE];
     }
 
     static get COST() {
@@ -22,13 +23,13 @@ export class TunnelerJob extends FighterJob {
     }
 
     act() {
+        const creep = getObjectById(this.id);
+        if (!creep) return;
+
         if (this.gameState.getTunnelBreached()) {
             super.act();
             return;
         }
-
-        const creep = getObjectById(this.id);
-        if (!creep) return;
 
         const nextWall = this._getNextTunnelWall();
         if (!nextWall) {
