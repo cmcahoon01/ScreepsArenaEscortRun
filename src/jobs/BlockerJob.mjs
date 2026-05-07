@@ -8,7 +8,7 @@ import { MINER_JOB_NAMES } from '../constants.mjs';
 
 export class BlockerJob extends ActiveCreep {
     static get BODY() {
-        return [MOVE, MOVE, HEAL, HEAL];
+        return [MOVE];
     }
 
     static get COST() {
@@ -22,10 +22,6 @@ export class BlockerJob extends ActiveCreep {
     act() {
         const creep = getObjectById(this.id);
         if (!creep) return;
-
-        if (this.constructor.BODY.includes(HEAL) && creep.hits < creep.hitsMax){
-            creep.heal(creep);
-        }
 
         if (!this.memory.minerTugged) {
             const movingMiner = this.controller.creeps.find(c =>

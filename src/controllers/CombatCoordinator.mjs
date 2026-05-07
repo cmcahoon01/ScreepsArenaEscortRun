@@ -52,12 +52,12 @@ export class CombatCoordinator {
     static setMode(gameState, newMode, details = {}) {
         const prevMode = gameState.getCombatMode();
         gameState.setCombatMode(newMode);
-        // if (prevMode !== newMode) {
-        //     const detailStr = Object.entries(details)
-        //         .map(([k, v]) => `${k}=${JSON.stringify(v)}`)
-        //         .join(' ');
-        //     console.log(`[CombatCoordinator] mode: ${prevMode} → ${newMode}${detailStr ? ' | ' + detailStr : ''}`);
-        // }
+        if (prevMode !== newMode) {
+            const detailStr = Object.entries(details)
+                .map(([k, v]) => `${k}=${JSON.stringify(v)}`)
+                .join(' ');
+            console.log(`[CombatCoordinator] mode: ${prevMode} → ${newMode}${detailStr ? ' | ' + detailStr : ''}`);
+        }
     }
 
     /**
@@ -119,26 +119,28 @@ export class CombatCoordinator {
                         enemyVanguardStrength,
                     });
                 } else {
-                    // Retreat to halfway between our spawn and the enemy vanguard leader
-                    const stepsFromOurSpawn = numStepsAwayFromOurSpawn(gameState, enemyVanguardLeader);
-                    const retreatTarget = positionNStepsAwayFromOurSpawn(gameState, Math.floor(stepsFromOurSpawn / 2));
-                    gameState.setRetreatTarget(retreatTarget);
+                    // The smurf bot never retreats
 
-                    // Store our vanguard leader position so non-vanguard units can move toward it
-                    if (myVanguard.length > 0) {
-                        const myVanguardLeader = myVanguard.reduce((best, unit) =>
-                            Math.abs(unit.y - enemySpawnY) < Math.abs(best.y - enemySpawnY) ? unit : best
-                        );
-                        gameState.setMyVanguardLeaderPos({ x: myVanguardLeader.x, y: myVanguardLeader.y });
-                    }
-
-                    CombatCoordinator.setMode(gameState, 'retreat', {
-                        myVanguardSize: myVanguard.length,
-                        myVanguardStrength,
-                        enemyVanguardSize: enemyVanguard.length,
-                        enemyVanguardStrength,
-                        retreatTarget,
-                    });
+                    // // Retreat to halfway between our spawn and the enemy vanguard leader
+                    // const stepsFromOurSpawn = numStepsAwayFromOurSpawn(gameState, enemyVanguardLeader);
+                    // const retreatTarget = positionNStepsAwayFromOurSpawn(gameState, Math.floor(stepsFromOurSpawn / 2));
+                    // gameState.setRetreatTarget(retreatTarget);
+                    //
+                    // // Store our vanguard leader position so non-vanguard units can move toward it
+                    // if (myVanguard.length > 0) {
+                    //     const myVanguardLeader = myVanguard.reduce((best, unit) =>
+                    //         Math.abs(unit.y - enemySpawnY) < Math.abs(best.y - enemySpawnY) ? unit : best
+                    //     );
+                    //     gameState.setMyVanguardLeaderPos({ x: myVanguardLeader.x, y: myVanguardLeader.y });
+                    // }
+                    //
+                    // CombatCoordinator.setMode(gameState, 'retreat', {
+                    //     myVanguardSize: myVanguard.length,
+                    //     myVanguardStrength,
+                    //     enemyVanguardSize: enemyVanguard.length,
+                    //     enemyVanguardStrength,
+                    //     retreatTarget,
+                    // });
                 }
             }
         }
