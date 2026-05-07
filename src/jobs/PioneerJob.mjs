@@ -1,9 +1,10 @@
 import { createConstructionSite, getObjectById, getObjectsByPrototype } from 'game/utils';
 import { CARRY, WORK, MOVE, RESOURCE_ENERGY, OK } from 'game/constants';
-import { StructureContainer, StructureTower } from 'game/prototypes';
+import { StructureTower } from 'game/prototypes';
 import { ActiveCreep } from './base/ActiveCreep.mjs';
 import { calculateCost } from '../services/BodyPartService.mjs';
 import { chebyshevDistance } from '../services/RangeUtils.mjs';
+import { MapTopology } from '../constants.mjs';
 
 export class PioneerJob extends ActiveCreep {
     static get BODY() {
@@ -22,9 +23,21 @@ export class PioneerJob extends ActiveCreep {
         const creep = getObjectById(this.id);
         if (!creep) return;
 
-        const targetPos = this.gameState.getWeAreTop() ? { x: 91, y: 50 } : { x: 91, y: 49 };
-        if (creep.x !== targetPos.x || creep.y !== targetPos.y) {
-            creep.moveTo(targetPos);
+        const sources = this.gameState.getSources();
+        if (!sources || sources.length === 0) return;
+
+        const flag = this.gameState.getFlag();
+        const targetSource = flag
+            ? (
+                sources.find(source =>
+                    (source.x < MapTopology.ARENA_CENTER) === (flag.x < MapTopology.ARENA_CENTER) &&
+                    (source.y < MapTopology.ARENA_CENTER) === (flag.y < MapTopology.ARENA_CENTER)
+                ) || sources[0]
+            )
+            : sources[0];
+
+        if (chebyshevDistance(creep, targetSource) > 1) {
+            creep.moveTo(targetSource);
             return;
         }
 
@@ -43,14 +56,6 @@ export class PioneerJob extends ActiveCreep {
             }
         }
 
-        const containers = getObjectsByPrototype(StructureContainer)
-            .filter(container => chebyshevDistance(creep, container) <= 1);
-        const richestContainer = containers.length > 0
-            ? containers.reduce((richest, container) =>
-                (container.store[RESOURCE_ENERGY] || 0) > (richest.store[RESOURCE_ENERGY] || 0) ? container : richest
-            )
-            : null;
-
         if (tower) {
             const carriedEnergy = creep.store[RESOURCE_ENERGY] || 0;
             if (carriedEnergy > 0) {
@@ -58,17 +63,14 @@ export class PioneerJob extends ActiveCreep {
                 if (transferResult !== OK) {
                     return;
                 }
-            } else if (richestContainer) {
-                const withdrawResult = creep.withdraw(richestContainer, RESOURCE_ENERGY);
-                if (withdrawResult !== OK) {
-                    return;
-                }
+            } else {
+                creep.harvest(targetSource);
             }
             return;
         }
 
-        if (richestContainer) {
-            creep.withdraw(richestContainer, RESOURCE_ENERGY);
+        if ((creep.store[RESOURCE_ENERGY] || 0) === 0) {
+            creep.harvest(targetSource);
         }
 
         if (towerSite) {
