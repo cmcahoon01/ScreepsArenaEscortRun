@@ -22,7 +22,7 @@ export class PioneerJob extends ActiveCreep {
         const creep = getObjectById(this.id);
         if (!creep) return;
 
-        const targetPos = this.gameState.getWeAreTop() ? { x: 91, y: 49 } : { x: 91, y: 50 };
+        const targetPos = this.gameState.getWeAreTop() ? { x: 91, y: 50 } : { x: 91, y: 49 };
         if (creep.x !== targetPos.x || creep.y !== targetPos.y) {
             creep.moveTo(targetPos);
             return;
