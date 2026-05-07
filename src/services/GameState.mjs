@@ -1,5 +1,5 @@
 import { getObjectsByPrototype, getObjectById } from 'game/utils';
-import { Creep, StructureSpawn, StructureRampart, StructureExtension, Source, ConstructionSite, StructureContainer } from 'game/prototypes';
+import { Creep, StructureSpawn, StructureRampart, StructureExtension, Source, ConstructionSite, StructureContainer, StructureTower } from 'game/prototypes';
 import { detectFortifiedMiner } from "./StructureUtils.mjs";
 import { findFlagBlockingEnemy, selectFlagKiller, hasAttackCapability } from "./combat/CombatUtils.mjs";
 import {BuildConfig, MapTopology, MINER_JOB_NAMES} from "../constants.mjs";
@@ -16,6 +16,7 @@ export class GameState {
         this.allCreeps = [];
         this.ramparts = [];
         this.myExtensions = [];
+        this.myTowers = [];
         this.sources = [];
         this.myConstructionSites = [];
         this.fortifiedMiner = null;
@@ -62,6 +63,9 @@ export class GameState {
 
         const allExtensions = getObjectsByPrototype(StructureExtension);
         this.myExtensions = allExtensions.filter(e => e.my);
+
+        const allTowers = getObjectsByPrototype(StructureTower);
+        this.myTowers = allTowers.filter(t => t.my);
 
         this.sources = getObjectsByPrototype(Source);
 
@@ -119,6 +123,7 @@ export class GameState {
     getRamparts() { return this.ramparts; }
     getMyRamparts() { return this.ramparts.filter(r => r.my); }
     getMyExtensions() { return this.myExtensions; }
+    getMyTowers() { return this.myTowers; }
     getSources() { return this.sources; }
     getMyConstructionSites() { return this.myConstructionSites; }
     getFortifiedMiner() { return this.fortifiedMiner; }
