@@ -58,10 +58,6 @@ export class MuleJob extends TugJob {
         } else if (this.memory.state === 'depositing') {
             this.deposit(creep);
         }
-
-        if (!this.memory.moved) {
-            console.log("!!! Mule " + creep.id + " did not move during act() !!!");
-        }
     }
 
     deposit(creep) {
