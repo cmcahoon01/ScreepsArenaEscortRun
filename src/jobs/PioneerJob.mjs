@@ -33,10 +33,10 @@ export class PioneerJob extends ActiveCreep {
             site.x === towerPos.x && site.y === towerPos.y
         );
 
-        const towerExists = getObjectsByPrototype(StructureTower).some(t =>
+        const tower = getObjectsByPrototype(StructureTower).find(t =>
             t.my && t.x === towerPos.x && t.y === towerPos.y
         );
-        if (!towerSite && !towerExists) {
+        if (!towerSite && !tower) {
             const createResult = createConstructionSite(towerPos, StructureTower);
             if (createResult.object) {
                 towerSite = createResult.object;
@@ -45,10 +45,23 @@ export class PioneerJob extends ActiveCreep {
 
         const containers = getObjectsByPrototype(StructureContainer)
             .filter(container => chebyshevDistance(creep, container) <= 1);
-        if (containers.length > 0) {
-            const richestContainer = containers.reduce((richest, container) =>
+        const richestContainer = containers.length > 0
+            ? containers.reduce((richest, container) =>
                 (container.store[RESOURCE_ENERGY] || 0) > (richest.store[RESOURCE_ENERGY] || 0) ? container : richest
-            );
+            )
+            : null;
+
+        if (tower) {
+            const carriedEnergy = creep.store[RESOURCE_ENERGY] || 0;
+            if (carriedEnergy > 0) {
+                creep.transfer(tower, RESOURCE_ENERGY);
+            } else if (richestContainer) {
+                creep.withdraw(richestContainer, RESOURCE_ENERGY);
+            }
+            return;
+        }
+
+        if (richestContainer) {
             creep.withdraw(richestContainer, RESOURCE_ENERGY);
         }
 
