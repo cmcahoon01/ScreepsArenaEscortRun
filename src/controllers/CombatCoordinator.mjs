@@ -1,6 +1,6 @@
 import {CombatUtils, findFlagBlockingEnemy} from '../services/combat/CombatUtils.mjs';
 import {ATTACK, RANGED_ATTACK} from "game/constants";
-import { getRange } from 'game/utils';
+import {getObjectById, getRange, getTicks} from 'game/utils';
 import { calculateTeamStrength } from '../services/combat/StrengthEstimatorService.mjs';
 import { CombatConfig } from '../constants.mjs';
 import {
@@ -51,13 +51,18 @@ export class CombatCoordinator {
      */
     static setMode(gameState, newMode, details = {}) {
         const prevMode = gameState.getCombatMode();
-        gameState.setCombatMode(newMode);
         if (prevMode !== newMode) {
-            const detailStr = Object.entries(details)
-                .map(([k, v]) => `${k}=${JSON.stringify(v)}`)
-                .join(' ');
-            console.log(`[CombatCoordinator] mode: ${prevMode} → ${newMode}${detailStr ? ' | ' + detailStr : ''}`);
+            if (gameState.getLastStanceChange() >= getTicks() - CombatConfig.COMBAT_STANCE_CHANGE_DELAY){
+                return;
+            } else {
+                gameState.setLastStanceChange(getTicks());
+            }
+            // const detailStr = Object.entries(details)
+            //     .map(([k, v]) => `${k}=${JSON.stringify(v)}`)
+            //     .join(' ');
+            // console.log(`[CombatCoordinator] mode: ${prevMode} → ${newMode}${detailStr ? ' | ' + detailStr : ''}`);
         }
+        gameState.setCombatMode(newMode);
     }
 
     /**
@@ -123,7 +128,8 @@ export class CombatCoordinator {
 
                     // // Retreat to halfway between our spawn and the enemy vanguard leader
                     // const stepsFromOurSpawn = numStepsAwayFromOurSpawn(gameState, enemyVanguardLeader);
-                    // const retreatTarget = positionNStepsAwayFromOurSpawn(gameState, Math.floor(stepsFromOurSpawn / 2));
+                    // // const retreatTarget = positionNStepsAwayFromOurSpawn(gameState, Math.floor(stepsFromOurSpawn / 2));
+                    // const retreatTarget = getObjectById(gameState.getPayloadId());
                     // gameState.setRetreatTarget(retreatTarget);
                     //
                     // // Store our vanguard leader position so non-vanguard units can move toward it
@@ -145,7 +151,7 @@ export class CombatCoordinator {
             }
         }
 
-        // Flag blocker assignment (unchanged)
+        // Flag blocker assignment
         const flagBlocker = findFlagBlockingEnemy(gameState, enemyCreeps);
         if (flagBlocker && gameState.getFlagKillerId() === null) {
             const ourMeleeCombatUnits = gameState.getMyCreeps().filter(c => c.body.some(part => part.type === ATTACK));

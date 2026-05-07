@@ -1,5 +1,5 @@
 import { getObjectsByPrototype, getObjectById } from 'game/utils';
-import { Creep, StructureSpawn, StructureRampart, StructureExtension, Source, ConstructionSite, StructureContainer, StructureTower } from 'game/prototypes';
+import { Creep, StructureSpawn, StructureRampart, StructureExtension, Source, ConstructionSite, StructureContainer, StructureTower, StructureWall } from 'game/prototypes';
 import { detectFortifiedMiner } from "./StructureUtils.mjs";
 import { findFlagBlockingEnemy, selectFlagKiller, hasAttackCapability } from "./combat/CombatUtils.mjs";
 import {BuildConfig, MapTopology, MINER_JOB_NAMES} from "../constants.mjs";
@@ -15,6 +15,7 @@ export class GameState {
         this.enemyCreeps = [];
         this.allCreeps = [];
         this.ramparts = [];
+        this.walls = [];
         this.myExtensions = [];
         this.myTowers = [];
         this.sources = [];
@@ -39,6 +40,8 @@ export class GameState {
         this.myVanguardLeaderPos = null;
         this.weAreTop = false;
         this.highestBuildStep = 0;
+        this.tunnelBreached = false;
+        this.lastStanceChange = -1;
     }
 
     updateCreepRoster(rosterMap) {
@@ -60,6 +63,7 @@ export class GameState {
         this.enemySpawn = spawns.find(s => !s.my) || null;
 
         this.ramparts = getObjectsByPrototype(StructureRampart);
+        this.walls = getObjectsByPrototype(StructureWall);
 
         const allExtensions = getObjectsByPrototype(StructureExtension);
         this.myExtensions = allExtensions.filter(e => e.my);
@@ -121,6 +125,7 @@ export class GameState {
     getEnemyCreeps() { return this.enemyCreeps; }
     getAllCreeps() { return this.allCreeps; }
     getRamparts() { return this.ramparts; }
+    getWalls() { return this.walls; }
     getMyRamparts() { return this.ramparts.filter(r => r.my); }
     getMyExtensions() { return this.myExtensions; }
     getMyTowers() { return this.myTowers; }
@@ -132,6 +137,8 @@ export class GameState {
     getEnemyHasCombatUnit() { return this.enemyHasCombatUnit; }
     getWeAreTop() { return this.weAreTop; }
     getHighestBuildStep() { return this.highestBuildStep; }
+    getTunnelBreached() { return this.tunnelBreached; }
+    getLastStanceChange() { return this.lastStanceChange; }
 
     getTugChain() { return this._tugChain; }
 
@@ -186,4 +193,6 @@ export class GameState {
     setMyVanguardLeaderPos(pos) { this.myVanguardLeaderPos = pos; }
     setTopTeam(flag) {this.weAreTop = (flag.y < MapTopology.MAP_CENTER.y); }
     setHighestBuildStep(buildStep) {this.highestBuildStep = buildStep; }
+    setTunnelBreached(isBreached) { this.tunnelBreached = isBreached; }
+    setLastStanceChange(tick) { this.lastStanceChange = tick; }
 }

@@ -31,7 +31,8 @@ export class PayloadJob extends ActiveCreep {
     }
 
     shouldTransitionToMoving() {
-        return this.hasMilitaryAdvantage() || getTicks() >= PayloadConfig.GAME_TIME_THRESHOLD;
+        // return this.hasMilitaryAdvantage() || getTicks() >= PayloadConfig.GAME_TIME_THRESHOLD;
+        return this.gameState.getTunnelBreached() || getTicks() >= PayloadConfig.GAME_TIME_THRESHOLD;
     }
 
     findWaitingRampart(creep) {
@@ -78,15 +79,11 @@ export class PayloadJob extends ActiveCreep {
                 this.gameState.setTugChain([this.id]);
                 console.log("Payload beginning pilgrimage");
             } else {
-                if (this.hasEnemiesNearby(creep)) {
-                    const targetRampart = this.findWaitingRampart(creep);
-                    if (targetRampart) creep.moveTo(targetRampart);
+                const tunneler = this.controller.creeps.find(creep => creep.jobName === 'tunneler');
+                if (tunneler && getTicks() > 650) {
+                    creep.moveTo(getObjectById(tunneler.id));
                 } else {
-                    const spawn = this.gameState.getMySpawn();
-                    if (spawn) {
-                        const waitPos = this.getForwardWaitPosition(spawn);
-                        creep.moveTo(waitPos);
-                    }
+                    creep.moveTo(this.getForwardWaitPosition(this.gameState.getMySpawn()));
                 }
                 return;
             }

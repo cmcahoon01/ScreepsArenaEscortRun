@@ -4,7 +4,7 @@ import { calculateCost } from '../services/BodyPartService.mjs';
 
 export class FighterJob extends MeleeJob {
     static get BODY() {
-        return [ATTACK, MOVE];
+        return [ATTACK, ATTACK, MOVE, MOVE];
     }
 
     static get COST() {

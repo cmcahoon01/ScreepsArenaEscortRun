@@ -148,7 +148,7 @@ export const CombatConfig = {
          * ranged-only units. Healing allows sustained engagement and survival,
          * effectively doubling combat effectiveness.
          */
-        RANGED_HEAL: 2.0,
+        RANGED_HEAL: 1.5,
         
         /**
          * Melee healing multiplier = 0.5
@@ -189,6 +189,11 @@ export const CombatConfig = {
     SPAWN_EXCLUSION_RADIUS: 20,
 
     IN_OUR_QUADRANT_DISTANCE: 40,
+
+    /**
+     * turns before combat coordinater can change tactics
+     */
+    COMBAT_STANCE_CHANGE_DELAY: 3,
 
     /**
      * Chebyshev distance from our spawn that defines "our quadrant" during retreat.
