@@ -8,6 +8,7 @@ import { MuleJob } from './MuleJob.mjs';
 import { ClericJob } from './ClericJob.mjs';
 import { TugJob } from './TugJob.mjs';
 import { BlockerJob } from './BlockerJob.mjs';
+import { PioneerJob } from './PioneerJob.mjs';
 
 export const Jobs = Object.freeze({
     fighter: FighterJob,
@@ -20,4 +21,5 @@ export const Jobs = Object.freeze({
     cleric: ClericJob,
     tug: TugJob,
     blocker: BlockerJob,
+    pioneer: PioneerJob,
 });
