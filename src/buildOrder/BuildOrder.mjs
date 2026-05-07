@@ -4,7 +4,7 @@ import {enemyRushing, weAreDominating} from "./BuildConditions.mjs";
 export class BuildOrder {
     /**
      * Initial build order that always executes first.
-     * Builds in sequence: miner1 → blocker → mule → miner2 → mule → pioneer.
+     * Builds in sequence:
      * After all are present, creeps are built according to PHASE2_OPTIONS.
      *
      * Each entry is an object with the following fields:
@@ -20,9 +20,9 @@ export class BuildOrder {
         { job: 'miner1' },
         { job: 'blocker'},
         { job: 'mule' },
+        { job: 'pioneer' },
         { job: 'miner2' }, // slightly bigger miner
         { job: 'mule' },
-        { job: 'pioneer' },
     ];
 
     /**
@@ -40,7 +40,7 @@ export class BuildOrder {
     static PHASE2_OPTIONS = [
         { // Default option.
             build: [
-                { job: 'fighter', weight: 1 },
+                { job: 'cleric', weight: 1 },
             ],
         },
     ];
