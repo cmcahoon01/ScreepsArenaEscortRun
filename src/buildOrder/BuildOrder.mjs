@@ -21,6 +21,7 @@ export class BuildOrder {
         { job: 'blocker'},
         { job: 'mule' },
         { job: 'pioneer' },
+        { job: 'tunneler' },
         { job: 'miner2' }, // slightly bigger miner
         { job: 'mule' },
     ];
