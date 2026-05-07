@@ -67,7 +67,7 @@ export class MuleJob extends TugJob {
                     creep.moveTo(otherMuleObj);
                     return;
                 }
-                if (transferResult === OK) {
+                if (transferResult === OK && (creep.store[RESOURCE_ENERGY] || 0) === 0) {
                     this.memory.state = 'collecting';
                     return this.collect(creep);
                 }
@@ -92,7 +92,7 @@ export class MuleJob extends TugJob {
         const container = containerId ? getObjectById(containerId) : null;
 
         if (this.memory.muleSlot === 2) {
-            if (creep.store[RESOURCE_ENERGY] || 0) {
+            if ((creep.store[RESOURCE_ENERGY] || 0) > 0) {
                 this.memory.state = 'depositing';
                 return this.deposit(creep);
             }
