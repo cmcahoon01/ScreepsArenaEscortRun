@@ -37,6 +37,7 @@ export class GameState {
         this.idleTarget = null;
         this.myVanguardLeaderPos = null;
         this.weAreTop = false;
+        this.highestBuildStep = 0;
     }
 
     updateCreepRoster(rosterMap) {
@@ -125,6 +126,7 @@ export class GameState {
     getJobEverDied(jobName) { return this._jobsEverDied.has(jobName); }
     getEnemyHasCombatUnit() { return this.enemyHasCombatUnit; }
     getWeAreTop() { return this.weAreTop; }
+    getHighestBuildStep() { return this.highestBuildStep; }
 
     getTugChain() { return this._tugChain; }
 
@@ -178,4 +180,5 @@ export class GameState {
     getMyVanguardLeaderPos() { return this.myVanguardLeaderPos; }
     setMyVanguardLeaderPos(pos) { this.myVanguardLeaderPos = pos; }
     setTopTeam(flag) {this.weAreTop = (flag.y < MapTopology.MAP_CENTER.y); }
+    setHighestBuildStep(buildStep) {this.highestBuildStep = buildStep; }
 }

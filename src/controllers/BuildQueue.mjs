@@ -192,7 +192,7 @@ export class BuildQueue {
         if (result && result.object && !result.error) {
             // Mark the job and tier as pending - we'll add it to memory once spawn.spawning is available
             this.pendingSpawn = { job: nextCreep.job, tier: nextCreep.tier || DEFAULT_TIER };
-            //console.log(`Started spawning ${nextCreep.job} tier ${nextCreep.tier || DEFAULT_TIER} (cost: ${nextCreep.cost}, available energy: ${availableEnergy})`);
+            this.gameState.setHighestBuildStep(Math.max(this.gameState.getHighestBuildStep(), nextCreep.buildStep || 0));
             return true;
         }
 
