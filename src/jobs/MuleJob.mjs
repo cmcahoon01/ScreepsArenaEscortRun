@@ -59,7 +59,7 @@ export class MuleJob extends TugJob {
     deposit(creep) {
         if (this.memory.muleSlot === 1) {
             const otherMule = this.controller.creeps
-                .find(c => c.jobName === 'mule' && c.id !== this.id);
+                .find(c => c.jobName === 'mule' && c.id !== this.id && c.memory.muleSlot === 2);
             const otherMuleObj = otherMule ? getObjectById(otherMule.id) : null;
             if (otherMuleObj) {
                 const transferResult = creep.transfer(otherMuleObj, RESOURCE_ENERGY);
@@ -80,7 +80,7 @@ export class MuleJob extends TugJob {
             const transferResult = creep.transfer(spawn, RESOURCE_ENERGY);
             if (transferResult === ERR_NOT_IN_RANGE) {
                 creep.moveTo(spawn);
-            } else if (transferResult === 0 && creep.store[RESOURCE_ENERGY] === 0) {
+            } else if (transferResult === OK && creep.store[RESOURCE_ENERGY] === 0) {
                 this.memory.state = 'collecting';
                 return this.collect(creep);
             }
@@ -110,7 +110,7 @@ export class MuleJob extends TugJob {
                     creep.moveTo(container);
                     withdrawResult = creep.withdraw(container, RESOURCE_ENERGY);
                 }
-                if (withdrawResult === 0) {
+                if (withdrawResult === OK) {
                     this.memory.state = 'depositing';
                     return this.deposit(creep);
                 }
@@ -120,8 +120,6 @@ export class MuleJob extends TugJob {
     }
 
     _actAsTug(creep, minerId) {
-        if (!minerId) return;
-
         const tugChain = this.gameState.getTugChain();
 
         if (tugChain.isLeader(this.id)) {
