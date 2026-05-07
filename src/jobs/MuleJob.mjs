@@ -1,5 +1,5 @@
 import { getObjectById } from 'game/utils';
-import { MOVE, CARRY, RESOURCE_ENERGY, ERR_NOT_IN_RANGE } from 'game/constants';
+import { MOVE, CARRY, RESOURCE_ENERGY, ERR_NOT_IN_RANGE, OK } from 'game/constants';
 import { TugJob } from './TugJob.mjs';
 import { calculateCost } from '../services/BodyPartService.mjs';
 import { MINER_JOB_NAMES } from '../constants.mjs';
@@ -67,7 +67,7 @@ export class MuleJob extends TugJob {
                     creep.moveTo(otherMuleObj);
                     return;
                 }
-                if (transferResult === 0) {
+                if (transferResult === OK) {
                     this.memory.state = 'collecting';
                     return this.collect(creep);
                 }
@@ -98,6 +98,7 @@ export class MuleJob extends TugJob {
             const container = containerId ? getObjectById(containerId) : null;
             if (container) {
                 creep.moveTo(container);
+                // Intentionally continue into the generic collection logic below.
             }
         }
 
@@ -123,6 +124,8 @@ export class MuleJob extends TugJob {
     }
 
     _actAsTug(creep, minerId) {
+        if (!minerId) return;
+
         const tugChain = this.gameState.getTugChain();
 
         if (tugChain.isLeader(this.id)) {
