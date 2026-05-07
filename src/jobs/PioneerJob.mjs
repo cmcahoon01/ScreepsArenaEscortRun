@@ -1,5 +1,5 @@
 import { createConstructionSite, getObjectById, getObjectsByPrototype } from 'game/utils';
-import { CARRY, WORK, MOVE, RESOURCE_ENERGY } from 'game/constants';
+import { CARRY, WORK, MOVE, RESOURCE_ENERGY, OK } from 'game/constants';
 import { StructureContainer, StructureTower } from 'game/prototypes';
 import { ActiveCreep } from './base/ActiveCreep.mjs';
 import { calculateCost } from '../services/BodyPartService.mjs';
@@ -54,9 +54,15 @@ export class PioneerJob extends ActiveCreep {
         if (tower) {
             const carriedEnergy = creep.store[RESOURCE_ENERGY] || 0;
             if (carriedEnergy > 0) {
-                creep.transfer(tower, RESOURCE_ENERGY);
+                const transferResult = creep.transfer(tower, RESOURCE_ENERGY);
+                if (transferResult !== OK) {
+                    return;
+                }
             } else if (richestContainer) {
-                creep.withdraw(richestContainer, RESOURCE_ENERGY);
+                const withdrawResult = creep.withdraw(richestContainer, RESOURCE_ENERGY);
+                if (withdrawResult !== OK) {
+                    return;
+                }
             }
             return;
         }
