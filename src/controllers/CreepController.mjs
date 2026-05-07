@@ -18,6 +18,8 @@ export class CreepController {
     }
 
     updateCreeps(gameState) {
+        this.syncTurrets(gameState);
+
         this.creeps = this.creeps.filter(activeCreep => {
             const creep = getObjectById(activeCreep.id);
             if (!creep || !creep.exists) {
@@ -33,6 +35,15 @@ export class CreepController {
         gameState.updateCreepRoster(
             new Map(this.creeps.map(c => [c.id, c.jobName]))
         );
+    }
+
+    syncTurrets(gameState) {
+        for (const turret of gameState.getMyTowers()) {
+            const turretAlreadyRegistered = this.creeps.some(activeCreep => activeCreep.id === turret.id);
+            if (!turretAlreadyRegistered) {
+                this.addCreep(turret.id, 'turret', DEFAULT_TIER, gameState);
+            }
+        }
     }
 
     hasCreepOfRole(jobName) {
