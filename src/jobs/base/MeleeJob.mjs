@@ -46,7 +46,7 @@ export class MeleeJob extends ActiveCreep {
 
         // Need to block override: move onto enemy flag If I am nearby and no one is on it
         if (chebyshevDistance(creep, enemyFlag) < PayloadConfig.ENEMY_NEARBY_RANGE && findInRange(enemyFlag, allCreeps, 0).length === 0) {
-            this.moveTo(enemyFlag);
+            creep.moveTo(enemyFlag);
             if (enemiesInMeleeRange.length > 0) {
                 creep.attack(creep.findClosestByRange(enemiesInMeleeRange));
             }

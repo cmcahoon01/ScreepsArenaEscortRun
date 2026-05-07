@@ -1,10 +1,11 @@
 import { getObjectById } from 'game/utils';
-import { MOVE, CARRY, RESOURCE_ENERGY, ERR_NOT_IN_RANGE } from 'game/constants';
+import { MOVE, CARRY, RESOURCE_ENERGY, ERR_NOT_IN_RANGE, OK } from 'game/constants';
 import { TugJob } from './TugJob.mjs';
 import { calculateCost } from '../services/BodyPartService.mjs';
 import { MINER_JOB_NAMES } from '../constants.mjs';
 import { isMovingToPosition } from '../services/mining/MinerStateMachine.mjs';
 import { joinTugChain } from '../services/TugChainService.mjs';
+import {chebyshevDistance} from "../services/RangeUtils.mjs";
 
 export class MuleJob extends TugJob {
     static get BODY() {
@@ -27,115 +28,120 @@ export class MuleJob extends TugJob {
             this.memory.state = 'collecting';
         }
 
-        if (this.memory.pairedMinerId) {
-            const pairedStillAlive = this.controller.creeps.some(c => c.id === this.memory.pairedMinerId);
-            if (!pairedStillAlive) {
-                this.memory.pairedMinerId = null;
-            }
+        if (!this.memory.muleSlot) {
+            const mules = this.controller.creeps.filter(c => c.jobName === 'mule');
+            const claimedSlots = this.controller.creeps.filter(c => c.id !== this.id &&
+                (c.memory.muleSlot === 1 || c.memory.muleSlot === 2))
+                .map(c => c.memory.muleSlot);
+            this.memory.muleSlot = claimedSlots.includes(1) ? 2 : 1;
         }
 
-        if (!this.memory.pairedMinerId) {
-            const miners = this.controller.creeps.filter(c => MINER_JOB_NAMES.has(c.jobName));
-            const claimedMinerIds = this.controller.creeps
-                .filter(c => c.jobName === 'mule' && c.id !== this.id && c.memory.pairedMinerId)
-                .map(c => c.memory.pairedMinerId);
-            const unpairedMiner = miners.find(m => !claimedMinerIds.includes(m.id));
-            if (unpairedMiner) {
-                this.memory.pairedMinerId = unpairedMiner.id;
-            }
-        }
-
-        if (this.memory.pairedMinerId) {
-            const pairedActiveCreep = this.controller.creeps.find(c => c.id === this.memory.pairedMinerId);
-            if (pairedActiveCreep && isMovingToPosition(pairedActiveCreep.memory)) {
-                this._actAsTug(creep);
-                return;
-            }
-        }
-
-        const otherMovingMiner = this.controller.creeps.find(c =>
-            MINER_JOB_NAMES.has(c.jobName) &&
-            c.id !== this.memory.pairedMinerId &&
-            isMovingToPosition(c.memory)
-        );
+        const otherMovingMiner = this.controller.creeps.find(c => MINER_JOB_NAMES.has(c.jobName) && isMovingToPosition(c.memory));
         if (otherMovingMiner) {
             this._actAsTug(creep, otherMovingMiner.id);
             return;
         }
 
         const usedCapacity = creep.store[RESOURCE_ENERGY] || 0;
-        const totalCapacity = creep.store.getCapacity(RESOURCE_ENERGY);
 
-        if (usedCapacity >= totalCapacity) {
+        if (usedCapacity > 0) {
             this.memory.state = 'depositing';
         } else if (usedCapacity === 0) {
             this.memory.state = 'collecting';
         }
+
+        this.memory.moved = false;
+        this.memory.collected = false;
 
         if (this.memory.state === 'collecting') {
             this.collect(creep);
         } else if (this.memory.state === 'depositing') {
             this.deposit(creep);
         }
+
+        if (!this.memory.moved) {
+            console.log("!!! Mule " + creep.id + " did not move during act() !!!");
+        }
     }
 
     deposit(creep) {
-        const spawn = this.gameState.getMySpawn();
-        if (spawn) {
-            const transferResult = creep.transfer(spawn, RESOURCE_ENERGY);
-            if (transferResult === ERR_NOT_IN_RANGE) {
-                creep.moveTo(spawn);
-            } else if (transferResult === 0 && creep.store[RESOURCE_ENERGY] === 0) {
-                this.memory.state = 'collecting';
-                return this.collect(creep);
-            }
+        const depositTarget = this._getDepositTarget(creep);
+        if (!this.memory.moved && chebyshevDistance(creep, depositTarget) > 1) {
+            creep.moveTo(depositTarget);
+            this.memory.moved = true;
+        }
+
+        const depositResult = creep.transfer(depositTarget, RESOURCE_ENERGY);
+        if (depositResult === OK) {
+            this.memory.state = 'collecting';
+            return this.collect(creep);
         }
     }
 
     collect(creep) {
-        const containerId = this.gameState.getMiningContainerId();
-        if (containerId) {
-            const container = getObjectById(containerId);
-            if (container) {
-                const containerEnergy = container.store[RESOURCE_ENERGY] || 0;
-                if (containerEnergy > 0) {
-                    let withdrawResult = creep.withdraw(container, RESOURCE_ENERGY);
-                    if (withdrawResult === ERR_NOT_IN_RANGE) {
-                        creep.moveTo(container);
-                        withdrawResult = creep.withdraw(container, RESOURCE_ENERGY);
-                    }
-                    if (withdrawResult === 0) {
-                        this.memory.state = 'depositing';
-                        return this.deposit(creep);
-                    }
-                }
-                return;
-            }
+        const { collectTarget, needToWithdraw } = this._getCollectionTarget(creep);
+        if (!this.memory.moved && chebyshevDistance(creep, collectTarget) > 1) {
+            creep.moveTo(collectTarget);
+            this.memory.moved = true;
         }
-
-        const pairedActiveCreep = this.memory.pairedMinerId
-            ? this.controller.creeps.find(c => c.id === this.memory.pairedMinerId)
-            : null;
-        const miner = pairedActiveCreep ? getObjectById(pairedActiveCreep.id) : null;
-
-        const usedCapacity = creep.store[RESOURCE_ENERGY] || 0;
-        if (!miner) {
-            if (usedCapacity > 0) {
-                this.memory.state = 'depositing';
-                return this.deposit(creep);
-            }
-        } else {
-            const minerEnergy = miner.store[RESOURCE_ENERGY] || 0;
-            if (minerEnergy === 0 && usedCapacity > 0) {
-                this.memory.state = 'depositing';
-                return this.deposit(creep);
+        if (this.memory.collected) {
+            return;
+        }
+        if(chebyshevDistance(creep, collectTarget) <= 1) {
+            if (needToWithdraw) {
+                const withdrawResult = creep.withdraw(collectTarget, RESOURCE_ENERGY);
+                if (withdrawResult === OK) {
+                    this.memory.state = 'depositing';
+                    this.memory.collected = true;
+                    return this.deposit(creep);
+                }
             } else {
-                creep.moveTo(miner);
+                const transferResult = collectTarget.transfer(creep, RESOURCE_ENERGY);
+                if (transferResult === OK) {
+                    this.memory.state = 'depositing';
+                    this.memory.collected = true;
+                    return this.deposit(creep);
+                }
             }
         }
     }
 
-    _actAsTug(creep, minerId = this.memory.pairedMinerId) {
+    _getDepositTarget(creep) {
+        let collectTarget;
+        if (this.memory.muleSlot === 1) {
+            const otherMule = this.controller.creeps
+                .find(c => c.jobName === 'mule' && c.id !== this.id );
+            const otherMuleObj = otherMule ? getObjectById(otherMule.id) : null;
+            return otherMuleObj ? otherMuleObj : this.gameState.getMySpawn();
+        } else {
+            return this.gameState.getMySpawn();
+        }
+    }
+
+    _getCollectionTarget(creep) {
+        let collectTarget;
+        let needToWithdraw = false;
+        if (this.memory.muleSlot === 1) {
+            const containerId = this.gameState.getMiningContainerId();
+            if (containerId) {
+                const container = getObjectById(containerId);
+                if (container) {
+                    collectTarget = container;
+                    needToWithdraw = true;
+                }
+            }
+            if (!collectTarget) {
+                collectTarget = getObjectById(this.controller.creeps.find(c => MINER_JOB_NAMES.has(c.jobName)).id);
+            }
+        } else {
+            const otherMule = this.controller.creeps
+                .find(c => c.jobName === 'mule' && c.id !== this.id );
+            collectTarget = otherMule ? getObjectById(otherMule.id) : null;
+        }
+        return {collectTarget, needToWithdraw};
+    }
+
+    _actAsTug(creep, minerId) {
         const tugChain = this.gameState.getTugChain();
 
         if (tugChain.isLeader(this.id)) {

@@ -1,11 +1,10 @@
-import { Jobs } from '../jobs/JobRegistry.mjs';
+import { Jobs } from '../jobs/index.mjs';
 import { DEFAULT_TIER } from '../constants.mjs';
 import { BuildOrder } from '../buildOrder/BuildOrder.mjs';
 
 export class BuildStrategy {
     constructor(gameState) {
         this.gameState = gameState;
-        this.highestStepBuilt = 0;
     }
 
     getNextCreepToBuild(creeps) {
@@ -16,8 +15,8 @@ export class BuildStrategy {
 
         // Phase 1: Initial build order — replace any lost creeps immediately.
         const initialBuild = BuildOrder.INITIAL_BUILD;
-        for (let stepNumber = 0; stepNumber < initialBuild.length; stepNumber++) {
-            const buildItem = initialBuild[stepNumber];
+        for (let buildStep = 0; buildStep < initialBuild.length; buildStep++) {
+            const buildItem = initialBuild[buildStep];
             const jobName = buildItem.job || buildItem;
             const tier = buildItem.tier || DEFAULT_TIER;
             const jobClass = Jobs[jobName];
@@ -35,14 +34,13 @@ export class BuildStrategy {
 
             // Skip this tick if the only_if condition is not satisfied.
             //
-            if (typeof buildItem.only_if === 'function') {
-                if (!buildItem.only_if(this.gameState) || this.highestStepBuilt > stepNumber){
-                    continue;
-                }
+            if ((typeof buildItem.only_if === 'function') &&
+                (this.gameState.getHighestBuildStep() > buildStep || !buildItem.only_if(this.gameState))) {
+                continue;
             }
 
             let expectedCount = 0;
-            for (let j = 0; j <= stepNumber; j++) {
+            for (let j = 0; j <= buildStep; j++) {
                 const checkItem = initialBuild[j];
                 if ((checkItem.job || checkItem) === jobName) {
                     expectedCount++;
@@ -50,12 +48,12 @@ export class BuildStrategy {
             }
 
             if ((creepCounts[jobName] || 0) < expectedCount) {
-                this.highestStepBuilt = Math.max(this.highestStepBuilt, stepNumber - 1);
                 return {
                     job: jobName,
                     tier: tier,
                     body: jobClass.getTierBody(tier),
                     cost: jobClass.getTierCost(tier),
+                    buildStep: buildStep,
                 };
             }
         }
@@ -84,6 +82,7 @@ export class BuildStrategy {
                     tier: DEFAULT_TIER,
                     body: jobClass.getTierBody(DEFAULT_TIER),
                     cost: jobClass.getTierCost(DEFAULT_TIER),
+                    buildStep: initialBuild.length,
                 };
             }
         }
@@ -96,6 +95,7 @@ export class BuildStrategy {
             tier: DEFAULT_TIER,
             body: fallbackClass.getTierBody(DEFAULT_TIER),
             cost: fallbackClass.getTierCost(DEFAULT_TIER),
+            buildStep: initialBuild.length,
         };
     }
 }
