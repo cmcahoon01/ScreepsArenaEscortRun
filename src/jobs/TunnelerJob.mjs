@@ -52,8 +52,12 @@ export class TunnelerJob extends FighterJob {
         );
         if (tunnelWalls.length === 0) return null;
 
-        return tunnelWalls.reduce((nextWall, wall) =>
-            wall.x < nextWall.x ? wall : nextWall
-        );
+        let nextWall = tunnelWalls[0];
+        for (const wall of tunnelWalls) {
+            if (wall.x < nextWall.x) {
+                nextWall = wall;
+            }
+        }
+        return nextWall;
     }
 }
