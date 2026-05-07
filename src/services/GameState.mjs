@@ -191,5 +191,5 @@ export class GameState {
     setMyVanguardLeaderPos(pos) { this.myVanguardLeaderPos = pos; }
     setTopTeam(flag) {this.weAreTop = (flag.y < MapTopology.MAP_CENTER.y); }
     setHighestBuildStep(buildStep) {this.highestBuildStep = buildStep; }
-    setTunnelBreached(flag) { this.tunnelBreached = flag; }
+    setTunnelBreached(isBreached) { this.tunnelBreached = isBreached; }
 }
