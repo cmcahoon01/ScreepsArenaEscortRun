@@ -92,7 +92,7 @@ export class MuleJob extends TugJob {
         const container = containerId ? getObjectById(containerId) : null;
 
         if (this.memory.muleSlot === 2) {
-            if ((creep.store[RESOURCE_ENERGY] || 0) > 0) {
+            if (creep.store[RESOURCE_ENERGY] || 0) {
                 this.memory.state = 'depositing';
                 return this.deposit(creep);
             }
@@ -105,12 +105,10 @@ export class MuleJob extends TugJob {
         if (container) {
             const containerEnergy = container.store[RESOURCE_ENERGY] || 0;
             if (containerEnergy > 0) {
-                let withdrawResult = creep.withdraw(container, RESOURCE_ENERGY);
+                const withdrawResult = creep.withdraw(container, RESOURCE_ENERGY);
                 if (withdrawResult === ERR_NOT_IN_RANGE) {
                     creep.moveTo(container);
-                    withdrawResult = creep.withdraw(container, RESOURCE_ENERGY);
-                }
-                if (withdrawResult === OK) {
+                } else if (withdrawResult === OK) {
                     this.memory.state = 'depositing';
                     return this.deposit(creep);
                 }
