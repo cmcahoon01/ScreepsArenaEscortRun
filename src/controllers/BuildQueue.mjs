@@ -17,6 +17,10 @@ export class BuildQueue {
         this.pendingSpawns = new Map(); // spawnId -> {job: string, tier: number}
     }
 
+    getMySpawns() {
+        return this.gameState.getMySpawns();
+    }
+
     /**
      * Attempt to spawn the next creep in the build order.
      * Coordinates between BuildStrategy to decide what to build,
@@ -42,9 +46,7 @@ export class BuildQueue {
      * Adds the creep to the controller once it starts spawning.
      */
     checkAndAddSpawningCreep() {
-        const spawns = this.gameState.getMySpawns
-            ? this.gameState.getMySpawns()
-            : (this.gameState.getMySpawn() ? [this.gameState.getMySpawn()] : []);
+        const spawns = this.getMySpawns();
 
         const liveSpawnIds = new Set(spawns.map(spawn => spawn.id));
 
@@ -185,9 +187,7 @@ export class BuildQueue {
      * @returns {boolean} True if spawn was successful, false otherwise
      */
     trySpawn(nextCreep, availableEnergy) {
-        const spawns = this.gameState.getMySpawns
-            ? this.gameState.getMySpawns()
-            : (this.gameState.getMySpawn() ? [this.gameState.getMySpawn()] : []);
+        const spawns = this.getMySpawns();
         const spawn = spawns.find(s => s && !s.spawning);
 
         // Check if any spawn exists and is not currently spawning

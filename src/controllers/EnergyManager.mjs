@@ -20,9 +20,7 @@ export class EnergyManager {
         let totalEnergy = 0;
 
         // Get energy from all friendly spawns
-        const spawns = this.gameState.getMySpawns
-            ? this.gameState.getMySpawns()
-            : (this.gameState.getMySpawn() ? [this.gameState.getMySpawn()] : []);
+        const spawns = this.gameState.getMySpawns();
         for (const spawn of spawns) {
             if (spawn && spawn.store) {
                 totalEnergy += spawn.store[RESOURCE_ENERGY] || 0;
