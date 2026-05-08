@@ -41,7 +41,8 @@ export class BuildOrder {
     static PHASE2_OPTIONS = [
         { // Default option.
             build: [
-                { job: 'archer', weight: 1 },
+                { job: 'cleric', weight: 1 },
+                { job: 'archer', weight: 2 },
             ],
         },
     ];
