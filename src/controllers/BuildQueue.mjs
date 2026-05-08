@@ -13,8 +13,12 @@ export class BuildQueue {
         this.gameState = gameState;
         this.energyManager = new EnergyManager(gameState);
         this.buildStrategy = new BuildStrategy(gameState);
-        // Track the job type and tier of the creep currently being spawned
-        this.pendingSpawn = null; // Will be {job: string, tier: number}
+        // Track pending spawn jobs per spawn id
+        this.pendingSpawns = new Map(); // spawnId -> {job: string, tier: number}
+    }
+
+    getMySpawns() {
+        return this.gameState.getMySpawns();
     }
 
     /**
@@ -24,17 +28,34 @@ export class BuildQueue {
      * @returns {boolean} True if spawn was successful, false otherwise
      */
     trySpawnNextCreep() {
-        // Get the next creep to build from strategy
-        const nextCreep = this.buildStrategy.getNextCreepToBuild(this.screepController.creeps);
-        if (!nextCreep) {
+        const availableSpawns = this.getMySpawns().filter(spawn => spawn && !spawn.spawning);
+        if (availableSpawns.length === 0) {
             return false;
         }
 
-        // Check available energy
-        const totalEnergy = this.energyManager.getTotalEnergy();
+        let spawnedAny = false;
+        const creepsForStrategy = this.screepController.creeps.map(c => ({ jobName: c.jobName }));
+        const energyBySpawnId = this.energyManager.getEnergyBySpawnId();
 
-        // Try to spawn using the build queue
-        return this.trySpawn(nextCreep, totalEnergy);
+        for (const pendingSpawn of this.pendingSpawns.values()) {
+            creepsForStrategy.push({ jobName: pendingSpawn.job });
+        }
+
+        for (const spawn of availableSpawns) {
+            // Get the next creep to build from strategy, including pending/planned spawns
+            const nextCreep = this.buildStrategy.getNextCreepToBuild(creepsForStrategy);
+            if (!nextCreep) {
+                continue;
+            }
+
+            const spawnEnergy = energyBySpawnId.get(spawn.id) || 0;
+            if (this.trySpawn(spawn, nextCreep, spawnEnergy)) {
+                spawnedAny = true;
+                creepsForStrategy.push({ jobName: nextCreep.job });
+            }
+        }
+
+        return spawnedAny;
     }
 
     /**
@@ -42,29 +63,40 @@ export class BuildQueue {
      * Adds the creep to the controller once it starts spawning.
      */
     checkAndAddSpawningCreep() {
-        const spawn = this.gameState.getMySpawn();
-        
-        // If spawn is spawning a creep and we have a pending job
-        if (spawn && spawn.spawning && this.pendingSpawn) {
-            const creepId = spawn.spawning.creep.id;
+        const spawns = this.getMySpawns();
 
-            if (creepId === undefined) {
-                console.log("spawning creep undefined");
-                return;
+        const liveSpawnIds = new Set(spawns.map(spawn => spawn.id));
+
+        for (const spawn of spawns) {
+            const pendingSpawn = this.pendingSpawns.get(spawn.id);
+            if (spawn.spawning && pendingSpawn) {
+                const creepId = spawn.spawning.creep.id;
+
+                if (creepId === undefined) {
+                    console.log(`Spawning creep ID is undefined for spawn ${spawn.id}`);
+                    continue;
+                }
+
+                // Check if this creep is already in our controller
+                const alreadyAdded = this.screepController.creeps.some(c => c.id === creepId);
+
+                if (!alreadyAdded) {
+                    // Add the creep to memory with its job and tier
+                    this.screepController.addCreep(creepId, pendingSpawn.job, pendingSpawn.tier, this.gameState);
+                }
+
+                // Clear pending job once we've checked and processed it
+                this.pendingSpawns.delete(spawn.id);
+            } else if (pendingSpawn && !spawn.spawning) {
+                // Clear pending job if this spawn is no longer spawning
+                this.pendingSpawns.delete(spawn.id);
             }
-            
-            // Check if this creep is already in our controller
-            const alreadyAdded = this.screepController.creeps.some(c => c.id === creepId);
-            
-            if (!alreadyAdded) {
-                // Add the creep to memory with its job and tier
-                this.screepController.addCreep(creepId, this.pendingSpawn.job, this.pendingSpawn.tier, this.gameState);
+        }
+
+        for (const spawnId of Array.from(this.pendingSpawns.keys())) {
+            if (!liveSpawnIds.has(spawnId)) {
+                this.pendingSpawns.delete(spawnId);
             }
-            // Clear pending job once we've checked and processed it
-            this.pendingSpawn = null;
-        } else if (this.pendingSpawn && (!spawn || !spawn.spawning)) {
-            // Clear pending job if spawn is no longer spawning but we still have a pending job
-            this.pendingSpawn = null;
         }
     }
 
@@ -167,13 +199,12 @@ export class BuildQueue {
 
     /**
      * Attempt to spawn a creep with the given configuration.
+     * @param {Object} spawn - Spawn structure to use
      * @param {Object} nextCreep - Creep configuration with job, tier, body, and cost
-     * @param {number} availableEnergy - Total energy available for spawning
+     * @param {number} availableEnergy - Energy available to the selected spawn
      * @returns {boolean} True if spawn was successful, false otherwise
      */
-    trySpawn(nextCreep, availableEnergy) {
-        const spawn = this.gameState.getMySpawn();
-        
+    trySpawn(spawn, nextCreep, availableEnergy) {
         // Check if spawn exists and is not currently spawning
         if (!spawn || spawn.spawning) {
             return false;
@@ -191,7 +222,7 @@ export class BuildQueue {
         const result = spawn.spawnCreep(nextCreep.body);
         if (result && result.object && !result.error) {
             // Mark the job and tier as pending - we'll add it to memory once spawn.spawning is available
-            this.pendingSpawn = { job: nextCreep.job, tier: nextCreep.tier || DEFAULT_TIER };
+            this.pendingSpawns.set(spawn.id, { job: nextCreep.job, tier: nextCreep.tier || DEFAULT_TIER });
             this.gameState.setHighestBuildStep(Math.max(this.gameState.getHighestBuildStep(), nextCreep.buildStep || 0));
             return true;
         }
