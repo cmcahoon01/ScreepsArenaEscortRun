@@ -13,6 +13,18 @@ export class EnergyManager {
     }
 
     /**
+     * Get available energy for a specific spawn.
+     * @param {Object} spawn - Spawn structure
+     * @returns {number} Energy currently available to that spawn
+     */
+    getSpawnEnergy(spawn) {
+        if (!spawn || !spawn.store) {
+            return 0;
+        }
+        return spawn.store[RESOURCE_ENERGY] || 0;
+    }
+
+    /**
      * Calculate total available energy from spawn and all extensions.
      * @returns {number} Total energy available across all energy-storing structures
      */
@@ -22,9 +34,7 @@ export class EnergyManager {
         // Get energy from all friendly spawns
         const spawns = this.gameState.getMySpawns();
         for (const spawn of spawns) {
-            if (spawn && spawn.store) {
-                totalEnergy += spawn.store[RESOURCE_ENERGY] || 0;
-            }
+            totalEnergy += this.getSpawnEnergy(spawn);
         }
 
         // Get energy from all extensions (now cached in GameState)
