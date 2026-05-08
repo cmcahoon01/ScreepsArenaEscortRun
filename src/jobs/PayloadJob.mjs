@@ -62,9 +62,9 @@ export class PayloadJob extends ActiveCreep {
 
     getForwardWaitPosition(spawn) {
         const yOffset = spawn.y < MapTopology.ARENA_CENTER
-            ? PayloadConfig.WAITING_FORWARD_OFFSET_Y
-            : -PayloadConfig.WAITING_FORWARD_OFFSET_Y;
-        return { x: spawn.x + PayloadConfig.WAITING_FORWARD_OFFSET_X, y: spawn.y + yOffset };
+            ? PayloadConfig.WAITING_FORWARD_OFFSET_Y - 1
+            : -PayloadConfig.WAITING_FORWARD_OFFSET_Y + 1;
+        return { x: spawn.x + PayloadConfig.WAITING_FORWARD_OFFSET_X - 1, y: spawn.y + yOffset };
     }
 
     act() {
