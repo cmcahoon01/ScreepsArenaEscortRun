@@ -1,4 +1,4 @@
-import { getObjectsByPrototype, getObjectById } from 'game/utils';
+import { getObjectsByPrototype } from 'game/utils';
 import { Creep, StructureSpawn, StructureRampart, StructureExtension, Source, ConstructionSite, StructureContainer, StructureTower, StructureWall } from 'game/prototypes';
 import { detectFortifiedMiner } from "./StructureUtils.mjs";
 import { findFlagBlockingEnemy, selectFlagKiller, hasAttackCapability } from "./combat/CombatUtils.mjs";
@@ -71,22 +71,14 @@ export class GameState {
         if (!myPrimaryStillExists) {
             this.primaryMySpawnId = this.mySpawns[0]?.id || null;
         }
-        this.mySpawn = this.primaryMySpawnId ? getObjectById(this.primaryMySpawnId) : null;
-        if (!this.mySpawn || !this.mySpawn.my) {
-            this.mySpawn = this.mySpawns[0] || null;
-            this.primaryMySpawnId = this.mySpawn ? this.mySpawn.id : null;
-        }
+        this.mySpawn = this.mySpawns.find(s => s.id === this.primaryMySpawnId) || null;
 
         const enemyPrimaryStillExists = this.primaryEnemySpawnId &&
             this.enemySpawns.some(s => s.id === this.primaryEnemySpawnId);
         if (!enemyPrimaryStillExists) {
             this.primaryEnemySpawnId = this.enemySpawns[0]?.id || null;
         }
-        this.enemySpawn = this.primaryEnemySpawnId ? getObjectById(this.primaryEnemySpawnId) : null;
-        if (!this.enemySpawn || this.enemySpawn.my) {
-            this.enemySpawn = this.enemySpawns[0] || null;
-            this.primaryEnemySpawnId = this.enemySpawn ? this.enemySpawn.id : null;
-        }
+        this.enemySpawn = this.enemySpawns.find(s => s.id === this.primaryEnemySpawnId) || null;
 
         this.ramparts = getObjectsByPrototype(StructureRampart);
         this.walls = getObjectsByPrototype(StructureWall);
