@@ -8,7 +8,7 @@ import { MINER_JOB_NAMES } from '../constants.mjs';
 
 export class BlockerJob extends ActiveCreep {
     static get BODY() {
-        return [MOVE, MOVE, HEAL, HEAL];
+        return [MOVE, MOVE, MOVE, MOVE, HEAL, HEAL];
     }
 
     static get COST() {
