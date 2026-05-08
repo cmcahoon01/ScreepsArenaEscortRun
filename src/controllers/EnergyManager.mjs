@@ -19,10 +19,14 @@ export class EnergyManager {
     getTotalEnergy() {
         let totalEnergy = 0;
 
-        // Get energy from spawn
-        const spawn = this.gameState.getMySpawn();
-        if (spawn && spawn.store) {
-            totalEnergy += spawn.store[RESOURCE_ENERGY] || 0;
+        // Get energy from all friendly spawns
+        const spawns = this.gameState.getMySpawns
+            ? this.gameState.getMySpawns()
+            : (this.gameState.getMySpawn() ? [this.gameState.getMySpawn()] : []);
+        for (const spawn of spawns) {
+            if (spawn && spawn.store) {
+                totalEnergy += spawn.store[RESOURCE_ENERGY] || 0;
+            }
         }
 
         // Get energy from all extensions (now cached in GameState)

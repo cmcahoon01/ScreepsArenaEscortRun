@@ -10,7 +10,11 @@ export class GameState {
     constructor() {
         this.creepRoster = new Map(); // id → jobName, updated each tick by CreepController
         this.mySpawn = null;
+        this.mySpawns = [];
+        this.primaryMySpawnId = null;
         this.enemySpawn = null;
+        this.enemySpawns = [];
+        this.primaryEnemySpawnId = null;
         this.myCreeps = [];
         this.enemyCreeps = [];
         this.allCreeps = [];
@@ -59,8 +63,30 @@ export class GameState {
         this.enemyHasCombatUnit = this.enemyCreeps.some(e => hasAttackCapability(e));
 
         const spawns = getObjectsByPrototype(StructureSpawn);
-        this.mySpawn = spawns.find(s => s.my) || null;
-        this.enemySpawn = spawns.find(s => !s.my) || null;
+        this.mySpawns = spawns.filter(s => s.my);
+        this.enemySpawns = spawns.filter(s => !s.my);
+
+        const myPrimaryStillExists = this.primaryMySpawnId &&
+            this.mySpawns.some(s => s.id === this.primaryMySpawnId);
+        if (!myPrimaryStillExists) {
+            this.primaryMySpawnId = this.mySpawns[0]?.id || null;
+        }
+        this.mySpawn = this.primaryMySpawnId ? getObjectById(this.primaryMySpawnId) : null;
+        if (!this.mySpawn || !this.mySpawn.my) {
+            this.mySpawn = this.mySpawns[0] || null;
+            this.primaryMySpawnId = this.mySpawn ? this.mySpawn.id : null;
+        }
+
+        const enemyPrimaryStillExists = this.primaryEnemySpawnId &&
+            this.enemySpawns.some(s => s.id === this.primaryEnemySpawnId);
+        if (!enemyPrimaryStillExists) {
+            this.primaryEnemySpawnId = this.enemySpawns[0]?.id || null;
+        }
+        this.enemySpawn = this.primaryEnemySpawnId ? getObjectById(this.primaryEnemySpawnId) : null;
+        if (!this.enemySpawn || this.enemySpawn.my) {
+            this.enemySpawn = this.enemySpawns[0] || null;
+            this.primaryEnemySpawnId = this.enemySpawn ? this.enemySpawn.id : null;
+        }
 
         this.ramparts = getObjectsByPrototype(StructureRampart);
         this.walls = getObjectsByPrototype(StructureWall);
@@ -120,6 +146,7 @@ export class GameState {
     }
 
     getMySpawn() { return this.mySpawn; }
+    getMySpawns() { return this.mySpawns; }
     getEnemySpawn() { return this.enemySpawn; }
     getMyCreeps() { return this.myCreeps; }
     getEnemyCreeps() { return this.enemyCreeps; }
