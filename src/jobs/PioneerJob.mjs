@@ -1,6 +1,6 @@
 import { createConstructionSite, getObjectById, getObjectsByPrototype } from 'game/utils';
 import { CARRY, WORK, MOVE, RESOURCE_ENERGY, OK } from 'game/constants';
-import { StructureContainer, StructureTower } from 'game/prototypes';
+import { StructureContainer, StructureSpawn } from 'game/prototypes';
 import { ActiveCreep } from './base/ActiveCreep.mjs';
 import { calculateCost } from '../services/BodyPartService.mjs';
 import { chebyshevDistance } from '../services/RangeUtils.mjs';
@@ -28,18 +28,18 @@ export class PioneerJob extends ActiveCreep {
             return;
         }
 
-        const towerPos = { x: creep.x - 1, y: creep.y };
-        let towerSite = this.gameState.getMyConstructionSites().find(site =>
-            site.x === towerPos.x && site.y === towerPos.y
+        const spawnPos = { x: creep.x - 1, y: creep.y };
+        let spawnSite = this.gameState.getMyConstructionSites().find(site =>
+            site.x === spawnPos.x && site.y === spawnPos.y
         );
 
-        const tower = getObjectsByPrototype(StructureTower).find(t =>
-            t.my && t.x === towerPos.x && t.y === towerPos.y
+        const spawn = getObjectsByPrototype(StructureSpawn).find(t =>
+            t.my && t.x === spawnPos.x && t.y === spawnPos.y
         );
-        if (!towerSite && !tower) {
-            const createResult = createConstructionSite(towerPos, StructureTower);
+        if (!spawnSite && !spawn) {
+            const createResult = createConstructionSite(spawnPos, StructureSpawn);
             if (createResult.object) {
-                towerSite = createResult.object;
+                spawnSite = createResult.object;
             }
         }
 
@@ -51,10 +51,10 @@ export class PioneerJob extends ActiveCreep {
             )
             : null;
 
-        if (tower) {
+        if (spawn) {
             const carriedEnergy = creep.store[RESOURCE_ENERGY] || 0;
             if (carriedEnergy > 0) {
-                const transferResult = creep.transfer(tower, RESOURCE_ENERGY);
+                const transferResult = creep.transfer(spawn, RESOURCE_ENERGY);
                 if (transferResult !== OK) {
                     return;
                 }
@@ -71,8 +71,8 @@ export class PioneerJob extends ActiveCreep {
             creep.withdraw(richestContainer, RESOURCE_ENERGY);
         }
 
-        if (towerSite) {
-            creep.build(towerSite);
+        if (spawnSite) {
+            creep.build(spawnSite);
         }
     }
 }
