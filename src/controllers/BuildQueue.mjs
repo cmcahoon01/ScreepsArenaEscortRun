@@ -34,23 +34,24 @@ export class BuildQueue {
         }
 
         let spawnedAny = false;
-        const plannedCreeps = this.screepController.creeps.map(c => ({ jobName: c.jobName }));
+        const creepsForStrategy = this.screepController.creeps.map(c => ({ jobName: c.jobName }));
+        const energyBySpawnId = this.energyManager.getEnergyBySpawnId();
 
         for (const pendingSpawn of this.pendingSpawns.values()) {
-            plannedCreeps.push({ jobName: pendingSpawn.job });
+            creepsForStrategy.push({ jobName: pendingSpawn.job });
         }
 
         for (const spawn of availableSpawns) {
             // Get the next creep to build from strategy, including pending/planned spawns
-            const nextCreep = this.buildStrategy.getNextCreepToBuild(plannedCreeps);
+            const nextCreep = this.buildStrategy.getNextCreepToBuild(creepsForStrategy);
             if (!nextCreep) {
                 continue;
             }
 
-            const spawnEnergy = this.energyManager.getSpawnEnergy(spawn);
+            const spawnEnergy = energyBySpawnId.get(spawn.id) || 0;
             if (this.trySpawn(spawn, nextCreep, spawnEnergy)) {
                 spawnedAny = true;
-                plannedCreeps.push({ jobName: nextCreep.job });
+                creepsForStrategy.push({ jobName: nextCreep.job });
             }
         }
 
