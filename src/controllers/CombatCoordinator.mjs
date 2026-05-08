@@ -1,4 +1,4 @@
-import {CombatUtils, findFlagBlockingEnemy} from '../services/combat/CombatUtils.mjs';
+import {CombatUtils} from '../services/combat/CombatUtils.mjs';
 import {ATTACK, RANGED_ATTACK} from "game/constants";
 import { getRange } from 'game/utils';
 import { calculateTeamStrength } from '../services/combat/StrengthEstimatorService.mjs';
@@ -139,30 +139,6 @@ export class CombatCoordinator {
                     });
                 }
             }
-        }
-
-        // Flag blocker assignment (unchanged)
-        const flagBlocker = findFlagBlockingEnemy(gameState, enemyCreeps);
-        if (flagBlocker && gameState.getFlagKillerId() === null) {
-            const ourMeleeCombatUnits = gameState.getMyCreeps().filter(c => c.body.some(part => part.type === ATTACK));
-            const ourRangedCombatUnits = gameState.getMyCreeps().filter(c => c.body.some(part => part.type === RANGED_ATTACK));
-            const candidates = ourMeleeCombatUnits.length > 0 ? ourMeleeCombatUnits : ourRangedCombatUnits;
-            if (candidates.length > 0) {
-                const flagKiller = candidates.reduce((closest, c) => {
-                    const dist = getRange(c, flagBlocker);
-                    if (dist < closest.dist) {
-                        return {creep: c, dist};
-                    } else {
-                        return closest;
-                    }
-                }, {creep: null, dist: Infinity}).creep;
-
-                if (flagKiller) {
-                    gameState.setFlagKillerId(flagKiller.id);
-                }
-            }
-        } else if (!flagBlocker) {
-            gameState.setFlagKillerId(null);
         }
     }
 }

@@ -1,4 +1,4 @@
-import {CombatConfig, PayloadConfig} from '../constants.mjs';
+import {CombatConfig} from '../constants.mjs';
 import * as game from "game";
 import {getObjectById} from "game/utils";
 import {chebyshevDistance} from "../services/RangeUtils.mjs";
@@ -37,24 +37,3 @@ export const needRushPaladin = (gameState) => {
         chebyshevDistance(enemy, mySpawn) <= CombatConfig.IN_OUR_QUADRANT_DISTANCE
     ) ;
 };
-
-/**
- * Only go paladins when the enemy is rushing the payload.
- * @param {GameState} gameState
- * @returns {boolean}
- */
-export const enemyRushing = (gameState) => {
-    const enemyPayload = getObjectById(gameState.getEnemyPayloadId());
-    return chebyshevDistance(gameState.getEnemySpawn(), enemyPayload) >= CombatConfig.AWAY_FROM_SPAWN_DISTANCE;
-}
-
-/**
- * Only go tugs if we have a big military advantage
- * @param {GameState} gameState
- * @returns {boolean}
- */
-export const weAreDominating = (gameState) => {
-    const comparison = compareTeamStrengths(gameState);
-    return comparison.ratio >= PayloadConfig.MILITARY_ADVANTAGE_THRESHOLD &&
-        comparison.myTeam.strength > comparison.enemyTeam.strength + 300;
-}

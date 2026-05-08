@@ -7,7 +7,7 @@ import {
     findBestRetreatPosition as kitingFindBestRetreatPosition,
 } from '../../services/combat/KitingBehavior.mjs';
 import { isInRangedAttackRange, chebyshevDistance } from '../../services/RangeUtils.mjs';
-import { selectPrimaryTarget, findFlagBlockingEnemy } from '../../services/combat/CombatUtils.mjs';
+import { selectPrimaryTarget } from '../../services/combat/CombatUtils.mjs';
 import { RangeConfig, CombatConfig, MapTopology } from '../../constants.mjs';
 
 export class RangedJob extends ActiveCreep {
@@ -92,46 +92,10 @@ export class RangedJob extends ActiveCreep {
 
         this.performHealing(creep, damagedCreeps, allCreeps);
 
-        // FlagKiller override: ignore combat mode, always pursue flag blocker
-        if (creep.id === this.gameState.getFlagKillerId()) {
-            const flagBlocker = findFlagBlockingEnemy(this.gameState, allHostileCreeps);
-            if (flagBlocker) {
-                creep.moveTo(flagBlocker);
-                if (enemiesInRange.length > 0) {
-                    const target = creep.findClosestByRange(enemiesInRange);
-                    if (target) creep.rangedAttack(target);
-                }
-                return;
-            }
-        }
-
         const result = selectPrimaryTarget(creep, this.gameState, enemiesInRange);
 
         if (!result || result.mode === 'idle') {
             this.idle(creep);
-            return;
-        }
-
-        if (result.mode === 'payload_priority') {
-            if (result.combatEnemiesInRange.length > 0) {
-                const target = creep.findClosestByRange(result.combatEnemiesInRange);
-                if (target) {
-                    const rangeToTarget = getRange(creep, target);
-                    if (rangeToTarget < RangeConfig.RANGED_ATTACK_RANGE) {
-                        const retreatPos = this.findBestRetreatPosition(creep, allHostileCreeps, allCreeps, allStructures, mySpawn);
-                        if (retreatPos) creep.moveTo(retreatPos);
-                    } else if (rangeToTarget > RangeConfig.RANGED_ATTACK_RANGE) {
-                        creep.moveTo(target);
-                    }
-                    creep.rangedAttack(target);
-                }
-            } else {
-                const rangeToPayload = getRange(creep, result.enemyPayload);
-                if (rangeToPayload > RangeConfig.RANGED_ATTACK_RANGE) {
-                    creep.moveTo(result.enemyPayload);
-                }
-                creep.rangedAttack(result.enemyPayload);
-            }
             return;
         }
 

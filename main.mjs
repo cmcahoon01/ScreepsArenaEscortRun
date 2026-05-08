@@ -1,27 +1,19 @@
-import { EscortCreep } from 'arena/season_3/escort_run/basic';
-import { Flag, getObjectsByPrototype } from 'game';
+import { getObjectsByPrototype } from 'game';
 
 import { CreepController } from './src/controllers/CreepController.mjs';
 import { GameState } from './src/services/GameState.mjs';
-import { PayloadJob } from './src/jobs/index.mjs';
 import { CombatCoordinator } from './src/controllers/CombatCoordinator.mjs';
 import { BuildQueue } from "./src/controllers/BuildQueue.mjs";
+import {StructureSpawn} from 'game/prototypes';
+
 
 const screepController = new CreepController();
 const gameState = new GameState();
 const buildQueue = new BuildQueue(screepController, gameState);
-const escortCreep = getObjectsByPrototype(EscortCreep).find(i => i.my);
-const enemyEscortCreep = getObjectsByPrototype(EscortCreep).find(i => !i.my);
-const flag = getObjectsByPrototype(Flag).find(i => i.my);
-const enemyFlag = getObjectsByPrototype(Flag).find(i => !i.my);
-const payloadJob = escortCreep
-    ? new PayloadJob(escortCreep.id, 'payload', 1, screepController, gameState, flag)
-    : null;
+const mySpawn = getObjectsByPrototype(StructureSpawn).find(i => i.my);
 
-gameState.initializeEnemyPayload(enemyEscortCreep);
-gameState.setFlag(flag);
-gameState.setEnemyFlag(enemyFlag);
-gameState.setTopTeam(flag);
+
+gameState.setTopTeam(mySpawn);
 
 export function loop() {
     gameState.refresh();
@@ -34,7 +26,4 @@ export function loop() {
 
     screepController.updateCreeps(gameState);
 
-    if (payloadJob) {
-        payloadJob.act();
-    }
 }

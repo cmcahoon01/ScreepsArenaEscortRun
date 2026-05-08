@@ -178,14 +178,6 @@ export const CombatConfig = {
      */
     DEFENSIVE_THRESHOLD: 0.7,
 
-    /**
-     * Distance threshold for flag-blocker priority.
-     * When the payload is within this range of the flag and an enemy is standing
-     * on the flag, all attackers not currently in combat will prioritize killing
-     * that enemy.
-     */
-    FLAG_BLOCKER_RANGE: 60,
-
     SPAWN_EXCLUSION_RADIUS: 20,
 
     IN_OUR_QUADRANT_DISTANCE: 40,
@@ -250,60 +242,6 @@ export const RangeConfig = {
      * Range for adjacent (melee) interactions.
      */
     ADJACENT_RANGE: 1,
-};
-
-// ============================================================================
-// Payload Configuration
-// ============================================================================
-
-/**
- * Configuration for the payload (EscortCreep) state machine and movement.
- */
-export const PayloadConfig = {
-    /**
-     * State string for the payload waiting on a rampart near spawn.
-     */
-    STATE_WAITING: 'waiting',
-
-    /**
-     * State string for the payload actively moving toward the flag.
-     */
-    STATE_MOVING: 'moving',
-
-    /**
-     * Strength ratio threshold for "significant military advantage".
-     * When myStrength / enemyStrength >= this value, the payload advances.
-     */
-    MILITARY_ADVANTAGE_THRESHOLD: 1.5,
-
-    /**
-     * Game tick threshold after which the payload advances regardless of military strength.
-     */
-    GAME_TIME_THRESHOLD: 1500,
-
-    /**
-     * Chebyshev distance from our spawn at which the payload waits on a rampart.
-     */
-    WAITING_RAMPART_DISTANCE: 2,
-
-    /**
-     * X offset from spawn for the forward waiting position (toward the goal).
-     */
-    WAITING_FORWARD_OFFSET_X: 3,
-
-    /**
-     * Y offset magnitude from spawn for the forward waiting position.
-     * Applied as negative (upward) when spawn is on top, positive (downward) when on bottom.
-     */
-    WAITING_FORWARD_OFFSET_Y: 3,
-
-    /**
-     * Chebyshev distance threshold for detecting nearby enemies while waiting.
-     * If any enemy is within this range, the payload seeks cover on a rampart.
-     */
-    ENEMY_NEARBY_RANGE: 8,
-
-    CRITICAL_HP: 4000,
 };
 
 // ============================================================================

@@ -1,5 +1,4 @@
 import * as BuildConditions from './BuildConditions.mjs';
-import {enemyRushing, weAreDominating} from "./BuildConditions.mjs";
 
 export class BuildOrder {
     /**
@@ -18,10 +17,7 @@ export class BuildOrder {
      */
     static INITIAL_BUILD = [
         { job: 'miner1' },
-        { job: 'mule' },
-        { job: 'paladin', replace_dead: false, only_if: BuildConditions.needRushPaladin },
-        { job: 'blocker', replace_dead: false, only_if: BuildConditions.enemyRushing },
-        { job: 'miner2' }, // slightly bigger miner
+        { job: 'blocker', replace_dead: false,},
         { job: 'mule' },
     ];
 
@@ -38,19 +34,6 @@ export class BuildOrder {
      *     weight {number} - Relative spawn weight for this job (required).
      */
     static PHASE2_OPTIONS = [
-        { // paladins if they are rushing
-            only_if: enemyRushing,
-            build: [
-                { job: 'fighter', weight: 2},
-                { job: 'cleric', weight: 1 },
-            ]
-        },
-        { // tugs if we are dominating
-            only_if: weAreDominating,
-            build: [
-                { job: 'tug' },
-            ]
-        },
         { // Default option.
             build: [
                 { job: 'cleric', weight: 1 },

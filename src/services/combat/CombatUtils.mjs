@@ -66,28 +66,6 @@ export function hasAttackCapability(creep) {
     return creep.body.some(part => part.type === ATTACK || part.type === RANGED_ATTACK);
 }
 
-export function selectFlagKiller(gameState, flagBlocker) {
-    const myCreeps = gameState.getMyCreeps();
-    const fighters = myCreeps.filter(c => gameState.getCreepJobName(c.id) === 'fighter');
-    const combatCreeps = myCreeps.filter(c => COMBAT_JOBS.has(gameState.getCreepJobName(c.id)));
-
-    const candidates = fighters.length > 0 ? fighters : combatCreeps;
-    if (candidates.length === 0) return null;
-
-    const closest = flagBlocker.findClosestByRange(candidates);
-    return closest ? closest.id : null;
-}
-
-export function getEnemyPayloadIfActive(gameState, ramparts, enemySpawn) {
-    const enemyEscortCreepId = gameState.getEnemyPayloadId();
-    if (!enemyEscortCreepId) return null;
-    const enemyPayload = getObjectById(enemyEscortCreepId);
-    if (!enemyPayload) return null;
-    if (isOnEnemyRampart(enemyPayload, ramparts)) return null;
-    if (isWithinEnemySpawnRadius(enemyPayload, enemySpawn)) return null;
-    return enemyPayload;
-}
-
 export function getValidTargets(allHostileCreeps, ramparts, enemySpawn) {
     const { enemiesNotOnRamparts } = filterEnemiesByRampartStatus(allHostileCreeps, ramparts);
     return enemySpawn
@@ -95,9 +73,6 @@ export function getValidTargets(allHostileCreeps, ramparts, enemySpawn) {
         : enemiesNotOnRamparts;
 }
 
-export function getFlagBlocker(gameState, enemies) {
-    return findFlagBlockingEnemy(gameState, enemies);
-}
 
 export function selectPrimaryTarget(creep, gameState, enemiesInAttackRange) {
     const allHostileCreeps = gameState.getEnemyCreeps();
@@ -107,18 +82,6 @@ export function selectPrimaryTarget(creep, gameState, enemiesInAttackRange) {
     const enemySpawn = gameState.getEnemySpawn();
     const validTargets = getValidTargets(allHostileCreeps, ramparts, enemySpawn);
 
-    const enemyPayload = getEnemyPayloadIfActive(gameState, ramparts, enemySpawn);
-    if (enemyPayload) {
-        const combatEnemiesInRange = enemiesInAttackRange.filter(
-            e => e.id !== gameState.getEnemyPayloadId() && hasAttackCapability(e)
-        );
-        let attackTarget = enemyPayload;
-        if (enemiesInAttackRange.length > 0 && !enemiesInAttackRange.some(e => e.id === enemyPayload.id)) {
-            attackTarget = enemiesInAttackRange[0]
-        }
-        return { mode: 'payload_priority', attackTarget, enemyPayload, combatEnemiesInRange, validTargets };
-    }
-
     if (validTargets.length === 0) {
         return { mode: 'idle', validTargets };
     }
@@ -127,37 +90,7 @@ export function selectPrimaryTarget(creep, gameState, enemiesInAttackRange) {
     let attackTarget = closestEnemy;
     let movementTarget = closestEnemy;
 
-    if (enemiesInAttackRange.length === 0) {
-        const flagBlocker = findFlagBlockingEnemy(gameState, allHostileCreeps);
-        if (flagBlocker && creep.id === gameState.getFlagKillerId()) {
-            attackTarget = flagBlocker;
-            movementTarget = flagBlocker;
-        } else if (gameState.isPayloadMoving()) {
-            const payloadId = gameState.getPayloadId();
-            const payload = payloadId ? getObjectById(payloadId) : null;
-            if (payload && validTargets.length > 0) {
-                const enemyClosestToPayload = payload.findClosestByRange(validTargets);
-                if (enemyClosestToPayload) movementTarget = enemyClosestToPayload;
-            }
-        }
-    }
-
     return { mode: 'standard', attackTarget, movementTarget, validTargets };
-}
-
-export function findFlagBlockingEnemy(gameState, enemies) {
-    const flag = gameState.getFlag();
-    if (!flag) return null;
-
-    const payloadId = gameState.getPayloadId();
-    if (!payloadId) return null;
-
-    const payload = getObjectById(payloadId);
-    if (!payload) return null;
-
-    if (getRange(payload, flag) > CombatConfig.FLAG_BLOCKER_RANGE) return null;
-
-    return enemies.find(e => e.x === flag.x && e.y === flag.y) || null;
 }
 
 // Backward-compatible namespace for callers using CombatUtils.method()
@@ -169,10 +102,6 @@ export const CombatUtils = {
     filterMeleeTargetableEnemies,
     isOnEnemyRampart,
     hasAttackCapability,
-    selectFlagKiller,
     selectPrimaryTarget,
-    findFlagBlockingEnemy,
-    getEnemyPayloadIfActive,
     getValidTargets,
-    getFlagBlocker,
 };

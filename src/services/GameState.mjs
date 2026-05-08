@@ -1,7 +1,7 @@
 import { getObjectsByPrototype, getObjectById } from 'game/utils';
 import { Creep, StructureSpawn, StructureRampart, StructureExtension, Source, ConstructionSite, StructureContainer } from 'game/prototypes';
 import { detectFortifiedMiner } from "./StructureUtils.mjs";
-import { findFlagBlockingEnemy, selectFlagKiller, hasAttackCapability } from "./combat/CombatUtils.mjs";
+import { hasAttackCapability } from "./combat/CombatUtils.mjs";
 import {BuildConfig, MapTopology, MINER_JOB_NAMES} from "../constants.mjs";
 import { TugChain } from "./TugChain.mjs";
 import { chebyshevDistance } from "./RangeUtils.mjs";
@@ -21,12 +21,6 @@ export class GameState {
         this.fortifiedMiner = null;
         this.hasBuiltMiner = false;
         this._tugChain = new TugChain();
-        this.payloadMoving = false;
-        this.payloadId = null;
-        this.enemyPayloadId = null;
-        this.flag = null;
-        this.enemyFlag = null;
-        this.flagKillerId = null;
         this._jobsEverBuilt = new Set();
         this._jobsEverDied = new Set();
         this.enemyHasCombatUnit = false;
@@ -95,18 +89,6 @@ export class GameState {
             this._jobsEverBuilt.add(jobName);
         }
 
-        // Maintain flag killer assignment
-        const flagBlocker = findFlagBlockingEnemy(this, this.enemyCreeps);
-        if (!flagBlocker) {
-            this.flagKillerId = null;
-        } else {
-            const currentKillerAlive = this.flagKillerId &&
-                this.myCreeps.some(c => c.id === this.flagKillerId);
-            if (!currentKillerAlive) {
-                this.flagKillerId = selectFlagKiller(this, flagBlocker);
-            }
-        }
-
         // Prune dead creeps from tug chain
         this._tugChain.prune();
     }
@@ -121,8 +103,6 @@ export class GameState {
     getMyExtensions() { return this.myExtensions; }
     getSources() { return this.sources; }
     getMyConstructionSites() { return this.myConstructionSites; }
-    getFortifiedMiner() { return this.fortifiedMiner; }
-    getHasBuiltMiner() { return this.hasBuiltMiner; }
     getJobEverDied(jobName) { return this._jobsEverDied.has(jobName); }
     getEnemyHasCombatUnit() { return this.enemyHasCombatUnit; }
     getWeAreTop() { return this.weAreTop; }
@@ -147,24 +127,6 @@ export class GameState {
         this._tugChain.clear();
     }
 
-    isPayloadMoving() { return this.payloadMoving; }
-    setPayloadMoving(moving) { this.payloadMoving = moving; }
-    getPayloadId() { return this.payloadId; }
-    setPayloadId(id) { this.payloadId = id; }
-
-    initializeEnemyPayload(enemyEscortCreep) {
-        this.enemyPayloadId = enemyEscortCreep ? enemyEscortCreep.id : null;
-    }
-
-    getEnemyPayloadId() { return this.enemyPayloadId; }
-
-    setFlag(flag) { this.flag = flag; }
-    getFlag() { return this.flag; }
-    setEnemyFlag(flag) { this.enemyFlag = flag; }
-    getEnemyFlag() { return this.enemyFlag; }
-    getFlagKillerId() { return this.flagKillerId; }
-    setFlagKillerId(id) { this.flagKillerId = id; }
-
     setMiningContainerPos(x, y) { this.miningContainerPos = { x, y }; }
     getMiningContainerPos() { return this.miningContainerPos; }
     getMiningContainerId() { return this.miningContainerId; }
@@ -179,6 +141,6 @@ export class GameState {
     setIdleTarget(pos) { this.idleTarget = pos; }
     getMyVanguardLeaderPos() { return this.myVanguardLeaderPos; }
     setMyVanguardLeaderPos(pos) { this.myVanguardLeaderPos = pos; }
-    setTopTeam(flag) {this.weAreTop = (flag.y < MapTopology.MAP_CENTER.y); }
+    setTopTeam(spawn) {this.weAreTop = (spawn.y < MapTopology.MAP_CENTER.y); }
     setHighestBuildStep(buildStep) {this.highestBuildStep = buildStep; }
 }

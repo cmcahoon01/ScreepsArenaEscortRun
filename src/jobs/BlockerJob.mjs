@@ -1,10 +1,12 @@
-import { getObjectById } from 'game/utils';
-import { MOVE, HEAL } from 'game/constants';
+import {getObjectById, getObjectsByPrototype} from 'game/utils';
+import { MOVE, HEAL, ATTACK } from 'game/constants';
 import { ActiveCreep } from './base/ActiveCreep.mjs';
 import { calculateCost } from '../services/BodyPartService.mjs';
 import { isMovingToPosition } from '../services/mining/MinerStateMachine.mjs';
 import { joinTugChain } from '../services/TugChainService.mjs';
 import { MINER_JOB_NAMES } from '../constants.mjs';
+import {BonusFlag} from 'arena/season_3/power_split/basic/prototypes';
+import {StructureSpawn} from "game/prototypes";
 
 export class BlockerJob extends ActiveCreep {
     static get BODY() {
@@ -40,10 +42,18 @@ export class BlockerJob extends ActiveCreep {
             this.memory.minerTugged = true;
         }
 
-        const enemyFlag = this.gameState.getEnemyFlag();
-        if (!enemyFlag) return;
+        const spawn = this.gameState.getMySpawn()
+        const attackBonusFlags = getObjectsByPrototype(BonusFlag).filter(i => i.bonusType === ATTACK);
+        const myAttackBonusFlag = spawn.findClosestByRange(attackBonusFlags);
 
-        creep.moveTo(enemyFlag);
+        if(!myAttackBonusFlag.my) {
+            creep.moveTo(myAttackBonusFlag);
+        }
+        else {
+            const enemySpawn = getObjectsByPrototype(StructureSpawn).find(i => !i.my);
+            creep.moveTo(enemySpawn);
+            creep.attack(enemySpawn);
+        }
     }
 
     _actAsTug(creep, movingMiner) {

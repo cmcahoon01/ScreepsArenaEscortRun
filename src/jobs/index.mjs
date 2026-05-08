@@ -11,6 +11,5 @@ export { Miner2Job } from './Miner2Job.mjs';
 export { MuleJob } from './MuleJob.mjs';
 export { ClericJob } from './ClericJob.mjs';
 export { TugJob } from './TugJob.mjs';
-export { PayloadJob } from './PayloadJob.mjs';
 export { BlockerJob } from './BlockerJob.mjs';
 export { Jobs } from './JobRegistry.mjs';
