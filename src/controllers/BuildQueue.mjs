@@ -28,17 +28,33 @@ export class BuildQueue {
      * @returns {boolean} True if spawn was successful, false otherwise
      */
     trySpawnNextCreep() {
-        // Get the next creep to build from strategy
-        const nextCreep = this.buildStrategy.getNextCreepToBuild(this.screepController.creeps);
-        if (!nextCreep) {
+        const availableSpawns = this.getMySpawns().filter(spawn => spawn && !spawn.spawning);
+        if (availableSpawns.length === 0) {
             return false;
         }
 
-        // Check available energy
-        const totalEnergy = this.energyManager.getTotalEnergy();
+        let spawnedAny = false;
+        const plannedCreeps = this.screepController.creeps.map(c => ({ jobName: c.jobName }));
 
-        // Try to spawn using the build queue
-        return this.trySpawn(nextCreep, totalEnergy);
+        for (const pendingSpawn of this.pendingSpawns.values()) {
+            plannedCreeps.push({ jobName: pendingSpawn.job });
+        }
+
+        for (const spawn of availableSpawns) {
+            // Get the next creep to build from strategy, including pending/planned spawns
+            const nextCreep = this.buildStrategy.getNextCreepToBuild(plannedCreeps);
+            if (!nextCreep) {
+                continue;
+            }
+
+            const spawnEnergy = this.energyManager.getSpawnEnergy(spawn);
+            if (this.trySpawn(spawn, nextCreep, spawnEnergy)) {
+                spawnedAny = true;
+                plannedCreeps.push({ jobName: nextCreep.job });
+            }
+        }
+
+        return spawnedAny;
     }
 
     /**
@@ -182,16 +198,14 @@ export class BuildQueue {
 
     /**
      * Attempt to spawn a creep with the given configuration.
+     * @param {Object} spawn - Spawn structure to use
      * @param {Object} nextCreep - Creep configuration with job, tier, body, and cost
-     * @param {number} availableEnergy - Total energy available for spawning
+     * @param {number} availableEnergy - Energy available to the selected spawn
      * @returns {boolean} True if spawn was successful, false otherwise
      */
-    trySpawn(nextCreep, availableEnergy) {
-        const spawns = this.getMySpawns();
-        const spawn = spawns.find(s => s && !s.spawning);
-
-        // Check if any spawn exists and is not currently spawning
-        if (!spawn) {
+    trySpawn(spawn, nextCreep, availableEnergy) {
+        // Check if spawn exists and is not currently spawning
+        if (!spawn || spawn.spawning) {
             return false;
         }
 
