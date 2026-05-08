@@ -54,7 +54,7 @@ export class BuildQueue {
                 const creepId = spawn.spawning.creep.id;
 
                 if (creepId === undefined) {
-                    console.log(`spawning creep undefined for spawn ${spawn.id}`);
+                    console.log(`Spawning creep ID is undefined for spawn ${spawn.id}`);
                     continue;
                 }
 
