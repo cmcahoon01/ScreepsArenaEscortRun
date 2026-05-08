@@ -3,6 +3,7 @@ import {ATTACK, RANGED_ATTACK} from "game/constants";
 import { getRange } from 'game/utils';
 import { calculateTeamStrength } from '../services/combat/StrengthEstimatorService.mjs';
 import { CombatConfig } from '../constants.mjs';
+import { chebyshevDistance } from '../services/RangeUtils.mjs';
 import {
     numStepsAwayFromOurSpawn,
     numStepsAwayFromEnemySpawn,
@@ -21,26 +22,26 @@ import {
  *   IDLE    — enemy vanguard is < 25 steps from their spawn; units wait at
  *             40 steps from the enemy spawn.
  *
- * The vanguard is the set of combat units whose y-coordinate is within
- * CombatConfig.VANGUARD_GROUP_HEIGHT of the unit closest to the enemy spawn y.
+ * The vanguard is the set of combat units whose chebyshevDistance from the leader is within
+ * CombatConfig.VANGUARD_GROUP_HEIGHT, where the leader is the unit closest to the enemy spawn.
  */
 export class CombatCoordinator {
     /**
-     * Find a team's vanguard: the combat unit closest (in y) to the given
-     * target y, plus all teammates within VANGUARD_GROUP_HEIGHT y-units of that leader.
+     * Find a team's vanguard: the combat unit closest (by chebyshevDistance) to the given
+     * target position, plus all teammates within VANGUARD_GROUP_HEIGHT chebyshev distance of that leader.
      *
      * @param {Creep[]} combatUnits - Array of combat-capable creeps
-     * @param {number} targetY - The enemy spawn's y-coordinate
+     * @param {{x: number, y: number}} targetPos - The enemy spawn's position
      * @returns {Creep[]} The vanguard group (may be empty)
      */
-    static findVanguard(combatUnits, targetY) {
+    static findVanguard(combatUnits, targetPos) {
         if (combatUnits.length === 0) return [];
 
         const leader = combatUnits.reduce((best, unit) =>
-            Math.abs(unit.y - targetY) < Math.abs(best.y - targetY) ? unit : best
+            chebyshevDistance(unit, targetPos) < chebyshevDistance(best, targetPos) ? unit : best
         );
 
-        return combatUnits.filter(u => Math.abs(u.y - leader.y) < CombatConfig.VANGUARD_GROUP_HEIGHT);
+        return combatUnits.filter(u => chebyshevDistance(u, leader) < CombatConfig.VANGUARD_GROUP_HEIGHT);
     }
 
     /**
@@ -80,17 +81,14 @@ export class CombatCoordinator {
         if (enemyCombatUnits.length === 0 || !enemySpawn || !mySpawn) {
             CombatCoordinator.setMode(gameState, 'attack', { reason: 'no_enemy_combat_units' });
         } else {
-            const enemySpawnY = enemySpawn.y;
-            const mySpawnY = mySpawn.y;
-
-            // Find the enemy vanguard leader: the enemy combat unit closest to our spawn y
+            // Find the enemy vanguard leader: the enemy combat unit closest to our spawn
             const enemyVanguardLeader = enemyCombatUnits.reduce((best, unit) =>
-                Math.abs(unit.y - mySpawnY) < Math.abs(best.y - mySpawnY) ? unit : best
+                chebyshevDistance(unit, mySpawn) < chebyshevDistance(best, mySpawn) ? unit : best
             );
 
-            // The vanguard is the leader plus all units within VANGUARD_GROUP_HEIGHT y-units of it
+            // The vanguard is the leader plus all units within VANGUARD_GROUP_HEIGHT chebyshev distance of it
             const enemyVanguard = enemyCombatUnits.filter(
-                u => Math.abs(u.y - enemyVanguardLeader.y) < CombatConfig.VANGUARD_GROUP_HEIGHT
+                u => chebyshevDistance(u, enemyVanguardLeader) < CombatConfig.VANGUARD_GROUP_HEIGHT
             );
 
             const vanguardStepsFromSpawn = numStepsAwayFromEnemySpawn(gameState, enemyVanguardLeader);
@@ -106,7 +104,7 @@ export class CombatCoordinator {
                 });
             } else {
                 const myCombatUnits = myCreeps.filter(c => CombatUtils.hasAttackCapability(c));
-                const myVanguard = CombatCoordinator.findVanguard(myCombatUnits, enemySpawnY);
+                const myVanguard = CombatCoordinator.findVanguard(myCombatUnits, enemySpawn);
 
                 const myVanguardStrength = calculateTeamStrength(myVanguard);
                 const enemyVanguardStrength = calculateTeamStrength(enemyVanguard);
@@ -127,7 +125,7 @@ export class CombatCoordinator {
                     // Store our vanguard leader position so non-vanguard units can move toward it
                     if (myVanguard.length > 0) {
                         const myVanguardLeader = myVanguard.reduce((best, unit) =>
-                            Math.abs(unit.y - enemySpawnY) < Math.abs(best.y - enemySpawnY) ? unit : best
+                            chebyshevDistance(unit, enemySpawn) < chebyshevDistance(best, enemySpawn) ? unit : best
                         );
                         gameState.setMyVanguardLeaderPos({ x: myVanguardLeader.x, y: myVanguardLeader.y });
                     }

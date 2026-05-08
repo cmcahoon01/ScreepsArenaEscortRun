@@ -6,7 +6,7 @@ import {
     findNearestEnemy as kitingFindNearestEnemy,
     findBestRetreatPosition as kitingFindBestRetreatPosition,
 } from '../../services/combat/KitingBehavior.mjs';
-import { isInRangedAttackRange } from '../../services/RangeUtils.mjs';
+import { isInRangedAttackRange, chebyshevDistance } from '../../services/RangeUtils.mjs';
 import { selectPrimaryTarget, findFlagBlockingEnemy } from '../../services/combat/CombatUtils.mjs';
 import { RangeConfig, CombatConfig, MapTopology } from '../../constants.mjs';
 
@@ -158,7 +158,7 @@ export class RangedJob extends ActiveCreep {
             if (!this.tryHealingMove(creep, damagedCreeps)) {
                 const vanguardLeaderPos = this.gameState.getMyVanguardLeaderPos();
                 const inVanguard = !vanguardLeaderPos ||
-                    Math.abs(creep.y - vanguardLeaderPos.y) < CombatConfig.VANGUARD_GROUP_HEIGHT;
+                    chebyshevDistance(creep, vanguardLeaderPos) < CombatConfig.VANGUARD_GROUP_HEIGHT;
                 if (!inVanguard) {
                     // Non-vanguard units move toward the vanguard to reinforce it
                     creep.moveTo(vanguardLeaderPos);

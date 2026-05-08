@@ -72,7 +72,7 @@ export class MeleeJob extends ActiveCreep {
         if (combatMode === 'retreat') {
             const vanguardLeaderPos = this.gameState.getMyVanguardLeaderPos();
             const inVanguard = !vanguardLeaderPos ||
-                Math.abs(creep.y - vanguardLeaderPos.y) < CombatConfig.VANGUARD_GROUP_HEIGHT;
+                chebyshevDistance(creep, vanguardLeaderPos) < CombatConfig.VANGUARD_GROUP_HEIGHT;
             if (!inVanguard) {
                 // Non-vanguard units move toward the vanguard to reinforce it
                 creep.moveTo(vanguardLeaderPos);
