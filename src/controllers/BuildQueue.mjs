@@ -74,10 +74,14 @@ export class BuildQueue {
             }
         }
 
+        const stalePendingSpawnIds = [];
         for (const spawnId of this.pendingSpawns.keys()) {
             if (!liveSpawnIds.has(spawnId)) {
-                this.pendingSpawns.delete(spawnId);
+                stalePendingSpawnIds.push(spawnId);
             }
+        }
+        for (const spawnId of stalePendingSpawnIds) {
+            this.pendingSpawns.delete(spawnId);
         }
     }
 
