@@ -39,7 +39,7 @@ export class EnergyManager {
             let closestDistance = Infinity;
             for (const candidate of spawns) {
                 const candidateDistance = this._distance(extension, candidate);
-                if (!closestSpawn || candidateDistance < closestDistance) {
+                if (candidateDistance < closestDistance) {
                     closestSpawn = candidate;
                     closestDistance = candidateDistance;
                 }
