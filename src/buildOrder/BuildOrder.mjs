@@ -41,8 +41,8 @@ export class BuildOrder {
         { // paladins if they are rushing
             only_if: enemyRushing,
             build: [
-                { job: 'fighter', weight: 2},
-                { job: 'cleric', weight: 1 },
+                { job: 'fighter', weight: 1},
+                { job: 'cleric', weight: 3 },
             ]
         },
         { // tugs if we are dominating
