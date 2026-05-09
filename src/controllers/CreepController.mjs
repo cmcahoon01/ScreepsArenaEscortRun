@@ -24,7 +24,11 @@ export class CreepController {
                 return false;
             }
             if (!creep.spawning) {
-                activeCreep.act();
+                try {
+                    activeCreep.act();
+                } catch (e) {
+                    console.log(`Creep with id ${activeCreep.id} failed to act: ${e}`);
+                }
             }
             return true;
         });
